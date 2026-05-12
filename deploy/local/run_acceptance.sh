@@ -16,9 +16,10 @@ steps=(
   "verify_plugin.sh|admin can reach Hikari plugin"
   "verify_pipeline.sh|Kafka -> Elasticsearch data plane"
   "verify_activity.sh|activity logging captured in DB and ES"
-  "verify_player_flow.sh|competitor: register, login, team, challenges"
-  "verify_team_flow.sh|two users sharing a team"
-  "verify_challenge_flow.sh|admin creates challenge, player solves it"
+  "verify_player_flow.sh|lone-wolf competitor: register, login, own one-person team, challenges"
+  "verify_team_flow.sh|team competitors: captain creates team, second member joins with team password"
+  "verify_challenge_flow.sh|admin creates challenge, player solves it, solve and activity recorded"
+  "verify_research.sh|researcher dashboard renders, JSONL export streams parseable records"
 )
 
 passed=()

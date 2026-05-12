@@ -1,0 +1,110 @@
+/* Styles for /admin/hikari/research. Pure tokens from theme.css. */
+
+.hikari-research {
+    padding: 1.5rem;
+    max-width: 1280px;
+    margin: 0 auto;
+}
+
+.research-header {
+    margin-bottom: 1.5rem;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 0.5rem 1rem;
+    align-items: center;
+}
+
+.research-header h1 {
+    margin: 0;
+    font-size: 1.5rem;
+}
+
+.research-subtitle {
+    grid-column: 1;
+    margin: 0;
+    color: var(--hikari-text-muted);
+    font-size: 0.9rem;
+}
+
+.research-header .btn {
+    grid-row: 1 / span 2;
+    grid-column: 2;
+}
+
+.research-grid {
+    display: grid;
+    grid-template-columns: 1fr 2fr 2fr;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.research-card {
+    background-color: var(--hikari-surface);
+    border: 1px solid var(--hikari-border);
+    border-radius: var(--hikari-radius);
+    padding: 1rem;
+}
+
+.research-card--wide {
+    grid-column: 1 / -1;
+}
+
+.research-card h2 {
+    font-size: 1rem;
+    margin-bottom: 0.75rem;
+    color: var(--hikari-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.research-card--metric {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.metric-label {
+    color: var(--hikari-text-muted);
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.metric-value {
+    color: var(--hikari-primary);
+    font-size: 2.5rem;
+    font-weight: 700;
+    line-height: 1.1;
+    font-variant-numeric: tabular-nums;
+}
+
+.hikari-research .table {
+    margin: 0;
+    color: var(--hikari-text);
+}
+
+.hikari-research .table thead th {
+    border-bottom: 1px solid var(--hikari-border);
+    color: var(--hikari-text-muted);
+    font-weight: 600;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.hikari-research .table td,
+.hikari-research .table th {
+    border-top: 1px solid var(--hikari-border);
+    padding: 0.5rem 0.75rem;
+    vertical-align: middle;
+}
+
+.hikari-research code {
+    background-color: var(--hikari-surface-2);
+    color: var(--hikari-primary);
+    padding: 0.1rem 0.4rem;
+    border-radius: 3px;
+    font-size: 0.85rem;
+}
+
+.text-right { text-align: right; }

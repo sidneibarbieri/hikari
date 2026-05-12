@@ -22,6 +22,7 @@ import CTFd.plugins.hikari_plugin.hikari_models as hikari_models
 import CTFd.plugins.hikari_challenge as hikari_challenge
 import CTFd.plugins.hikari_plugin.hikari_importer as hikari_importer
 from CTFd.plugins.hikari_plugin import hikari_activity
+from CTFd.plugins.hikari_plugin import hikari_research
 
 
 
@@ -486,6 +487,7 @@ def load(app):
         else:
             return render_template('hikari-import.html', form=form)
     
+    hikari_research.register(hikariplugin)
     app.register_blueprint(hikariplugin)
 
 

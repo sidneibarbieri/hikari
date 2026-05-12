@@ -1,0 +1,139 @@
+{
+  "success": true,
+  "data": [
+    {
+      "pos": 1,
+      "account_id": 12,
+      "account_url": "/teams/12",
+      "account_type": "team",
+      "oauth_id": null,
+      "name": "alpha_1778594654",
+      "score": 200,
+      "bracket_id": null,
+      "bracket_name": null,
+      "members": [
+        {
+          "id": 16,
+          "oauth_id": null,
+          "name": "capt_1778594654",
+          "score": 100,
+          "bracket_id": null,
+          "bracket_name": null
+        },
+        {
+          "id": 17,
+          "oauth_id": null,
+          "name": "memb_1778594654",
+          "score": 100,
+          "bracket_id": null,
+          "bracket_name": null
+        }
+      ]
+    },
+    {
+      "pos": 2,
+      "account_id": 4,
+      "account_url": "/teams/4",
+      "account_type": "team",
+      "oauth_id": null,
+      "name": "solo_1778592998",
+      "score": 100,
+      "bracket_id": null,
+      "bracket_name": null,
+      "members": [
+        {
+          "id": 6,
+          "oauth_id": null,
+          "name": "solver_1778592998",
+          "score": 100,
+          "bracket_id": null,
+          "bracket_name": null
+        }
+      ]
+    },
+    {
+      "pos": 3,
+      "account_id": 5,
+      "account_url": "/teams/5",
+      "account_type": "team",
+      "oauth_id": null,
+      "name": "solo_1778593245",
+      "score": 100,
+      "bracket_id": null,
+      "bracket_name": null,
+      "members": [
+        {
+          "id": 7,
+          "oauth_id": null,
+          "name": "solver_1778593245",
+          "score": 100,
+          "bracket_id": null,
+          "bracket_name": null
+        }
+      ]
+    },
+    {
+      "pos": 4,
+      "account_id": 8,
+      "account_url": "/teams/8",
+      "account_type": "team",
+      "oauth_id": null,
+      "name": "solo_1778593807",
+      "score": 100,
+      "bracket_id": null,
+      "bracket_name": null,
+      "members": [
+        {
+          "id": 11,
+          "oauth_id": null,
+          "name": "solver_1778593807",
+          "score": 100,
+          "bracket_id": null,
+          "bracket_name": null
+        }
+      ]
+    },
+    {
+      "pos": 5,
+      "account_id": 11,
+      "account_url": "/teams/11",
+      "account_type": "team",
+      "oauth_id": null,
+      "name": "solo_1778593886",
+      "score": 100,
+      "bracket_id": null,
+      "bracket_name": null,
+      "members": [
+        {
+          "id": 15,
+          "oauth_id": null,
+          "name": "solver_1778593886",
+          "score": 100,
+          "bracket_id": null,
+          "bracket_name": null
+        }
+      ]
+    },
+    {
+      "pos": 6,
+      "account_id": 13,
+      "account_url": "/teams/13",
+      "account_type": "team",
+      "oauth_id": null,
+      "name": "solo_1778594654",
+      "score": 100,
+      "bracket_id": null,
+      "bracket_name": null,
+      "members": [
+        {
+          "id": 18,
+          "oauth_id": null,
+          "name": "wolf_1778594654",
+          "score": 100,
+          "bracket_id": null,
+          "bracket_name": null
+        }
+      ]
+    }
+  ]
+}
