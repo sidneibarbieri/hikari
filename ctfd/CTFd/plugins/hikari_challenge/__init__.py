@@ -11,35 +11,18 @@ from CTFd.models import (
     db
 )
 
-from confluent_kafka import Producer, KafkaError
+from confluent_kafka import KafkaError
 
 from CTFd.utils import get_app_config
 from CTFd.utils.uploads.uploaders import FilesystemUploader, S3Uploader
 
 import CTFd.plugins.hikari_plugin.hikari_models as hikari_models
+from CTFd.plugins.hikari_plugin.kafka_client import get_producer
 
 UPLOADERS = {"filesystem": FilesystemUploader, "s3": S3Uploader}
 
 def get_uploader():
     return UPLOADERS.get(get_app_config("UPLOAD_PROVIDER") or "filesystem")()
-
-
-
-def build_producer_config():
-    use_sasl = os.environ.get("KAFKA_USE_SASL", "false").lower() in ("true", "1", "yes")
-    bootstrap = os.environ.get("KAFKA_BOOTSTRAP_SERVERS", "kafka:9092")
-    if not use_sasl:
-        return {"bootstrap.servers": bootstrap}
-    return {
-        "bootstrap.servers": bootstrap,
-        "security.protocol": "SASL_SSL",
-        "sasl.mechanisms": os.environ.get("KAFKA_SASL_MECHANISM", "SCRAM-SHA-512"),
-        "sasl.username": os.environ.get("KAFKA_SASL_USERNAME"),
-        "sasl.password": os.environ.get("KAFKA_SASL_PASSWORD"),
-    }
-
-
-producer = Producer(build_producer_config())
 
 
 ####### HikariController for controlling activation of logs
@@ -70,13 +53,13 @@ class HikariController:
         if not isinstance(data, list):
             return
  
+        producer = get_producer()
         for record in data:
             try:
                 producer.produce('competition1', value=json.dumps(record).encode('utf-8'))
             except KafkaError as e:
                print(f"Error: {e}")
-        
-        # Garante que todos os dados sejam enviados
+
         producer.flush()
  
 

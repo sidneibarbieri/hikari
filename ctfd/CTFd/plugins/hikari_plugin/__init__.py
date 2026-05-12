@@ -18,9 +18,10 @@ import os
 from CTFd.utils import get_app_config
 from CTFd.utils.uploads.uploaders import FilesystemUploader, S3Uploader
 
-import CTFd.plugins.hikari_plugin.hikari_models as hikari_models 
+import CTFd.plugins.hikari_plugin.hikari_models as hikari_models
 import CTFd.plugins.hikari_challenge as hikari_challenge
 import CTFd.plugins.hikari_plugin.hikari_importer as hikari_importer
+from CTFd.plugins.hikari_plugin import hikari_activity
 
 
 
@@ -32,9 +33,11 @@ def get_uploader():
 
 
 def load(app):
-    # Create all tables 
+    # Create all tables
     app.db.create_all()
 
+    # Observe HTTP traffic and emit activity records to DB + Kafka.
+    hikari_activity.register(app)
 
     # Register plugin assets directory
     register_plugin_assets_directory(app, base_path='/plugins/hikari_plugin/assets/')

@@ -129,7 +129,8 @@ services:
     environment:
       LS_JAVA_OPTS: "-Xms256m -Xmx512m"
     volumes:
-      - ./logstash/pipeline:/usr/share/logstash/pipeline:ro
+      - ./logstash/pipelines:/usr/share/logstash/pipelines:ro
+      - ./logstash/config/pipelines.yml:/usr/share/logstash/config/pipelines.yml
       - ./logstash/config/logstash.yml:/usr/share/logstash/config/logstash.yml
     depends_on:
       elasticsearch:
