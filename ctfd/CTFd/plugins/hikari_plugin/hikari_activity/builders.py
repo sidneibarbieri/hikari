@@ -26,13 +26,26 @@ def _actor_role(user_type: Optional[str]) -> Optional[str]:
     return "user"
 
 
-def _challenge_id_from_view_args(request: Request) -> Optional[int]:
-    if not request.view_args:
-        return None
-    raw = request.view_args.get("challenge_id")
-    if raw is None:
-        return None
-    return int(raw)
+def _challenge_id_from_request(request: Request) -> Optional[int]:
+    """Read challenge_id from URL view args, JSON body, or form, in that order.
+
+    GET /api/v1/challenges/<challenge_id> exposes it on view_args.
+    POST /api/v1/challenges/attempt carries it in the JSON body.
+    Form-encoded submissions carry it as a form field.
+    """
+    if request.view_args:
+        view_value = request.view_args.get("challenge_id")
+        if view_value is not None:
+            return int(view_value)
+    if request.is_json:
+        body = request.get_json(silent=True) or {}
+        body_value = body.get("challenge_id")
+        if body_value is not None:
+            return int(body_value)
+    form_value = request.form.get("challenge_id")
+    if form_value is not None:
+        return int(form_value)
+    return None
 
 
 def build_record(
@@ -53,7 +66,7 @@ def build_record(
 
     if event.event_type in ("challenge.view", "challenge.attempt"):
         target_kind = "challenge"
-        target_id = _challenge_id_from_view_args(request)
+        target_id = _challenge_id_from_request(request)
 
     payload = {"status_code": response.status_code}
 

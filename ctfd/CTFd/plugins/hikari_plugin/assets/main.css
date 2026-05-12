@@ -1,54 +1,61 @@
-
-#status-section {
-    background-color: none;
-    grid-column-start: 2;
-    grid-column-end: 3;
-}
-
-#rapid-menu {
-    grid-column-start: 0;
-    grid-column-end: 1;
-}
+/* /admin/hikari styles. Reads the design tokens defined in theme.css. */
 
 #main-content {
     display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 1.5rem;
+    padding: 1.5rem;
 }
 
+#rapid-menu {
+    grid-column: 1;
+    background-color: var(--hikari-surface);
+    border: 1px solid var(--hikari-border);
+    border-radius: var(--hikari-radius);
+    padding: 1rem;
+}
+
+#status-section {
+    grid-column: 2;
+    background-color: var(--hikari-surface);
+    border: 1px solid var(--hikari-border);
+    border-radius: var(--hikari-radius);
+    padding: 1rem;
+}
 
 .status-item-entry {
-    border: 1px solid rgba(0,0,0,0.4);
-    border-radius: 5px;
+    border: 1px solid var(--hikari-border);
+    border-radius: var(--hikari-radius);
     display: grid;
-    grid-template-columns: 0.5fr 0.5fr;
+    grid-template-columns: 1fr 2fr;
+    overflow: hidden;
+    margin-bottom: 0.75rem;
+    background-color: var(--hikari-surface-2);
 }
 
 .item-status {
-    background-color: green;
-    padding: 10px;
-    color: white;
+    padding: 0.75rem 1rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    letter-spacing: 0.05em;
+    display: flex;
+    align-items: center;
 }
 
-.item-text > span{
-    margin:5px;
+.item-text {
+    padding: 0.75rem 1rem;
+    color: var(--hikari-text);
 }
 
-body {
-    background-color: none;
+.item-text > span {
+    display: block;
+    margin: 0.25rem 0;
 }
 
-.hikari-success {
-    background-color:   #0d8305;
-    color:white;
-}
-
-.hikari-warning {
-    background-color:   #ff7c00;
-    color:white;
-}
-
-
-
-.hikari-error {
-    background-color:  #e60000;
-    color: white;
+.item-text > span:first-child {
+    color: var(--hikari-text-muted);
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
 }

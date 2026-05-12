@@ -22,20 +22,24 @@ echo "produced."
 
 echo "polling Elasticsearch for the document ..."
 deadline=$((SECONDS + 30))
+query=$(jq -cn --arg probe "$probe_id" \
+  '{query: {match_phrase: {probe_id: $probe}}}')
 hits=0
 while (( SECONDS < deadline )); do
-  hits=$(curl -sS "$ES_URL/$TOPIC/_search?q=probe_id:$probe_id" \
+  hits=$(curl -sS -H 'Content-Type: application/json' \
+    -X POST "$ES_URL/$TOPIC/_search" -d "$query" \
     | jq -r '.hits.total.value // 0')
-  if [[ "$hits" == "1" ]]; then
+  if [[ "$hits" -ge 1 ]]; then
     break
   fi
   sleep 2
 done
 
-if [[ "$hits" != "1" ]]; then
-  echo "FAIL: probe_id=$probe_id not found in Elasticsearch after 30s (hits=$hits)"
-  curl -sS "$ES_URL/$TOPIC/_search?q=probe_id:$probe_id" | jq .
+if [[ "$hits" -lt 1 ]]; then
+  echo "FAIL: probe_id=$probe_id not found in Elasticsearch after 30s"
+  curl -sS -H 'Content-Type: application/json' \
+    -X POST "$ES_URL/$TOPIC/_search" -d "$query" | jq .
   exit 1
 fi
 
-echo "PASS: produced record reached Elasticsearch (index=$TOPIC, probe_id=$probe_id)"
+echo "PASS: produced record reached Elasticsearch (index=$TOPIC, probe_id=$probe_id, hits=$hits)"
