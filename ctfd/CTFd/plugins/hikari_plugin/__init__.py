@@ -1,4 +1,4 @@
-from flask import render_template, request, redirect, url_for, flash, Blueprint, jsonify, session
+from flask import current_app, render_template, request, redirect, url_for, flash, Blueprint, jsonify, session
 import random, requests
 from sqlalchemy import event, inspect
 from sqlalchemy.exc import IntegrityError
@@ -494,22 +494,44 @@ def load(app):
     # Hooks
 
 
+    def _kibana_provisioning_enabled():
+        flag = os.environ.get("HIKARI_KIBANA_PROVISIONING", "").lower()
+        return flag in {"true", "1", "yes", "on"}
+
     @event.listens_for(Users, 'after_update')
-    def after_update_team_assign(mapper, connection, target):
+    def provision_kibana_user_on_team_change(mapper, connection, target):
+        # Provisioning is opt-in: a deployment without xpack.security enabled
+        # cannot create Kibana users and should not try to.
+        if not _kibana_provisioning_enabled():
+            return
+
         inspector = inspect(target)
-        if 'team_id' in inspector.attrs and inspector.attrs.team_id.history.has_changes():
-            username = target.name
-            email = target.email
-            team = Teams.query.filter_by(id=target.team_id).first()
-            role_name = f'kibana_dashboard_only'
+        if 'team_id' not in inspector.attrs:
+            return
+        if not inspector.attrs.team_id.history.has_changes():
+            return
+        if target.team_id is None:
+            return
 
-            if team:
-                user, pwd = KibanaHelper.assign_user(role_name, username)
-                message = "You have been assigned to a team! Those are your elastic credentials to access the platform:"
-                message += "\nUSERNAME: " + user + "\nPASSWORD: " + pwd
-                sendmail(email, message)
+        team = Teams.query.filter_by(id=target.team_id).first()
+        if team is None:
+            return
 
-            print("TEM HAS CHANGED FOR USER ", target.name, "->", target.team_id)
+        assignment = KibanaHelper.assign_user('kibana_dashboard_only', target.name)
+        if assignment is None:
+            current_app.logger.warning(
+                "hikari.kibana: provisioning skipped for user_id=%s; "
+                "see KibanaHelper output for the underlying response",
+                target.id,
+            )
+            return
+
+        username, password = assignment
+        sendmail(
+            target.email,
+            "You have been assigned to a team. Kibana credentials:\n"
+            f"USERNAME: {username}\nPASSWORD: {password}",
+        )
 
 
 
