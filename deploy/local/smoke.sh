@@ -16,14 +16,29 @@ fail() { echo "FAIL: $*" >&2; exit 1; }
 ok()   { echo "PASS: $*"; }
 
 wait_http() {
-  local url=$1 label=$2 deadline=$((SECONDS + 240))
+  local url=$1 label=$2 timeout=${3:-240}
+  local deadline=$((SECONDS + timeout))
   while (( SECONDS < deadline )); do
     if curl -fsS -o /dev/null --max-time 3 "$url"; then
       ok "$label reachable at $url"; return 0
     fi
     sleep 3
   done
-  fail "$label did not become reachable at $url within $((deadline)) seconds"
+  fail "$label did not become reachable at $url within ${timeout} seconds"
+}
+
+wait_kibana_status() {
+  local timeout=${1:-360} body
+  local deadline=$((SECONDS + timeout))
+  while (( SECONDS < deadline )); do
+    body=$(curl -sS --max-time 10 "$KIBANA_URL/api/status" 2>/dev/null || true)
+    if echo "$body" | jq -e '.status.overall.level == "available"' >/dev/null 2>&1; then
+      ok "Kibana reports overall status available"
+      return 0
+    fi
+    sleep 5
+  done
+  fail "Kibana did not report available within ${timeout} seconds"
 }
 
 check_compose_state() {
@@ -69,13 +84,16 @@ check_kafka_topics() {
 main() {
   if [[ "$WAIT" == "--wait" ]]; then
     wait_http "$CTFD_URL/" "CTFd"
-    wait_http "$KIBANA_URL/api/status" "Kibana"
+    wait_http "$KIBANA_URL/api/status" "Kibana HTTP"
     wait_http "$ES_URL/_cluster/health" "Elasticsearch"
+    wait_kibana_status
   fi
   check_compose_state
   check_ctfd_http
   check_elasticsearch
-  check_kibana_status
+  if [[ "$WAIT" != "--wait" ]]; then
+    check_kibana_status
+  fi
   check_kafka_topics
   echo
   echo "All smoke checks passed."
