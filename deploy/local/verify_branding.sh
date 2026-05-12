@@ -16,10 +16,12 @@ code=$(curl -sSL -o "$page" -w '%{http_code}' "$CTFD_URL/")
 [[ "$code" == "200" ]] || { echo "FAIL: home page returned $code"; exit 1; }
 echo "PASS: home page 200"
 
-grep -q "Threat-hunting training and research" "$page" \
+grep -q "Threat-hunting lab" "$page" \
   || { echo "FAIL: home page missing Hikari eyebrow"; exit 1; }
-grep -q '<h1 class="hikari-wordmark">Hikari</h1>' "$page" \
+grep -q 'class="hikari-wordmark">Hikari</h1>' "$page" \
   || { echo "FAIL: home page missing Hikari wordmark"; exit 1; }
+grep -q "hikari-support-item" "$page" \
+  || { echo "FAIL: home page missing support section"; exit 1; }
 echo "PASS: home page renders the Hikari landing block"
 
 if grep -q "A cool CTF platform from" "$page"; then

@@ -11,36 +11,51 @@ CTFD_URL=${CTFD_URL:-http://localhost:8000}
 ADMIN_EMAIL=${ADMIN_EMAIL:-admin@hikari.local}
 ADMIN_PASSWORD=${ADMIN_PASSWORD:-hikari-admin-pw}
 
-INDEX_CONTENT='<div class="hikari-landing">
-  <div class="hikari-hero">
-    <h1 class="hikari-wordmark">Hikari</h1>
-    <p class="hikari-eyebrow">Threat-hunting training and research</p>
+INDEX_CONTENT='<main class="hikari-landing">
+  <section class="hikari-hero" aria-labelledby="hikari-home-title">
+    <p class="hikari-eyebrow">Threat-hunting lab</p>
+    <h1 id="hikari-home-title" class="hikari-wordmark">Hikari</h1>
     <p class="hikari-tagline">
-      A gamified lab where blue-team analysts practise hunting through
-      live log streams, and where every action is captured for
-      reproducible study.
+      Train analysts in CTFd, hunt in a SIEM-like workspace, and preserve
+      actions as research records.
     </p>
-    <div class="hikari-actions">
-      <a class="btn btn-primary" href="/challenges">Challenges</a>
-      <a class="btn btn-outline-primary" href="/hikari/siem">SIEM</a>
-      <a class="btn btn-outline-primary" href="/feedback">Feedback</a>
+    <nav class="hikari-actions" aria-label="Primary actions">
+      <a class="hikari-action hikari-action-primary" href="/challenges">Start challenges</a>
+      <a class="hikari-action hikari-action-secondary" href="/hikari/siem">Open SIEM</a>
+      <a class="hikari-action hikari-action-secondary" href="/feedback">Answer feedback</a>
+    </nav>
+  </section>
+  <section class="hikari-support" aria-label="Platform scope">
+    <div class="hikari-support-inner">
+      <div class="hikari-support-item">
+        <span>Compete</span>
+        <p>Teams solve flags and unlock log sets progressively.</p>
+      </div>
+      <div class="hikari-support-item">
+        <span>Hunt</span>
+        <p>Analysts query event data through the controlled SIEM gateway.</p>
+      </div>
+      <div class="hikari-support-item">
+        <span>Study</span>
+        <p>Researchers inspect attributed activity, feedback, and exports.</p>
+      </div>
     </div>
-  </div>
-</div>'
+  </section>
+</main>'
 
-FEEDBACK_CONTENT='<section class="hikari-landing">
-  <div class="hikari-hero">
+FEEDBACK_CONTENT='<main class="hikari-landing hikari-landing-compact">
+  <section class="hikari-hero" aria-labelledby="hikari-feedback-title">
     <p class="hikari-eyebrow">Research feedback</p>
-    <h1 class="hikari-wordmark">Feedback</h1>
+    <h1 id="hikari-feedback-title" class="hikari-wordmark">Feedback</h1>
     <p class="hikari-tagline">
       The questionnaire is hosted inside Hikari so responses stay attached
       to the exercise, participant account, and team context.
     </p>
-    <div class="hikari-actions">
-      <a class="btn btn-primary" href="/hikari/feedback">Open questionnaire</a>
-    </div>
-  </div>
-</section>'
+    <nav class="hikari-actions" aria-label="Feedback action">
+      <a class="hikari-action hikari-action-primary" href="/hikari/feedback">Open questionnaire</a>
+    </nav>
+  </section>
+</main>'
 
 THEME_FOOTER='<style>
 footer.footer { display: none; }

@@ -26,6 +26,7 @@ ctfd/.data/
 ctfd/data.zip
 deploy/local/artifacts/
 .playwright-cli/
+output/playwright/
 
 # Secrets and credentials
 .env
