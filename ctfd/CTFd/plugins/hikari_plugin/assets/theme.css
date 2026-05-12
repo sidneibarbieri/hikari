@@ -311,23 +311,65 @@ textarea.form-control {
     color: var(--hikari-text);
 }
 
-/* Auth pages keep a light card surface from jtheme; the body text colour
-   inherits the dark-on-dark Hikari palette and would render as white on
-   that card. Pin text colours inside the light card so headings and form
-   labels stay readable. */
-.login-container,
+/* Auth surface: unify with the dark palette so the platform looks like one
+   product across anonymous and authenticated pages. The card keeps elevation
+   through border + shadow rather than inverting to a light background. */
+.login-container {
+    background-color: var(--hikari-surface) !important;
+    border: 1px solid var(--hikari-border);
+    box-shadow: 0 24px 60px -32px rgba(0, 0, 0, 0.6);
+    color: var(--hikari-text);
+}
 .login-container h1,
 .login-container h2,
 .login-container h3,
 .login-container h4,
 .login-container p,
-.login-container label,
+.login-container label {
+    color: var(--hikari-text);
+}
 .login-container .separator {
-    color: #0b1220;
+    color: var(--hikari-text-muted);
+}
+.login-container .separator::before,
+.login-container .separator::after {
+    border-color: var(--hikari-border) !important;
 }
 .login-container a {
     color: var(--hikari-primary);
 }
+.login-container .jform-control {
+    background-color: var(--hikari-surface-2);
+    border: 1px solid var(--hikari-border);
+    border-radius: var(--hikari-radius);
+}
+.login-container .jform-control:focus-within {
+    border-color: var(--hikari-primary);
+    box-shadow: 0 0 0 0.15rem var(--hikari-primary-soft);
+}
+.login-container .jform-control input,
+.login-container .jform-control > input {
+    background-color: transparent !important;
+    color: var(--hikari-text) !important;
+    border: 0;
+}
 .login-container .jform-control input::placeholder {
-    color: #4a5568;
+    color: var(--hikari-text-muted);
+}
+.login-container .jbtn {
+    background-color: var(--hikari-primary) !important;
+    color: #06101f !important;
+    font-weight: 600;
+    border: 0;
+}
+.login-container .jbtn:hover {
+    background-color: var(--hikari-primary-strong) !important;
+}
+.login-container .jbtn-secondary {
+    background-color: var(--hikari-surface-2) !important;
+    color: var(--hikari-text) !important;
+    border: 1px solid var(--hikari-border) !important;
+}
+.login-container .jbtn-secondary:hover {
+    background-color: var(--hikari-border) !important;
 }
