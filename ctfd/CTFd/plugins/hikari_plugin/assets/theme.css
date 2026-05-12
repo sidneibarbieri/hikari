@@ -265,3 +265,69 @@ textarea.form-control {
         font-size: clamp(3.5rem, 18vw, 5rem);
     }
 }
+
+/* The CTFd navbar uses Bootstrap navbar-expand-md, which relies on
+   Bootstrap JS to manage the .collapse.navbar-collapse element. Anonymous
+   pages do not load page.js, so on first paint the menu would stack
+   vertically until the collapse fallback kicked in. These rules express the
+   md+ layout purely in CSS so the menu is horizontal from first paint. */
+@media (min-width: 768px) {
+    .navbar-expand-md .navbar-toggler {
+        display: none;
+    }
+    .navbar-expand-md > .container,
+    .navbar-expand-md > .container-fluid,
+    .navbar-expand-md > .container-md,
+    .navbar-expand-md > .container-lg,
+    .navbar-expand-md > .container-xl {
+        flex-wrap: nowrap;
+    }
+    .navbar-expand-md .navbar-collapse {
+        display: flex !important;
+        flex-basis: auto;
+    }
+    .navbar-expand-md .navbar-nav {
+        flex-direction: row;
+    }
+    .navbar-expand-md .navbar-nav .nav-link {
+        padding-right: 0.75rem;
+        padding-left: 0.75rem;
+    }
+}
+
+/* Bootstrap normally zeros the bullet styling on navbar lists but a CSS
+   reset is missing on anonymous pages where the bundle has not run. */
+.navbar-nav {
+    list-style: none;
+    padding-left: 0;
+    margin: 0;
+    display: flex;
+    align-items: center;
+}
+.navbar-nav .nav-item {
+    list-style: none;
+}
+.navbar-nav .nav-link {
+    color: var(--hikari-text);
+}
+
+/* Auth pages keep a light card surface from jtheme; the body text colour
+   inherits the dark-on-dark Hikari palette and would render as white on
+   that card. Pin text colours inside the light card so headings and form
+   labels stay readable. */
+.login-container,
+.login-container h1,
+.login-container h2,
+.login-container h3,
+.login-container h4,
+.login-container p,
+.login-container label,
+.login-container .separator {
+    color: #0b1220;
+}
+.login-container a {
+    color: var(--hikari-primary);
+}
+.login-container .jform-control input::placeholder {
+    color: #4a5568;
+}
