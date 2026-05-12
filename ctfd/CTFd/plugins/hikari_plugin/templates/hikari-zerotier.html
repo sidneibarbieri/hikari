@@ -84,7 +84,6 @@
                 <th scope="row">{{ loop.index }}</th>
                 <td>{{ zt.name }}</td>
                 <td>{{ zt.network_id }}</td>
-                <!-- <td>{{ zt.team.name if config.team else 'Not Assigned' }}</td> -->
                 <td><button class="btn btn-danger" onclick="delete_zerotier('{{zt.network_id}}')">Delete</button>
                     <form id="deleteZerotierForm{{ zt.network_id }}" action="{{url_for('hikariplugin.delete_zerotier')}}" method="POST" style="display:none;">
                         {{ form.nonce() }}
