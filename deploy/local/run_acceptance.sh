@@ -37,8 +37,9 @@ failed=()
 # The suite issues many admin logins in tight succession, so clear the
 # ratelimit counters before each step. The keys are namespaced under "rl:".
 clear_ratelimit_cache() {
-  docker-compose exec -T cache redis-cli --scan --pattern 'rl:*' 2>/dev/null \
-    | xargs -r docker-compose exec -T cache redis-cli del >/dev/null 2>&1 || true
+  docker-compose exec -T cache redis-cli eval \
+    "local k = redis.call('keys', 'rl:*'); if #k > 0 then return redis.call('del', unpack(k)) else return 0 end" \
+    0 >/dev/null 2>&1 || true
 }
 
 for entry in "${steps[@]}"; do
