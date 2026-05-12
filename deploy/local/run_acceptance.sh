@@ -37,8 +37,10 @@ failed=()
 # The suite issues many admin logins in tight succession, so clear the
 # ratelimit counters before each step. The keys are namespaced under "rl:".
 clear_ratelimit_cache() {
+  # Flask-Caching prefixes every key with "flask_cache_", so the rate-limit
+  # entries CTFd writes appear under "flask_cache_rl:*", not "rl:*".
   docker-compose exec -T cache redis-cli eval \
-    "local k = redis.call('keys', 'rl:*'); if #k > 0 then return redis.call('del', unpack(k)) else return 0 end" \
+    "local k = redis.call('keys', 'flask_cache_rl:*'); if #k > 0 then return redis.call('del', unpack(k)) else return 0 end" \
     0 >/dev/null 2>&1 || true
 }
 
