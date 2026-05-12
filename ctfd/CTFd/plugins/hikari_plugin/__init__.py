@@ -23,6 +23,7 @@ import CTFd.plugins.hikari_challenge as hikari_challenge
 import CTFd.plugins.hikari_plugin.hikari_importer as hikari_importer
 from CTFd.plugins.hikari_plugin import hikari_activity
 from CTFd.plugins.hikari_plugin import hikari_feedback
+from CTFd.plugins.hikari_plugin import hikari_kibana_gateway
 from CTFd.plugins.hikari_plugin import hikari_research
 
 
@@ -56,6 +57,10 @@ def load(app):
     register_plugin_assets_directory(app, base_path='/plugins/hikari_plugin/assets/')
 
     hikariplugin = Blueprint('hikariplugin', __name__, template_folder="templates")
+
+    @hikariplugin.route('/favicon.ico')
+    def hikari_favicon():
+        return redirect('/themes/hikari-theme/static/img/favicon.ico')
     
     @hikariplugin.route('/admin/hikari/add-challenge', methods=['POST'])
     @admins_only
@@ -442,6 +447,7 @@ def load(app):
     
     hikari_research.register(hikariplugin)
     hikari_feedback.register(hikariplugin)
+    hikari_kibana_gateway.register(hikariplugin)
     app.register_blueprint(hikariplugin)
 
 
@@ -488,7 +494,5 @@ def load(app):
             "You have been assigned to a team. Kibana credentials:\n"
             f"USERNAME: {username}\nPASSWORD: {password}",
         )
-
-
 
 

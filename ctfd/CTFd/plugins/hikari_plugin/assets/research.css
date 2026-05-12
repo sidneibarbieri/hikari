@@ -26,9 +26,13 @@
     font-size: 0.9rem;
 }
 
-.research-header .btn {
+.research-actions {
     grid-row: 1 / span 2;
     grid-column: 2;
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    justify-content: flex-end;
 }
 
 .research-grid {
@@ -54,7 +58,7 @@
     margin-bottom: 0.75rem;
     color: var(--hikari-text-muted);
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0;
 }
 
 .research-card--metric {
@@ -67,7 +71,7 @@
     color: var(--hikari-text-muted);
     font-size: 0.85rem;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0;
 }
 
 .metric-value {
@@ -89,7 +93,7 @@
     font-weight: 600;
     font-size: 0.8rem;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0;
 }
 
 .hikari-research .table td,
@@ -108,3 +112,18 @@
 }
 
 .text-right { text-align: right; }
+
+@media (max-width: 860px) {
+    .research-header,
+    .research-grid {
+        grid-template-columns: 1fr;
+    }
+    .research-subtitle,
+    .research-actions {
+        grid-column: 1;
+    }
+    .research-actions {
+        grid-row: auto;
+        justify-content: flex-start;
+    }
+}

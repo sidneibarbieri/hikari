@@ -4,7 +4,7 @@
   <title>{{ title or Configs.ctf_name }}</title>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="shortcut icon" href="{{ Configs.ctf_small_icon }}" type="image/x-icon">
+  <link rel="shortcut icon" href="/themes/hikari-theme/static/img/favicon.ico" type="image/x-icon">
   <link rel="stylesheet" href="{{ url_for('views.themes', path='css/jtheme.css') }}">
   <link rel="stylesheet" href="{{ url_for('views.themes', path='css/jtheme-mobile.css') }}">
 
@@ -21,17 +21,6 @@
 
   {{ Plugins.styles }}
 
-  <script>
-    document.querySelectorAll('.input-field').forEach(input => {
-      console.log('test');
-        const id = input.id;
-        if (!id) return;
-        const label = document.querySelector(`label[for="$id"]`);
-        if (label){
-          console.log(label);
-        }
-    });
-  </script>
   <script type="text/javascript">
       window.init = {
           'urlRoot': "{{ request.script_root }}",
@@ -75,7 +64,9 @@
 {% include "components/notifications.html" %}
 
 {% block scripts %}
-  {{ Assets.js("assets/js/page.js") }}
+  {% if Session.id %}
+    {{ Assets.js("assets/js/page.js") }}
+  {% endif %}
 {% endblock %}
 
 {{ Plugins.scripts }}

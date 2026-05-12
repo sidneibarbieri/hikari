@@ -6,13 +6,19 @@
 
 set -euo pipefail
 
-ES_URL=${ES_URL:-http://localhost:9200}
 TOPIC=${TOPIC:-competition1}
 COMPOSE_FILE=${COMPOSE_FILE:-$(cd "$(dirname "$0")" && pwd)/docker-compose.yml}
 
 probe_id="hikari-smoke-$(date +%s)"
 payload=$(printf '{"event":"smoke","probe_id":"%s","ts":"%s"}' \
   "$probe_id" "$(date -u +%Y-%m-%dT%H:%M:%SZ)")
+
+elasticsearch_search() {
+  local path=$1 query_body=$2
+  docker-compose -f "$COMPOSE_FILE" exec -T elasticsearch \
+    curl -sS -H 'Content-Type: application/json' \
+    -X POST "http://localhost:9200/$path" -d "$query_body"
+}
 
 echo "producing one record to topic '$TOPIC' with probe_id=$probe_id ..."
 echo "$payload" | docker-compose -f "$COMPOSE_FILE" exec -T kafka \
@@ -26,8 +32,7 @@ query=$(jq -cn --arg probe "$probe_id" \
   '{query: {match_phrase: {probe_id: $probe}}}')
 hits=0
 while (( SECONDS < deadline )); do
-  hits=$(curl -sS -H 'Content-Type: application/json' \
-    -X POST "$ES_URL/$TOPIC/_search" -d "$query" \
+  hits=$(elasticsearch_search "$TOPIC/_search" "$query" \
     | jq -r '.hits.total.value // 0')
   if [[ "$hits" -ge 1 ]]; then
     break
@@ -37,8 +42,7 @@ done
 
 if [[ "$hits" -lt 1 ]]; then
   echo "FAIL: probe_id=$probe_id not found in Elasticsearch after 30s"
-  curl -sS -H 'Content-Type: application/json' \
-    -X POST "$ES_URL/$TOPIC/_search" -d "$query" | jq .
+  elasticsearch_search "$TOPIC/_search" "$query" | jq .
   exit 1
 fi
 

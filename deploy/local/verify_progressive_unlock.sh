@@ -12,7 +12,6 @@
 set -euo pipefail
 
 CTFD_URL=${CTFD_URL:-http://localhost:8000}
-ES_URL=${ES_URL:-http://localhost:9200}
 ES_INDEX=${ES_INDEX:-competition1}
 ADMIN_EMAIL=${ADMIN_EMAIL:-admin@hikari.local}
 ADMIN_PASSWORD=${ADMIN_PASSWORD:-hikari-admin-pw}
@@ -60,8 +59,9 @@ es_marker_hits() {
   local query
   query=$(jq -cn --arg m "$marker" \
     '{query:{match_phrase:{marker:$m}}}')
-  curl -sS -H 'Content-Type: application/json' \
-    -X POST "$ES_URL/$ES_INDEX/_search" -d "$query" \
+  docker-compose -f "$COMPOSE_FILE" exec -T elasticsearch \
+    curl -sS -H 'Content-Type: application/json' \
+    -X POST "http://localhost:9200/$ES_INDEX/_search" -d "$query" \
     | jq -r '.hits.total.value // 0'
 }
 

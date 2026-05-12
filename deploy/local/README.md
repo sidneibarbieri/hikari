@@ -26,8 +26,9 @@ report healthy.
     bash run_acceptance.sh
 
 The acceptance suite verifies service health, CTFd setup, Hikari branding,
-the plugin, Kafka-to-Elasticsearch ingestion, activity logging, player and
-team flows, admin challenge creation, progressive log activation, and the
+the plugin, Kafka-to-Elasticsearch ingestion, SIEM data view setup, activity
+logging, SIEM access through the Hikari gateway, player and team flows, admin
+challenge creation, progressive log activation, local feedback, and the
 research export.
 
 ## Import a legacy backup
@@ -42,8 +43,8 @@ database and uploads, restarts CTFd, and leaves the snapshot under
 ## Where to access
 
 - CTFd:           http://localhost:8000
-- Kibana:         http://localhost:5601
-- Elasticsearch:  http://localhost:9200
+- SIEM gateway:   http://localhost:8000/hikari/siem
+- Feedback:       http://localhost:8000/feedback
 - Mailcatcher UI: http://localhost:1080
 
 CTFd's first-time setup wizard runs on first visit. After that, log in,
@@ -57,8 +58,9 @@ and start the competition from the plugin admin page.
 
 ## Notes
 
-- Elasticsearch security is disabled in this compose for local use only.
-  Do not expose this stack to a network you do not control.
+- Elasticsearch and Kibana stay on the compose internal network. Competitors
+  reach Kibana through CTFd so activity can be attributed to the logged-in
+  user and team.
 - The Logstash pipeline consumes from Kafka topic `competition1` and
   writes to the Elasticsearch index of the same name. Both are created
   on first use.

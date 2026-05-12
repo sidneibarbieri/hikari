@@ -13,6 +13,7 @@ export default defineConfig({
   },
   build: {
     manifest: true,
+    emptyOutDir: false,
     outDir: "static",
     rollupOptions: {
       plugins: [

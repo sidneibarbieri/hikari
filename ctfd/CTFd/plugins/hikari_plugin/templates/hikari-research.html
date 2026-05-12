@@ -2,6 +2,7 @@
 
 {% block stylesheets %}
 {{ super() }}
+<link rel="stylesheet" href="/plugins/hikari_plugin/assets/theme.css">
 <link rel="stylesheet" href="/plugins/hikari_plugin/assets/research.css">
 {% endblock %}
 
@@ -11,12 +12,14 @@
   <header class="research-header">
     <h1>Research analytics</h1>
     <p class="research-subtitle">Aggregations over the hikari_activity log. Read-only.</p>
-    <a class="btn btn-outline-primary" href="/admin/hikari/research/export.jsonl">
-      Export activity log (JSONL)
-    </a>
-    <a class="btn btn-outline-primary" href="/admin/hikari/research/feedback.jsonl">
-      Export feedback (JSONL)
-    </a>
+    <div class="research-actions">
+      <a class="btn btn-outline-primary" href="/admin/hikari/research/export.jsonl">
+        Export activity log (JSONL)
+      </a>
+      <a class="btn btn-outline-primary" href="/admin/hikari/research/feedback.jsonl">
+        Export feedback (JSONL)
+      </a>
+    </div>
   </header>
 
   <section class="research-grid">

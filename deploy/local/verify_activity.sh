@@ -7,13 +7,18 @@
 set -euo pipefail
 
 CTFD_URL=${CTFD_URL:-http://localhost:8000}
-ES_URL=${ES_URL:-http://localhost:9200}
 ADMIN_EMAIL=${ADMIN_EMAIL:-admin@hikari.local}
 ADMIN_PASSWORD=${ADMIN_PASSWORD:-hikari-admin-pw}
 COMPOSE_FILE=${COMPOSE_FILE:-$(cd "$(dirname "$0")" && pwd)/docker-compose.yml}
 
 cookie_jar=$(mktemp)
 trap 'rm -f "$cookie_jar"' EXIT
+
+elasticsearch_get() {
+  local path=$1
+  docker-compose -f "$COMPOSE_FILE" exec -T elasticsearch \
+    curl -sS "http://localhost:9200/$path"
+}
 
 before=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 echo "marker timestamp: $before"
@@ -49,7 +54,7 @@ echo "polling Elasticsearch hikari-activity index ..."
 deadline=$((SECONDS + 30))
 es_hits=0
 while (( SECONDS < deadline )); do
-  resp=$(curl -sS "$ES_URL/hikari-activity/_search?q=event_type:user.login&size=1")
+  resp=$(elasticsearch_get "hikari-activity/_search?q=event_type:user.login&size=1")
   es_hits=$(echo "$resp" | jq -r '.hits.total.value // 0')
   if [[ "$es_hits" -ge 1 ]]; then
     break
@@ -58,7 +63,7 @@ while (( SECONDS < deadline )); do
 done
 if [[ "$es_hits" -lt 1 ]]; then
   echo "FAIL: hikari-activity index has no user.login document"
-  curl -sS "$ES_URL/hikari-activity/_search?size=1" | jq .
+  elasticsearch_get "hikari-activity/_search?size=1" | jq .
   exit 1
 fi
 echo "PASS: hikari-activity index has $es_hits user.login document(s)"

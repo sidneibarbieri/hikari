@@ -1,8 +1,9 @@
 """Persist an activity record to the database and publish it to Kafka.
 
-The two steps are separate functions so the listener can decide on failure
-policy at the call site. Neither function catches its own exceptions; the
-listener catches at the boundary and logs.
+These functions do not catch their own exceptions. Callers wrap them at the
+boundary with concrete except clauses and log via ``logger.exception`` so the
+underlying error is visible in operational logs without crashing the
+user-facing request that triggered the record.
 """
 
 from typing import Final

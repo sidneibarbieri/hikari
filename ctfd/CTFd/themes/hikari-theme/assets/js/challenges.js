@@ -16,6 +16,21 @@ function addTargetBlank(html) {
   return view.documentElement.outerHTML;
 }
 
+function getSortFunction(expression) {
+  if (!expression) {
+    return null;
+  }
+  const buildSort = new Function(`return (${expression})`);
+  return buildSort();
+}
+
+function showTabIfPresent(element) {
+  if (!element.matches("[data-bs-toggle='tab'], [data-bs-toggle='pill']")) {
+    return;
+  }
+  Tab.getOrCreateInstance(element).show();
+}
+
 window.Alpine = Alpine;
 
 Alpine.store("challenge", {
@@ -74,25 +89,19 @@ Alpine.data("Challenge", () => ({
     let styles = {
       "modal-dialog": true,
     };
-    try {
-      let size = CTFd.config.themeSettings.challenge_window_size;
-      switch (size) {
-        case "sm":
-          styles["modal-sm"] = true;
-          break;
-        case "lg":
-          styles["modal-lg"] = true;
-          break;
-        case "xl":
-          styles["modal-xl"] = true;
-          break;
-        default:
-          break;
-      }
-    } catch (error) {
-      // Ignore errors with challenge window size
-      console.log("Error processing challenge_window_size");
-      console.log(error);
+    const size = CTFd.config.themeSettings?.challenge_window_size;
+    switch (size) {
+      case "sm":
+        styles["modal-sm"] = true;
+        break;
+      case "lg":
+        styles["modal-lg"] = true;
+        break;
+      case "xl":
+        styles["modal-xl"] = true;
+        break;
+      default:
+        break;
     }
     return styles;
   },
@@ -102,7 +111,7 @@ Alpine.data("Challenge", () => ({
   },
 
   async showChallenge() {
-    new Tab(this.$el).show();
+    showTabIfPresent(this.$el);
   },
 
   async showSolves() {
@@ -111,7 +120,7 @@ Alpine.data("Challenge", () => ({
       solve.date = dayjs(solve.date).format("MMMM Do, h:mm:ss A");
       return solve;
     });
-    new Tab(this.$el).show();
+    showTabIfPresent(this.$el);
   },
 
   getNextId() {
@@ -217,16 +226,11 @@ Alpine.data("ChallengeBoard", () => ({
       }
     });
 
-    try {
-      const f = CTFd.config.themeSettings.challenge_category_order;
-      if (f) {
-        const getSort = new Function(`return (${f})`);
-        categories.sort(getSort());
-      }
-    } catch (error) {
-      // Ignore errors with theme category sorting
-      console.log("Error running challenge_category_order function");
-      console.log(error);
+    const categoryOrder = getSortFunction(
+      CTFd.config.themeSettings?.challenge_category_order,
+    );
+    if (categoryOrder) {
+      categories.sort(categoryOrder);
     }
 
     return categories;
@@ -239,16 +243,11 @@ Alpine.data("ChallengeBoard", () => ({
       challenges = this.challenges.filter(challenge => challenge.category === category);
     }
 
-    try {
-      const f = CTFd.config.themeSettings.challenge_order;
-      if (f) {
-        const getSort = new Function(`return (${f})`);
-        challenges.sort(getSort());
-      }
-    } catch (error) {
-      // Ignore errors with theme challenge sorting
-      console.log("Error running challenge_order function");
-      console.log(error);
+    const challengeOrder = getSortFunction(
+      CTFd.config.themeSettings?.challenge_order,
+    );
+    if (challengeOrder) {
+      challenges.sort(challengeOrder);
     }
 
     return challenges;

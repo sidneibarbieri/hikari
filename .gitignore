@@ -25,6 +25,7 @@ Thumbs.db
 ctfd/.data/
 ctfd/data.zip
 deploy/local/artifacts/
+.playwright-cli/
 
 # Secrets and credentials
 .env

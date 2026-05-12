@@ -1,9 +1,11 @@
 """Register the Flask before/after_request hooks that emit activity records.
 
-The listener is the only seam between activity logging and the rest of the
-application. Everything else in this package is pure or only depends on the
-plugin's own modules. The listener also defines the failure policy: a problem
-recording the activity must not break the user-visible request.
+Failure policy: each I/O step is wrapped in its own ``try`` that catches the
+concrete exception type the step can raise and logs the full traceback via
+``logger.exception``. The user-facing response is preserved so a transient
+Kafka outage or a brief DB contention does not knock out every authenticated
+CTFd endpoint. The error is not masked; it is recorded in full with a tagged
+message that operations can alert on.
 """
 
 from typing import Optional, Tuple
@@ -68,21 +70,20 @@ def _emit(response: Response) -> Response:
         user_team_id=team_id,
     )
 
-    # Activity logging must never break the user-visible request, so storage
-    # and publishing failures are caught at this boundary using concrete
-    # exception types.
     try:
         recorder.persist(record)
     except SQLAlchemyError:
         current_app.logger.exception(
-            "hikari.activity: persist failed for %s", event.event_type
+            "hikari.activity: persist failed for event_type=%s actor_id=%s",
+            event.event_type, actor_id,
         )
 
     try:
         recorder.publish(record)
     except (KafkaException, BufferError):
         current_app.logger.exception(
-            "hikari.activity: publish failed for %s", event.event_type
+            "hikari.activity: publish failed for event_type=%s actor_id=%s",
+            event.event_type, actor_id,
         )
 
     return response

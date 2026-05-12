@@ -15,6 +15,8 @@ Steps 1-7 can be run end to end with:
     bash smoke.sh --wait        # stack reachable
     bash setup_ctfd.sh          # admin account + ctf settings
     bash verify_plugin.sh       # /admin/hikari renders, challenge type registered
+    bash verify_pipeline.sh     # seed competition1 through Kafka and Logstash
+    bash configure_siem.sh      # create the default Discover data view
 
 The narrative below is the human-readable version of the same checks.
 
@@ -55,12 +57,14 @@ Open http://localhost:8000/admin/challenges/new .
 Expected: the challenge type selector contains `hikari` alongside CTFd's
 built-in types.
 
-## 6. Kibana responds
+## 6. Kibana responds through Hikari
 
-    curl -sS -o /dev/null -w '%{http_code}\n' http://localhost:5601/api/status
+    bash verify_siem_flow.sh
 
-Expected: `200`. Open http://localhost:5601 in a browser, the Kibana home
-page should load.
+Expected: after `configure_siem.sh`, the script registers a competitor,
+reaches Kibana through `/hikari/kibana/api/status`, submits a query through
+Kibana's console proxy, and finds the corresponding `kibana.query` record in
+`hikari_activity`.
 
 ## 7. Kafka and Logstash are wired
 
@@ -85,7 +89,8 @@ on the plugin's main page.
 
 Expected: one JSON record echoed back.
 
-    curl -sS 'http://localhost:9200/competition1/_search?size=1'
+    docker compose exec elasticsearch \
+      curl -sS 'http://localhost:9200/competition1/_search?size=1'
 
 Expected: at least one document indexed.
 

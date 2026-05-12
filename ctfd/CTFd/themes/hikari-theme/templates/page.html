@@ -7,5 +7,7 @@
 {% endblock %}
 
 {% block scripts %}
-  {{ Assets.js("assets/js/page.js") }}
+  {% if Session.id %}
+    {{ Assets.js("assets/js/page.js") }}
+  {% endif %}
 {% endblock %}

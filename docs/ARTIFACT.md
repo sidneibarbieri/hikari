@@ -11,7 +11,8 @@ The artifact provides a local training and research stack:
 - CTFd with the Hikari plugin and Hikari challenge type.
 - MariaDB and Redis for CTFd state.
 - Kafka, Logstash, Elasticsearch, and Kibana for log ingestion and hunting.
-- Activity logging for observed CTFd actions.
+- Activity logging for observed CTFd and Kibana actions.
+- A local feedback questionnaire stored in the Hikari database.
 - A read-only research surface for activity summaries and JSONL export.
 
 The artifact preserves the competitive mechanic used by Hikari: when a
@@ -32,8 +33,9 @@ bash run_acceptance.sh
 
 The acceptance script is the main executable claim. It verifies service
 health, CTFd setup, branding, plugin loading, Kafka-to-Elasticsearch ingestion,
-activity logging, player and team flows, admin challenge creation, progressive
-log activation, and research export.
+activity logging, SIEM query attribution, local feedback, player and team
+flows, admin challenge creation, progressive log activation, and research
+export.
 
 ## Legacy data
 
@@ -54,6 +56,8 @@ database and uploads. Generated snapshots and dry-run files stay under
 Hikari stores operational data that can support later analysis:
 
 - CTFd login, registration, team, challenge view, and submission events.
+- Kibana access and query requests routed through the Hikari gateway.
+- Local feedback responses linked to user, team, and competition context.
 - Actor identifiers, team identifiers, timestamps, request metadata, and
   event payloads.
 - Competition logs streamed into Elasticsearch through Kafka.
@@ -65,12 +69,6 @@ requires attribution during and after a competition.
 
 ## Current limits
 
-The current automation does not yet prove Kibana query attribution. Capturing
-Kibana interactions requires a server-side integration that associates Kibana
-requests with Hikari users, teams, and competitions. The next implementation
-workstream should add that control point before claiming complete hunting
-interaction capture.
-
-The current feedback page is still legacy content after old backup imports.
-It should be replaced by a local Hikari questionnaire backed by the same
-research database.
+The local compose file is an executable artifact and development target. A
+production deployment still needs deployment-specific TLS, hostnames, secrets,
+backup policy, and access-control review before being exposed to participants.

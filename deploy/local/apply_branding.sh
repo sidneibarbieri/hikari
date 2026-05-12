@@ -13,16 +13,17 @@ ADMIN_PASSWORD=${ADMIN_PASSWORD:-hikari-admin-pw}
 
 INDEX_CONTENT='<div class="hikari-landing">
   <div class="hikari-hero">
-    <p class="hikari-eyebrow">Threat-hunting training and research</p>
     <h1 class="hikari-wordmark">Hikari</h1>
+    <p class="hikari-eyebrow">Threat-hunting training and research</p>
     <p class="hikari-tagline">
       A gamified lab where blue-team analysts practise hunting through
       live log streams, and where every action is captured for
       reproducible study.
     </p>
     <div class="hikari-actions">
-      <a class="btn btn-primary" href="/challenges">Enter the lab</a>
-      <a class="btn btn-outline-primary" href="/admin">Admin console</a>
+      <a class="btn btn-primary" href="/challenges">Challenges</a>
+      <a class="btn btn-outline-primary" href="/hikari/siem">SIEM</a>
+      <a class="btn btn-outline-primary" href="/feedback">Feedback</a>
     </div>
   </div>
 </div>'
