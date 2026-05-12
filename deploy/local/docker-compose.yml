@@ -135,13 +135,10 @@ services:
     networks: [hikari]
 
   logstash:
-    image: docker.elastic.co/logstash/logstash:8.13.4
+    build:
+      context: ./logstash
     environment:
       LS_JAVA_OPTS: "-Xms256m -Xmx512m"
-    volumes:
-      - ./logstash/pipelines:/usr/share/logstash/pipelines:ro
-      - ./logstash/config/pipelines.yml:/usr/share/logstash/config/pipelines.yml
-      - ./logstash/config/logstash.yml:/usr/share/logstash/config/logstash.yml
     depends_on:
       elasticsearch:
         condition: service_healthy

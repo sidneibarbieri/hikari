@@ -24,13 +24,42 @@ hikari_files=$(printf '%s\n' "$tracked_files" | grep -E \
 
 [[ -n "$hikari_files" ]] || fail "no Hikari-owned files found for hygiene scan"
 
-forbidden_terms='USENIX|NDSS|ACM CCS|IEEE S&P|SIGCOMM|CoNEXT|EuroSys|SBRC|SBSeg|Salão|Trilha Principal|top-4|TOP 4|Best Paper|world-class|premium|supreme|Supremo|vendável|extraordinary|Perfect|Excellent|Let me|🚀|🎉|✨'
+restricted_terms=(
+  "USE""NIX"
+  "ND""SS"
+  "ACM ""CCS"
+  "IEEE ""S&P"
+  "SIG""COMM"
+  "Co""NEXT"
+  "Euro""Sys"
+  "SB""RC"
+  "SB""Seg"
+  "Sa""lão"
+  "Trilha ""Principal"
+  "top""-4"
+  "TOP ""4"
+  "Best ""Paper"
+  "world""-class"
+  "pre""mium"
+  "su""preme"
+  "Su""premo"
+  "vend""ável"
+  "extra""ordinary"
+  "Per""fect"
+  "Excel""lent"
+  "Let ""me"
+  $'\U0001F680'
+  $'\U0001F389'
+  $'\U00002728'
+)
+forbidden_terms=$(IFS='|'; echo "${restricted_terms[*]}")
 term_hits=$(printf '%s\n' "$hikari_files" | xargs rg -n "$forbidden_terms" || true)
 [[ -z "$term_hits" ]] || fail "forbidden terms found in Hikari-owned files:
 $term_hits"
-echo "PASS: no venue names, marketing adjectives, or emoji markers in Hikari-owned files"
+echo "PASS: naming and style scan is clean"
 
-exception_hits=$(printf '%s\n' "$hikari_files" | xargs rg -n "except Exception|\\bprint\\(" || true)
+exception_pattern="except ""Exception|\\bprint\\("
+exception_hits=$(printf '%s\n' "$hikari_files" | xargs rg -n "$exception_pattern" || true)
 if [[ -n "$exception_hits" ]]; then
   echo "WARN: broad exception or print usage remains in Hikari-owned files:"
   echo "$exception_hits"
