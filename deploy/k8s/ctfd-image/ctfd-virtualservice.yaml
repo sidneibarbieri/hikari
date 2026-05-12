@@ -1,0 +1,22 @@
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: ctfd-virtualservice
+  namespace: ctfd
+  labels:
+    app.kubernetes.io/name: ctfd
+    app.kubernetes.io/instance: ctfd
+spec:
+  gateways:
+    - ctfd-gateway
+  hosts:
+    - ctfd.secdevias.com
+  http:
+    - match:
+        - uri:
+            prefix: /
+      route:
+        - destination:
+            host: ctfd
+            port:
+              number: 80

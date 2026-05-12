@@ -1,0 +1,8 @@
+server.name: kibana_read_only
+server.host: "0.0.0.0"
+elasticsearch.hosts: ["http://elasticsearch:9200"]
+elasticsearch.username: "user"
+elasticsearch.password: "userPass456"
+xpack.security.enabled: true
+xpack.security.encryptionKey: "ReadOnlySecureEncryptionKeyABC123!!"
+

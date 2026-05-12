@@ -1,0 +1,32 @@
+resources:
+  requests:
+    cpu: "1"
+    memory: "4Gi"
+  limits:
+    cpu: "4"
+    memory: "8Gi"
+
+replicas: 3
+
+persistence:
+  enabled: true
+  size: 50Gi
+  storageClass: "rook-ceph-block"
+
+topologySpreadConstraints:
+  - maxSkew: 1
+    topologyKey: "kubernetes.io/hostname"
+    whenUnsatisfiable: "DoNotSchedule"
+
+podAntiAffinity:
+  requiredDuringSchedulingIgnoredDuringExecution:
+    - labelSelector:
+        matchLabels:
+          app: "elasticsearch"
+      topologyKey: "kubernetes.io/hostname"
+
+terminationGracePeriodSeconds: 120
+
+env:
+  - name: "ES_JAVA_OPTS"
+    value: "-Xms2g -Xmx4g"

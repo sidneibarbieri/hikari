@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ctfd
+  namespace: ctfd
+  labels:
+    app: ctfd
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+       maxUnavailable: 25%
+       maxSurge: 1
+  selector:
+    matchLabels:
+      app: ctfd
+  template:
+    metadata:
+      labels:
+        app: ctfd
+    spec:
+      containers:
+        - name: ctfd
+        #  image: ctfd/ctfd:latest
+          image: secdevias/hikari-ctfd:0.0.2
+          ports:
+            - containerPort: 8000
+          envFrom:
+            - configMapRef:
+                name: ctfd-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ctfd
+  namespace: ctfd
+  labels:
+    app: ctfd
+spec:
+  selector:
+    app: ctfd
+  ports:
+   - name: http
+     port: 80
+     targetPort: 8000
+     protocol: TCP

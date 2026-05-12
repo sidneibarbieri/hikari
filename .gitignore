@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.tox/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Node
+node_modules/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editors
+.vscode/
+.idea/
+*.swp
+
+# Local runtime state
+ctfd/.data/
+ctfd/data.zip
+
+# Secrets and credentials
+.env
+*.local.env
+deploy/k8s/elk-zerotier-install/kube_creds/
+
+# Data
+data_backup.zip
+lab/apt29/
+lab/venv/
+
+# Build
+dist/
+build/

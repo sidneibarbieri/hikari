@@ -1,0 +1,6 @@
+configurationOverrides: |
+  advertised.listeners=PLAINTEXT://kafka:9092
+  listener.security.protocol.map=PLAINTEXT:PLAINTEXT
+  listeners=PLAINTEXT://:9092
+  delete.topic.enable=true
+

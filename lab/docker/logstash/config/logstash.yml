@@ -1,0 +1,16 @@
+# pipeline.ordered: auto
+# config.reload.automatic: true
+# config.reload.interval: 10s
+# http.host: "0.0.0.0"
+# log.level: info
+# xpack.monitoring.enabled: false
+
+
+
+# New
+http.host: "0.0.0.0"
+xpack.monitoring.enabled: true
+xpack.monitoring.elasticsearch.hosts: ["http://elasticsearch:9200"]
+xpack.monitoring.elasticsearch.username: "elastic"
+xpack.monitoring.elasticsearch.password: "adminPass123"
+

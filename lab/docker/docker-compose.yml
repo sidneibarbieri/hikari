@@ -1,0 +1,157 @@
+version: '3.8'
+
+services:
+
+  orch:
+    container_name: orchestrator
+    image: ubuntu:latest
+    command: "/scripts/run-all.sh"
+    tty: true
+    networks:
+        - hikari
+    volumes:
+      - ./scripts:/scripts
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+
+  zookeeper:
+    container_name: zookeeper
+    image: zookeeper:3.7.0
+    ports:
+      - "2181:2181"
+    networks:
+      - hikari
+    environment:
+      - ALLOW_ANONYMOUS_LOGIN=yes
+    healthcheck:
+      test: ["CMD", "echo", "ruok", "|", "nc", "localhost", "2181", "|", "grep", "imok"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    logging:
+      driver: none
+
+  kafka:
+    container_name: kafka
+    image: wurstmeister/kafka:2.13-2.8.1
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT
+      KAFKA_LISTENERS: PLAINTEXT://:9092
+      KAFKA_DELETE_TOPIC_ENABLE: "true"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-topics.sh --bootstrap-server localhost:9092 --list >/dev/null"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - hikari
+    logging:
+      driver: none
+
+  elasticsearch:
+    container_name: elastic
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.10.2
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=true
+      - ELASTIC_PASSWORD=adminPass123
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    volumes:
+      - ./scripts/docker-entrypoint-initdb.d:/usr/share/elasticsearch/docker-entrypoint-initdb.d
+    networks:
+      - hikari
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsSL -u elastic:adminPass123 http://localhost:9200/_cluster/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    logging:
+      driver: none
+
+  logstash:
+    container_name: logstash
+    image: docker.elastic.co/logstash/logstash:7.10.2
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./logstash/config/logstash.yml:/usr/share/logstash/config/logstash.yml
+      - ./logstash/pipeline:/usr/share/logstash/pipeline
+    depends_on:
+      - elasticsearch
+    networks:
+      - hikari
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsSL http://localhost:9600/_node/stats || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    logging:
+      driver: none
+
+  kibana:
+    container_name: kibana
+    image: docker.elastic.co/kibana/kibana:7.10.2
+    ports:
+      - "5601:5601"
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - ELASTICSEARCH_USERNAME=elastic
+      - ELASTICSEARCH_PASSWORD=adminPass123
+      - xpack.security.enabled=true
+      - SERVER_BASEPATH="/elastic"
+      - SERVER_REWRITEBASEPATH="true"
+    depends_on:
+      - elasticsearch
+    networks:
+      - hikari
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsSL -u elastic:adminPass123 http://localhost:5601/api/status || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    logging:
+      driver: none
+
+  fastapi_app:
+    container_name: fastapi
+    build:
+      context: ../app
+    ports:
+      - "8000:8000"
+    volumes:
+      - ../app:/app
+    environment:
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    depends_on:
+      kafka:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+    networks:
+      - hikari
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+    logging:
+      driver: none
+
+networks:
+  hikari:
+    name: hikari
+    driver: bridge
+

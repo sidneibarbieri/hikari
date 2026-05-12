@@ -1,0 +1,102 @@
+{% block header %}
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+    {% endwith %}
+{% endblock %}
+
+<form id="HikariChallengeForm" method="POST" action="{{url_for('hikariplugin.hk_add_challenge')}}" enctype="multipart/form-data">
+{% block name %}
+<div class="form-group">
+    <label>
+        Name:<br>
+        <small class="form-text text-muted">
+            The name of your challenge
+        </small>
+    </label>
+    <input type="text" class="form-control" name="name" placeholder="Enter challenge name" required>
+</div>
+{% endblock %}
+
+{% block category %}
+	<div class="form-group">
+		<label>
+			Category:<br>
+			<small class="form-text text-muted">
+				The category of your challenge
+			</small>
+		</label>
+		<input type="text" class="form-control" name="category" placeholder="Enter challenge category" reaquired>
+	</div>
+{% endblock %}
+
+
+{% block message %}
+<div class="form-group">
+    <label>
+        Message:<br>
+        <small class="form-text text-muted">
+            Use this to give a brief introduction to your challenge.
+        </small>
+    </label>
+    <textarea id="new-desc-editor" class="form-control markdown" name="description" rows="10" required></textarea>
+</div>
+{% endblock %}
+
+{% block value %}
+<div class="form-group">
+    <label>
+        Value:<br>
+        <small class="form-text text-muted">
+            This is how many points are rewarded for solving this challenge.
+        </small>
+    </label>
+    <input type="number" class="form-control" name="value" placeholder="Enter value" required>
+</div>
+
+{% endblock %}
+
+{% block UploadForm %}
+<div id="uploadForm">
+    <input type="file" name="file_log" id="fileInput">
+</div>
+
+
+<br>
+<br>
+<div id="MessageStatus">
+    <span>       
+    </span>
+</div>
+
+{% endblock %}
+
+{% block type %}
+	<input type="hidden" value="hikari" name="type" id="chaltype">
+{% endblock %}
+
+{% block submit %}
+<input type="hidden" name="nonce" id="nonce">
+<input id="createBtn" class="btn btn-primary float-right" type="submit">
+
+<script>
+    createBtn = document.getElementById('createBtn');
+    form = document.getElementById('HikariChallengeForm');
+    nonceInput = document.getElementById('nonce');
+    createBtn.addEventListener('click', function (event){
+        event.preventDefault();
+        nonceInput.value = CTFd.config.csrfNonce;
+        form.submit();
+    });
+
+
+</script>
+
+{% endblock %}
+
+</form>

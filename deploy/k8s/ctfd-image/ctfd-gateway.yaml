@@ -1,0 +1,18 @@
+apiVersion: networking.istio.io/v1
+kind: Gateway
+metadata:
+  name: ctfd-gateway
+  namespace: ctfd
+  labels:
+    app.kubernetes.io/name: ctfd
+    app.kubernetes.io/instance: ctfd
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+    - hosts:
+        - ctfd.secdevias.com   # Change to your actual domain
+      port:
+        name: http
+        number: 80
+        protocol: HTTP
