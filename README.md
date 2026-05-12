@@ -52,16 +52,25 @@ and export, lone-wolf and team competitor flows, admin challenge creation
 and player submission, progressive log activation after solve, and the
 research dashboard plus JSONL export.
 
-See `docs/ARTIFACT.md` for execution scope, data captured, legacy import
+See `docs/ARTIFACT.md` for execution scope, data captured, backup import
 path, and current limits.
 
 ## Compatibility
 
-Past competition exports (CTFd backup zips containing JSON dumps and the
-`uploads/` directory) can be imported through the admin import page provided
-by the plugin or through `deploy/local/import_backup.sh` for local testing.
-The local acceptance suite is designed to run after a backup import as well
-as on a clean database.
+Past competition `.data` backups can be imported through
+`deploy/local/import_backup.sh`. The importer snapshots the current database,
+extracts the backup into a sidecar MariaDB, restores portable SQL into the
+current stack, replaces uploaded files, clears runtime cache, and restarts
+CTFd so plugin tables are created.
+
+To validate a backup without touching the active local stack:
+
+    cd deploy/local
+    bash verify_backup_import.sh /path/to/data_backup.zip
+
+The verification runs in an isolated Compose project and checks users, teams,
+challenges, solves, Hikari challenge type registration, uploads, and plugin
+access after the import.
 
 ## License
 

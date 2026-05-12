@@ -51,6 +51,18 @@ The import script writes a database snapshot before replacing the local CTFd
 database and uploads. Generated snapshots and dry-run files stay under
 `deploy/local/artifacts/`, which is ignored by Git.
 
+To test a backup without changing the active local stack:
+
+```bash
+cd deploy/local
+bash verify_backup_import.sh /path/to/data_backup.zip
+```
+
+The isolated verification starts a separate Compose project, imports the
+backup, reapplies the current admin account and theme, verifies the Hikari
+plugin, and checks users, teams, challenges, solves, Hikari challenges, upload
+files, and the activity table.
+
 ## Research data
 
 Hikari stores operational data that can support later analysis:

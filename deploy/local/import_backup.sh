@@ -27,10 +27,12 @@ fi
 
 cd "$(dirname "$0")"
 COMPOSE_FILE="$(pwd)/docker-compose.yml"
-PROJECT=$(basename "$(pwd)")
+PROJECT=${COMPOSE_PROJECT_NAME:-$(basename "$(pwd)")}
+COMPOSE=(docker-compose -f "$COMPOSE_FILE" -p "$PROJECT")
 UPLOADS_VOLUME="${PROJECT}_ctfd-uploads"
-NETWORK="hikari"
-SIDECAR="hikari-backup-sidecar"
+NETWORK="${PROJECT}_hikari"
+SIDECAR="${PROJECT}-backup-sidecar"
+CTFD_URL=${CTFD_URL:-http://localhost:${CTFD_PORT:-8000}}
 
 if [[ "$CONFIRM" != "--yes" ]]; then
   echo "This will REPLACE the ctfd database and uploads with the contents of"
@@ -52,8 +54,8 @@ cleanup() {
 trap cleanup EXIT
 
 echo "==> snapshotting current database to $snapshot_file"
-docker-compose -f "$COMPOSE_FILE" exec -T db \
-  mariadb-dump -uctfd -pctfd --all-databases --routines --events \
+"${COMPOSE[@]}" exec -T db \
+  mariadb-dump -uctfd -pctfd --routines --events --triggers ctfd \
   > "$snapshot_file"
 
 # Extract under the project directory rather than /tmp because on macOS+Colima
@@ -113,12 +115,20 @@ echo "==> stopping sidecar"
 docker rm -f "$SIDECAR" >/dev/null
 
 echo "==> dropping and recreating ctfd database in the running mariadb"
-docker-compose -f "$COMPOSE_FILE" exec -T db \
+"${COMPOSE[@]}" exec -T db \
   mariadb -uctfd -pctfd -e "DROP DATABASE IF EXISTS ctfd; CREATE DATABASE ctfd CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
 
 echo "==> restoring dump into ctfd"
-docker-compose -f "$COMPOSE_FILE" exec -T db \
+"${COMPOSE[@]}" exec -T db \
   mariadb -uctfd -pctfd ctfd < "$dump_file"
+
+echo "==> marking imported CTFd instance as already set up"
+"${COMPOSE[@]}" exec -T db \
+  mariadb -uctfd -pctfd ctfd -e \
+  "INSERT INTO config (\`key\`, value)
+   SELECT 'setup', '1'
+   WHERE NOT EXISTS (SELECT 1 FROM config WHERE \`key\` = 'setup');
+   UPDATE config SET value = '1' WHERE \`key\` = 'setup';"
 
 echo "==> replacing $UPLOADS_VOLUME with backup uploads"
 docker run --rm \
@@ -126,11 +136,14 @@ docker run --rm \
   -v "$work_dir/.data/CTFd/uploads":/src:ro \
   alpine sh -c 'rm -rf /dest/* /dest/..?* /dest/.[!.]* 2>/dev/null; cp -a /src/. /dest/'
 
+echo "==> clearing runtime cache after database replacement"
+"${COMPOSE[@]}" exec -T cache redis-cli FLUSHDB >/dev/null
+
 echo "==> restarting ctfd so create_all picks up new tables (hikari_activity)"
-docker-compose -f "$COMPOSE_FILE" restart ctfd >/dev/null
+"${COMPOSE[@]}" restart ctfd >/dev/null
 deadline=$((SECONDS + 90))
 while (( SECONDS < deadline )); do
-  if curl -fsS -o /dev/null --max-time 3 http://localhost:8000/login; then
+  if curl -fsS -o /dev/null --max-time 3 "$CTFD_URL/login"; then
     break
   fi
   sleep 2
@@ -138,15 +151,15 @@ done
 (( SECONDS < deadline )) || { echo "ctfd did not come back up"; exit 1; }
 
 echo "==> verifying imported state"
-users=$(docker-compose -f "$COMPOSE_FILE" exec -T db \
+users=$("${COMPOSE[@]}" exec -T db \
   mariadb -uctfd -pctfd ctfd -N -B -e "SELECT COUNT(*) FROM users;" | tr -d '[:space:]')
-teams=$(docker-compose -f "$COMPOSE_FILE" exec -T db \
+teams=$("${COMPOSE[@]}" exec -T db \
   mariadb -uctfd -pctfd ctfd -N -B -e "SELECT COUNT(*) FROM teams;" | tr -d '[:space:]')
-challenges=$(docker-compose -f "$COMPOSE_FILE" exec -T db \
+challenges=$("${COMPOSE[@]}" exec -T db \
   mariadb -uctfd -pctfd ctfd -N -B -e "SELECT COUNT(*) FROM challenges;" | tr -d '[:space:]')
-solves=$(docker-compose -f "$COMPOSE_FILE" exec -T db \
+solves=$("${COMPOSE[@]}" exec -T db \
   mariadb -uctfd -pctfd ctfd -N -B -e "SELECT COUNT(*) FROM solves;" | tr -d '[:space:]')
-activity=$(docker-compose -f "$COMPOSE_FILE" exec -T db \
+activity=$("${COMPOSE[@]}" exec -T db \
   mariadb -uctfd -pctfd ctfd -N -B -e \
   "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='ctfd' AND table_name='hikari_activity';" \
   | tr -d '[:space:]')
@@ -164,6 +177,6 @@ Pre-import snapshot: $snapshot_file
 Backup dump kept at: $dump_file
 
 To recover the previous state:
-  docker-compose -f "$COMPOSE_FILE" exec -T db \\
+  COMPOSE_PROJECT_NAME="$PROJECT" docker-compose -f "$COMPOSE_FILE" exec -T db \\
     mariadb -uctfd -pctfd ctfd < $snapshot_file
 EOF
