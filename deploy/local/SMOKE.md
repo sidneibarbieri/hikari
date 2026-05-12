@@ -9,6 +9,15 @@ that step.
 - Docker Engine running.
 - 6 GB free RAM.
 
+Steps 1-7 can be run end to end with:
+
+    cd deploy/local
+    bash smoke.sh --wait        # stack reachable
+    bash setup_ctfd.sh          # admin account + ctf settings
+    bash verify_plugin.sh       # /admin/hikari renders, challenge type registered
+
+The narrative below is the human-readable version of the same checks.
+
 ## 1. Stack starts
 
     cd deploy/local
