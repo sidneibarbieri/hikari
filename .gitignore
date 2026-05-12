@@ -24,6 +24,7 @@ Thumbs.db
 # Local runtime state
 ctfd/.data/
 ctfd/data.zip
+deploy/local/artifacts/
 
 # Secrets and credentials
 .env
