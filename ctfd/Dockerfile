@@ -1,9 +1,13 @@
 FROM python:3.11-slim-bookworm as build
 
+ARG PIP_INDEX_URL=https://pypi.org/simple/
+ARG DEBIAN_MIRROR=http://deb.debian.org/debian
+
 WORKDIR /opt/CTFd
 
 # hadolint ignore=DL3008
-RUN apt-get update \
+RUN sed -i "s|http://deb.debian.org/debian|${DEBIAN_MIRROR}|g" /etc/apt/sources.list.d/debian.sources \
+    && apt-get update \
     && apt-get install -y --no-install-recommends \
         build-essential \
         libffi-dev \
@@ -13,7 +17,11 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/* \
     && python -m venv /opt/venv
 
-ENV PATH="/opt/venv/bin:$PATH"
+ENV PATH="/opt/venv/bin:$PATH" \
+    PIP_DEFAULT_TIMEOUT=120 \
+    PIP_RETRIES=5 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PIP_INDEX_URL=${PIP_INDEX_URL}
 
 COPY . /opt/CTFd
 
@@ -26,10 +34,14 @@ RUN pip install --no-cache-dir -r requirements.txt \
 
 
 FROM python:3.11-slim-bookworm as release
+
+ARG DEBIAN_MIRROR=http://deb.debian.org/debian
+
 WORKDIR /opt/CTFd
 
 # hadolint ignore=DL3008
-RUN apt-get update \
+RUN sed -i "s|http://deb.debian.org/debian|${DEBIAN_MIRROR}|g" /etc/apt/sources.list.d/debian.sources \
+    && apt-get update \
     && apt-get install -y --no-install-recommends \
         libffi8 \
         libssl3 \

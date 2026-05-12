@@ -56,7 +56,7 @@ page should load.
 ## 7. Kafka and Logstash are wired
 
     docker compose exec kafka \
-      /opt/bitnami/kafka/bin/kafka-topics.sh \
+      /opt/kafka/bin/kafka-topics.sh \
       --bootstrap-server localhost:9092 --list
 
 Expected: at minimum the consumer group offsets topic. After step 8 below,
@@ -70,7 +70,7 @@ as its log, set its state to `visible`, then click "Start competition"
 on the plugin's main page.
 
     docker compose exec kafka \
-      /opt/bitnami/kafka/bin/kafka-console-consumer.sh \
+      /opt/kafka/bin/kafka-console-consumer.sh \
       --bootstrap-server localhost:9092 \
       --topic competition1 --from-beginning --max-messages 1 --timeout-ms 5000
 
