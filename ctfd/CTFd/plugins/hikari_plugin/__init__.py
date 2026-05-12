@@ -95,72 +95,44 @@ def load(app):
     def hk_patch_challenge():
         form = HikariAddChallengeForm()
         if form.validate_on_submit():
-            
             chall_id = form.challenge_id.data
-            chall_name = form.name.data
-            chall_desc = form.description.data
-            chall_val = form.value.data
-            chall_cat = form.category.data
-            chall_max_attempts = form.max_attempts.data
-            chall_state = form.state.data
-            chall_conn_info = form.connection_info.data
             log_filename = form.log_filename.data
-            nonce = form.nonce.data
             
             if log_filename == 'None':
                 log_filename = None
 
-            # Upload the file
             file_obj = form.file_log.data
             if file_obj:
                 try:
-                    uploader = get_uploader()
-
-                    try:
-                        hf = hikari_models.HikariFiles.query.filter_by(filename=log_filename).first()
-                        uploader.delete(hf.location)
-                        db.session.delete(hf)
-                        db.session.commit()
-                    except Exception as e:
-                        print(e)
-
-                    filename = file_obj.filename
-                    location = uploader.upload(file_obj=file_obj, filename=filename)
-                    hf = hikari_models.HikariFiles(filename=filename, location=location)
-                    db.session.add(hf)
-                    db.session.commit()
-                    
-                    log_filename = filename
-
+                    existing_file = hikari_models.HikariFiles.query.filter_by(
+                        filename=log_filename
+                    ).first()
+                    if existing_file is not None:
+                        get_uploader().delete(existing_file.location)
+                        db.session.delete(existing_file)
+                    log_filename = save_hikari_log_file(file_obj)
                 except IntegrityError:
-                    flash(f'A log file with that name already exists and is probably used by another challenge. Change the filename if you want to uploaded it anyway.', 'danger')
-                    return redirect(url_for('admin.challenges_new'))
-                except Exception as e:
-                    flash(f'Error while patching challenge: {e}', 'danger')
+                    db.session.rollback()
+                    flash('A log file with that name already exists. Use another filename.', 'danger')
                     return redirect(url_for('admin.challenges_new'))
 
-
-            session_cookie = request.cookies.get('session')
-            url = f"http://127.0.0.1:8000/api/v1/challenges/{chall_id}"
-            response = requests.patch(
-                url,
-                json={
-                    'name':chall_name,
-                    'category':chall_cat,
-                    'description':chall_desc,
-                    'value':chall_val,
-                    'max_attempts':chall_max_attempts,
-                    'state':chall_state,
-                    'connection_info':chall_conn_info,
-                    'log_filename': log_filename
-                },
-                headers={'Content-Type':'application/json', 'Csrf-token':nonce},
-                cookies={'session':session_cookie})
-            print(response)
+            challenge = hikari_models.HikariChallengeModel.query.filter_by(id=chall_id).first_or_404()
+            challenge.name = form.name.data
+            challenge.category = form.category.data
+            challenge.description = form.description.data
+            challenge.value = form.value.data
+            challenge.max_attempts = form.max_attempts.data
+            challenge.state = form.state.data
+            challenge.connection_info = form.connection_info.data
+            challenge.log_filename = log_filename
+            db.session.commit()
             flash('Challenge updated', 'success')
             return redirect(url_for('admin.challenges_detail', challenge_id=chall_id))
         else:
-            flash(f'Error while creating the challenge:{form.errors}', 'danger')
+            current_app.logger.warning(
+                "hikari.challenge: patch form validation failed: %s", form.errors
+            )
+            flash('Error while updating the challenge', 'danger')
             return redirect(url_for('admin.challenges_new'))
 
     @hikariplugin.route('/admin/hikari/init-competition', methods=['GET'])
@@ -178,7 +150,10 @@ def load(app):
                 # Activate logs for the challenges that do not have prerequisites
                 # and are visible
                 if chall.state == 'visible':
-                    print("ACTIVATING LOGS FOR CHALLENGE: ", chall.name)
+                    current_app.logger.info(
+                        "hikari.challenge: activating initial logs for challenge_id=%s",
+                        chall.id,
+                    )
                     hikari_challenge.HikariController.activate_logs(chall.id)
                     setattr(chall, "logs_activated", True)
                     db.session.commit()
@@ -303,23 +278,20 @@ def load(app):
     def hikari_notify_all():
         users = Users.query.all()
         
-        try:
-            for user in users:
-                team_id = user.team_id
-                team_zerotier_config = hikari_models.ZerotierConfig.query.filter_by(team_id=team_id).first()
+        for user in users:
+            team_id = user.team_id
+            team_zerotier_config = hikari_models.ZerotierConfig.query.filter_by(team_id=team_id).first()
 
-                if team_zerotier_config is None:
-                    continue
+            if team_zerotier_config is None:
+                continue
 
-                zt_id = team_zerotier_config.zerotier_id
-                zt = hikari_models.Zerotier.query.filter_by(id=zt_id).first()
+            zt_id = team_zerotier_config.zerotier_id
+            zt = hikari_models.Zerotier.query.filter_by(id=zt_id).first()
 
-                if zt:
-                    message = "Greetings competitor! You may have access to Kibana and other resources by joining this zerotier id: {}".format(zt.network_id)
-                    sendmail(user.email, message)
-            flash('Zerotier information has been sent to all users.', 'success')
-        except Exception as e:
-            flash('Error while sending zerotier information to teams: {}'.format(e), 'danger')
+            if zt:
+                message = "Greetings competitor! You may have access to Kibana and other resources by joining this zerotier id: {}".format(zt.network_id)
+                sendmail(user.email, message)
+        flash('Zerotier information has been sent to all users.', 'success')
         return redirect(url_for('hikariplugin.hikari_zerotier_setup'))
     
     # POST-Route: Route that sets zerotier configuration
@@ -414,11 +386,8 @@ def load(app):
             ztcnf = hikari_models.ZerotierConfig(team_id=t.id, zerotier_id=z.id)
             db.session.add(ztcnf)
 
-        try:
-            db.session.commit()
-            flash('All zerotiers were randomly associated to a team.', 'success')
-        except Exception as e:
-            flash('Error while assigning zerotiers: {}'.format(e), 'danger')
+        db.session.commit()
+        flash('All zerotiers were randomly associated to a team.', 'success')
         return redirect(url_for('hikariplugin.hikari_zerotier_setup'))
 
     # POST-Route: Route that unlinks all zerotiers
@@ -429,11 +398,8 @@ def load(app):
         for z in zerotiers:
             db.session.delete(z)
         
-        try:
-            db.session.commit()
-            flash('All zerotiers were unlinked.', 'success')
-        except Exception as e:
-            flash('Error while unlinking zerotiers: {}'.format(e), 'danger')
+        db.session.commit()
+        flash('All zerotiers were unlinked.', 'success')
         return redirect(url_for('hikariplugin.hikari_zerotier_setup'))
 
     # POST-Route: Route that deletes all zerotiers
@@ -444,11 +410,8 @@ def load(app):
         for z in zerotiers:
             db.session.delete(z)
         
-        try:
-            db.session.commit()
-            flash('All zerotiers were deleted.', 'success')
-        except Exception as e:
-            flash('Error while deleting zerotiers: {}'.format(e), 'danger')
+        db.session.commit()
+        flash('All zerotiers were deleted.', 'success')
         return redirect(url_for('hikariplugin.hikari_zerotier_setup'))
 
 
@@ -463,12 +426,11 @@ def load(app):
         form = ImportHikariCTFdForm()
         
         if form.validate_on_submit():
-            file = form.file_import.data
-            if file:
-                filename = secure_filename(file.filename)
-                upload_path = os.path.join("/tmp", filename)
-                print(upload_path)
-                file.save(upload_path)
+                file = form.file_import.data
+                if file:
+                    filename = secure_filename(file.filename)
+                    upload_path = os.path.join("/tmp", filename)
+                    file.save(upload_path)
 
                 importer = hikari_importer.HikariImporter(upload_path)
                 importer.import_all()
@@ -524,8 +486,6 @@ def load(app):
             "You have been assigned to a team. Kibana credentials:\n"
             f"USERNAME: {username}\nPASSWORD: {password}",
         )
-
-
 
 
 

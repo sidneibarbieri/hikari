@@ -14,6 +14,7 @@ docker-compose -f "$COMPOSE_FILE" exec -T ctfd env \
   ADMIN_PASSWORD="$ADMIN_PASSWORD" \
   python - <<'PY'
 import os
+import sys
 
 from CTFd import create_app
 from CTFd.models import Users, db
@@ -45,5 +46,5 @@ with app.app_context():
         user.hidden = True
         action = "updated"
     db.session.commit()
-    print(f"automation admin {action}: {admin_email}")
+    sys.stdout.write(f"automation admin {action}: {admin_email}\n")
 PY

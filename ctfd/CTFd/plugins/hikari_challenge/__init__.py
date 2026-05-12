@@ -1,17 +1,13 @@
 import os
 import json
-from flask import Blueprint
-from CTFd.models import db 
+from flask import Blueprint, current_app
 from CTFd.plugins import register_plugin_assets_directory
 from CTFd.plugins.challenges import CHALLENGE_CLASSES, BaseChallenge
 from CTFd.plugins.migrations import upgrade
 from CTFd.models import (
-    Challenges,
     Solves,
     db
 )
-
-from confluent_kafka import KafkaError
 
 from CTFd.utils import get_app_config
 from CTFd.utils.uploads.uploaders import FilesystemUploader, S3Uploader
@@ -27,38 +23,29 @@ def get_uploader():
 
 ####### HikariController for controlling activation of logs
 class HikariController:
-    def __init__(self):
-        # No code here needed for now
-        pass
-
-    # Send logs to kafka topic
     @staticmethod
     def activate_logs(chall_id):
         challenge = hikari_models.HikariChallengeModel.query.filter_by(id=chall_id).first()
+        if challenge is None:
+            raise ValueError(f"Hikari challenge not found: {chall_id}")
 
         if challenge.log_filename is None:
             return
         
         hf = hikari_models.HikariFiles.query.filter_by(filename=challenge.log_filename).first()
-        
-        try:
-            uploader = get_uploader()
-            f = uploader.open(hf.location, 'r')
-            data = json.loads(f.read())
-            f.close()
-        except json.decoder.JSONDecodeError:
-            print("[-] INVALID JSON FILE")
-            return
+        if hf is None:
+            raise ValueError(f"Hikari log file not found: {challenge.log_filename}")
+
+        uploader = get_uploader()
+        with uploader.open(hf.location, 'r') as file_obj:
+            data = json.loads(file_obj.read())
         
         if not isinstance(data, list):
-            return
+            raise ValueError(f"Hikari log file must contain a JSON list: {hf.filename}")
  
         producer = get_producer()
         for record in data:
-            try:
-                producer.produce('competition1', value=json.dumps(record).encode('utf-8'))
-            except KafkaError as e:
-               print(f"Error: {e}")
+            producer.produce('competition1', value=json.dumps(record).encode('utf-8'))
 
         producer.flush()
  
@@ -117,7 +104,6 @@ class HikariChallenge(BaseChallenge):
        
         for attr, value in data.items():
             setattr(challenge, attr, value)
-            print(attr, ":", value)
         db.session.commit()
 
         return challenge
@@ -126,19 +112,13 @@ class HikariChallenge(BaseChallenge):
     def solve(cls, user, team, challenge, request):
         super().solve(user, team, challenge, request)
         
-        # Grab all challenges available
         all_challenges = hikari_models.HikariChallengeModel.query.all()
 
-        # Get all solves made by this user
         solve_ids = Solves.query.filter_by(user_id=user.id).all()
         solve_ids = [s.challenge_id for s in solve_ids]
 
-        # Get challenges that were not solved by the user
         challs = [c for c in all_challenges if c.id not in solve_ids]
 
-        # For each challenge not solved by the user,
-        # check if all the prerequisites were solved by the user and,
-        # if that is the case, activate the logs for this current challenge
         for chall in challs:
             prereqs = set()
             if chall.requirements:
@@ -148,11 +128,11 @@ class HikariChallenge(BaseChallenge):
             if chall.logs_activated:
                 continue
             if len(prereqs.intersection(solve_ids)) == len(prereqs):
-                print("\n\n\n[ * * * ACTIVATING NEXT CHALLENGE LOGS: {} * * * ]".format(chall.name))
+                current_app.logger.info(
+                    "hikari.challenge: activating dependent logs for challenge_id=%s",
+                    chall.id,
+                )
                 HikariController.activate_logs(chall.id)
-                print("\n\n\n")
-
-                # Updating challenge logs status
                 setattr(chall, 'logs_activated', True)
                 db.session.commit()
 

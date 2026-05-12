@@ -23,14 +23,17 @@ ENV PATH="/opt/venv/bin:$PATH" \
     PIP_DISABLE_PIP_VERSION_CHECK=1 \
     PIP_INDEX_URL=${PIP_INDEX_URL}
 
+COPY requirements.txt /opt/CTFd/requirements.txt
+
+RUN pip install --no-cache-dir -r requirements.txt
+
 COPY . /opt/CTFd
 
-RUN pip install --no-cache-dir -r requirements.txt \
-    && for d in CTFd/plugins/*; do \
+RUN for d in CTFd/plugins/*; do \
         if [ -f "$d/requirements.txt" ]; then \
-            pip install --no-cache-dir -r "$d/requirements.txt";\
+            pip install --no-cache-dir -r "$d/requirements.txt"; \
         fi; \
-    done;
+    done
 
 
 FROM python:3.11-slim-bookworm as release

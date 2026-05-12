@@ -68,10 +68,9 @@ def _emit(response: Response) -> Response:
         user_team_id=team_id,
     )
 
-    # Activity logging must never break the user-visible request, so the
-    # storage and publish paths are caught at the boundary. Each catch names
-    # the concrete exception type — broad ``except Exception`` would hide
-    # real bugs behind the same log line that legitimate I/O failures use.
+    # Activity logging must never break the user-visible request, so storage
+    # and publishing failures are caught at this boundary using concrete
+    # exception types.
     try:
         recorder.persist(record)
     except SQLAlchemyError:

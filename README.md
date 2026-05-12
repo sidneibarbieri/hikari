@@ -30,6 +30,9 @@ CTFd plugin, validates Kafka-to-Elasticsearch ingestion, checks activity
 logging, exercises player/team/admin flows, verifies progressive log
 activation after a solve, and checks the research export surface.
 
+See `docs/ARTIFACT.md` for the execution scope, data captured, legacy import
+path, and current limits.
+
 ## Compatibility
 
 Past competition exports (CTFd backup zips containing JSON dumps and the

@@ -1,6 +1,7 @@
 import zipfile
 import json
 import os
+import logging
 from CTFd.plugins.dynamic_challenges import DynamicChallenge
 from CTFd.models import db, Challenges, Flags, Users, Teams, Awards, \
                             Brackets, Comments, Configs, \
@@ -20,6 +21,8 @@ from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError
 
 import dataset
+
+logger = logging.getLogger(__name__)
 
 
 class HikariImporter:
@@ -133,23 +136,21 @@ class HikariImporter:
         try:
             with open(self.get_path(json_filename), 'r') as f:
                 jdata = json.loads(f.read())
-        except Exception as e:
-            print(f"Error loading json file: {e}")
+        except (FileNotFoundError, json.JSONDecodeError, KeyError) as error:
+            logger.warning("hikari.import: skipping %s: %s", json_filename, error)
             return False
     
         data = jdata['results']
         table = self.side_db[json_filename[:-5]]
-        for _zdata in data:
+        for row in data:
             try:
-                req = _zdata.get('requirements')
+                req = row.get('requirements')
                 if req and isinstance(req, dict):
-                    _zdata['requirements'] = json.dumps(req)
+                    row['requirements'] = json.dumps(req)
 
-                table.insert(_zdata)
+                table.insert(row)
             except IntegrityError:
-                print(f"ERROR FOR TABLE: {json_filename}")
-            except Exception as e:
-                print(f"ERROR: {e}")
+                logger.warning("hikari.import: duplicate row in %s", json_filename)
         return True
 
     def import_all(self):

@@ -2,6 +2,10 @@ import os
 import requests
 import json
 import secrets
+import logging
+
+
+logger = logging.getLogger(__name__)
 
 
 class KibanaHelper:
@@ -36,9 +40,9 @@ class KibanaHelper:
         )
 
         if response.status_code == 200 or response.status_code == 201:
-            print(f"Kibana space '{space_name}' created successfully!")
+            logger.info("hikari.kibana: space created: %s", space_name)
         else:
-            print("Error:", response.text)
+            logger.warning("hikari.kibana: space creation failed: %s", response.text)
 
     @staticmethod
     def create_role(role_name, space_name):
@@ -77,9 +81,9 @@ class KibanaHelper:
         )
 
         if response.status_code in [200, 201]:
-            print(f"Role '{role_name}' created successfully!")
+            logger.info("hikari.kibana: role created: %s", role_name)
         else:
-            print("Error:", response.text)
+            logger.warning("hikari.kibana: role creation failed: %s", response.text)
             return
         
         index_pattern_creation = {
@@ -96,9 +100,9 @@ class KibanaHelper:
         )
 
         if response.status_code in [200, 201]:
-            print(f"Role '{role_name}' created successfully!")
+            logger.info("hikari.kibana: index pattern created for space: %s", space_name)
         else:
-            print("Error:", response.text)
+            logger.warning("hikari.kibana: index pattern creation failed: %s", response.text)
 
 
     @staticmethod
@@ -125,7 +129,7 @@ class KibanaHelper:
         )
 
         if response.status_code in [200, 201]:
-            print(f"User '{username}' assigned to role '{role_name}' successfully!")
+            logger.info("hikari.kibana: user assigned: %s", username)
             return username, password
         else:
-            print("Error:", response.text)
+            logger.warning("hikari.kibana: user assignment failed: %s", response.text)

@@ -9,7 +9,7 @@ set -uo pipefail
 cd "$(dirname "$0")"
 
 steps=(
-  "smoke.sh|stack health"
+  "verify_artifact_hygiene.sh|artifact hygiene and terminology"
   "smoke.sh --wait|wait for services if cold-started"
   "setup_ctfd.sh|run setup wizard"
   "ensure_admin.sh|ensure automation admin exists"
