@@ -21,6 +21,7 @@ steps=(
   "configure_siem.sh|default SIEM data view"
   "verify_activity.sh|activity logging captured in DB and ES"
   "verify_siem_flow.sh|competitor SIEM access and query attribution"
+  "verify_kibana_classifier.sh|Kibana proxy extracts forensic facts (kind, indices, filters, time range)"
   "verify_feedback.sh|local feedback captured and exported"
   "verify_player_flow.sh|lone-wolf competitor: register, login, own one-person team, challenges"
   "verify_team_flow.sh|team competitors: captain creates team, second member joins with team password"
