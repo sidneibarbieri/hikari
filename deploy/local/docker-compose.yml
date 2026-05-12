@@ -163,5 +163,4 @@ volumes:
 
 networks:
   hikari:
-    name: hikari
     driver: bridge
