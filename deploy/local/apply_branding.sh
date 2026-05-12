@@ -27,6 +27,20 @@ INDEX_CONTENT='<div class="hikari-landing">
   </div>
 </div>'
 
+FEEDBACK_CONTENT='<section class="hikari-landing">
+  <div class="hikari-hero">
+    <p class="hikari-eyebrow">Research feedback</p>
+    <h1 class="hikari-wordmark">Feedback</h1>
+    <p class="hikari-tagline">
+      The questionnaire is hosted inside Hikari so responses stay attached
+      to the exercise, participant account, and team context.
+    </p>
+    <div class="hikari-actions">
+      <a class="btn btn-primary" href="/hikari/feedback">Open questionnaire</a>
+    </div>
+  </div>
+</section>'
+
 THEME_FOOTER='<style>
 footer.footer { display: none; }
 .hikari-footer {
@@ -84,6 +98,35 @@ if [[ "$current" != "$INDEX_CONTENT" ]]; then
   echo "index page updated"
 else
   echo "index page already up to date"
+fi
+
+feedback_id=$(echo "$pages" | jq -r '.data[] | select(.route=="feedback") | .id' | head -1)
+if [[ -n "$feedback_id" ]]; then
+  current_feedback=$(curl -sS -c "$cookie_jar" -b "$cookie_jar" \
+    "$CTFD_URL/api/v1/pages/$feedback_id" | jq -r '.data.content // ""')
+  if [[ "$current_feedback" != "$FEEDBACK_CONTENT" ]]; then
+    response=$(curl -sS -c "$cookie_jar" -b "$cookie_jar" \
+      -H "Content-Type: application/json" -H "Csrf-Token: $csrf" \
+      -X PATCH "$CTFD_URL/api/v1/pages/$feedback_id" \
+      -d "$(jq -cn --arg c "$FEEDBACK_CONTENT" \
+        '{title:"Feedback",route:"feedback",content:$c,format:"html",draft:false,hidden:false,auth_required:false}')")
+    success=$(echo "$response" | jq -r '.success')
+    [[ "$success" == "true" ]] \
+      || { echo "FAIL: feedback page patch returned $response"; exit 1; }
+    echo "feedback page updated"
+  else
+    echo "feedback page already up to date"
+  fi
+else
+  response=$(curl -sS -c "$cookie_jar" -b "$cookie_jar" \
+    -H "Content-Type: application/json" -H "Csrf-Token: $csrf" \
+    -X POST "$CTFD_URL/api/v1/pages" \
+    -d "$(jq -cn --arg c "$FEEDBACK_CONTENT" \
+      '{title:"Feedback",route:"feedback",content:$c,format:"html",draft:false,hidden:false,auth_required:false}')")
+  success=$(echo "$response" | jq -r '.success')
+  [[ "$success" == "true" ]] \
+    || { echo "FAIL: feedback page create returned $response"; exit 1; }
+  echo "feedback page created"
 fi
 
 # theme_footer config — same idempotency dance as theme_header.

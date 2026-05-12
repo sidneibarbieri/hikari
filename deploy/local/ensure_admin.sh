@@ -6,7 +6,7 @@ set -euo pipefail
 ADMIN_NAME=${ADMIN_NAME:-admin}
 ADMIN_EMAIL=${ADMIN_EMAIL:-admin@hikari.local}
 ADMIN_PASSWORD=${ADMIN_PASSWORD:-hikari-admin-pw}
-COMPOSE_FILE=${COMPOSE_FILE:-/Users/sidneibarbieri/hikari_project/hikari/hikari-platform/deploy/local/docker-compose.yml}
+COMPOSE_FILE=${COMPOSE_FILE:-$(cd "$(dirname "$0")" && pwd)/docker-compose.yml}
 
 docker-compose -f "$COMPOSE_FILE" exec -T ctfd env \
   ADMIN_NAME="$ADMIN_NAME" \

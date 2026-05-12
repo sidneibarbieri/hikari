@@ -7,7 +7,7 @@
 set -euo pipefail
 
 CTFD_URL=${CTFD_URL:-http://localhost:8000}
-COMPOSE_FILE=${COMPOSE_FILE:-/Users/sidneibarbieri/hikari_project/hikari/hikari-platform/deploy/local/docker-compose.yml}
+COMPOSE_FILE=${COMPOSE_FILE:-$(cd "$(dirname "$0")" && pwd)/docker-compose.yml}
 ADMIN_EMAIL=${ADMIN_EMAIL:-admin@hikari.local}
 ADMIN_PASSWORD=${ADMIN_PASSWORD:-hikari-admin-pw}
 

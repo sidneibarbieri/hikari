@@ -16,7 +16,7 @@ ES_URL=${ES_URL:-http://localhost:9200}
 ES_INDEX=${ES_INDEX:-competition1}
 ADMIN_EMAIL=${ADMIN_EMAIL:-admin@hikari.local}
 ADMIN_PASSWORD=${ADMIN_PASSWORD:-hikari-admin-pw}
-COMPOSE_FILE=${COMPOSE_FILE:-/Users/sidneibarbieri/hikari_project/hikari/hikari-platform/deploy/local/docker-compose.yml}
+COMPOSE_FILE=${COMPOSE_FILE:-$(cd "$(dirname "$0")" && pwd)/docker-compose.yml}
 
 stamp=$(date +%s)
 C1_NAME="prog_c1_${stamp}"

@@ -8,7 +8,7 @@ set -euo pipefail
 
 ES_URL=${ES_URL:-http://localhost:9200}
 TOPIC=${TOPIC:-competition1}
-COMPOSE_FILE=${COMPOSE_FILE:-/Users/sidneibarbieri/hikari_project/hikari/hikari-platform/deploy/local/docker-compose.yml}
+COMPOSE_FILE=${COMPOSE_FILE:-$(cd "$(dirname "$0")" && pwd)/docker-compose.yml}
 
 probe_id="hikari-smoke-$(date +%s)"
 payload=$(printf '{"event":"smoke","probe_id":"%s","ts":"%s"}' \

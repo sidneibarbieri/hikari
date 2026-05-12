@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+
+{% block stylesheets %}
+{{ super() }}
+<link rel="stylesheet" href="/plugins/hikari_plugin/assets/research.css">
+{% endblock %}
+
+{% block content %}
+<main class="hikari-research">
+  <header class="research-header">
+    <h1>Feedback</h1>
+    <p class="research-subtitle">Your answers are stored inside Hikari and linked to your competition account.</p>
+  </header>
+
+  <form method="post" class="research-card research-card--wide">
+    {{ form.nonce() }}
+
+    <div class="form-row">
+      <div class="form-group col-md-4">
+        {{ form.phase.label }}
+        {{ form.phase(class="form-control") }}
+      </div>
+      <div class="form-group col-md-4">
+        {{ form.experience_level.label }}
+        {{ form.experience_level(class="form-control") }}
+      </div>
+      <div class="form-group col-md-4">
+        {{ form.blue_team_familiarity.label }}
+        {{ form.blue_team_familiarity(class="form-control") }}
+      </div>
+    </div>
+
+    <div class="form-group form-check">
+      {{ form.prior_ctf(class="form-check-input") }}
+      {{ form.prior_ctf.label(class="form-check-label") }}
+    </div>
+
+    <div class="form-row">
+      <div class="form-group col-md-3">
+        {{ form.interface_rating.label }}
+        {{ form.interface_rating(class="form-control", min="1", max="5") }}
+      </div>
+      <div class="form-group col-md-3">
+        {{ form.learning_effectiveness.label }}
+        {{ form.learning_effectiveness(class="form-control", min="1", max="5") }}
+      </div>
+      <div class="form-group col-md-3">
+        {{ form.operational_confidence_before.label }}
+        {{ form.operational_confidence_before(class="form-control", min="1", max="5") }}
+      </div>
+      <div class="form-group col-md-3">
+        {{ form.operational_confidence_after.label }}
+        {{ form.operational_confidence_after(class="form-control", min="1", max="5") }}
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group col-md-4">
+        {{ form.challenge_difficulty.label }}
+        {{ form.challenge_difficulty(class="form-control") }}
+      </div>
+      <div class="form-group col-md-4">
+        {{ form.dashboard_relevance.label }}
+        {{ form.dashboard_relevance(class="form-control") }}
+      </div>
+      <div class="form-group col-md-4">
+        {{ form.realism.label }}
+        {{ form.realism(class="form-control") }}
+      </div>
+    </div>
+
+    <div class="form-group">
+      {{ form.learned_areas.label }}
+      {{ form.learned_areas(class="form-control", size="6") }}
+    </div>
+
+    <div class="form-group">
+      {{ form.useful_dashboard_elements.label }}
+      {{ form.useful_dashboard_elements(class="form-control", rows="3") }}
+    </div>
+
+    <div class="form-group">
+      {{ form.unused_dashboard_elements.label }}
+      {{ form.unused_dashboard_elements(class="form-control", rows="3") }}
+    </div>
+
+    <div class="form-group form-check">
+      {{ form.technical_issues(class="form-check-input") }}
+      {{ form.technical_issues.label(class="form-check-label") }}
+    </div>
+
+    <div class="form-group">
+      {{ form.technical_issue_notes.label }}
+      {{ form.technical_issue_notes(class="form-control", rows="3") }}
+    </div>
+
+    <div class="form-group">
+      {{ form.methodology_notes.label }}
+      {{ form.methodology_notes(class="form-control", rows="4") }}
+    </div>
+
+    <div class="form-group">
+      {{ form.suggested_improvements.label }}
+      {{ form.suggested_improvements(class="form-control", rows="4") }}
+    </div>
+
+    {{ form.submit(class="btn btn-primary") }}
+  </form>
+</main>
+{% endblock %}

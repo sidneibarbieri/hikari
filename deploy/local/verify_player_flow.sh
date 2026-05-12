@@ -10,7 +10,7 @@
 set -euo pipefail
 
 CTFD_URL=${CTFD_URL:-http://localhost:8000}
-COMPOSE_FILE=${COMPOSE_FILE:-/Users/sidneibarbieri/hikari_project/hikari/hikari-platform/deploy/local/docker-compose.yml}
+COMPOSE_FILE=${COMPOSE_FILE:-$(cd "$(dirname "$0")" && pwd)/docker-compose.yml}
 
 stamp=$(date +%s)
 PLAYER_NAME="player_${stamp}"
