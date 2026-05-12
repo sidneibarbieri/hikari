@@ -17,16 +17,26 @@ a cleaner dataset and slower teams must sift through more noise.
 
 ## Quick start
 
-Local bring-up is being introduced under `deploy/local/`. Until that lands,
-the only supported path is the Kubernetes one in `deploy/k8s/`, which
-requires a working cluster.
+The local stack is under `deploy/local/` and is the supported path for
+development and artifact review.
+
+    cd deploy/local
+    cp .env.example .env
+    docker-compose up -d --build
+    bash run_acceptance.sh
+
+The acceptance script performs setup, applies the Hikari theme, verifies the
+CTFd plugin, validates Kafka-to-Elasticsearch ingestion, checks activity
+logging, exercises player/team/admin flows, verifies progressive log
+activation after a solve, and checks the research export surface.
 
 ## Compatibility
 
 Past competition exports (CTFd backup zips containing JSON dumps and the
 `uploads/` directory) can be imported through the admin import page provided
-by the plugin. Schemas have not changed between the last shipped competition
-and this tree.
+by the plugin or through `deploy/local/import_backup.sh` for local testing.
+The local acceptance suite is designed to run after a backup import as well
+as on a clean database.
 
 ## License
 

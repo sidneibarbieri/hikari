@@ -1,5 +1,5 @@
 from flask import current_app, render_template, request, redirect, url_for, flash, Blueprint, jsonify, session
-import random, requests
+import random
 from sqlalchemy import event, inspect
 from sqlalchemy.exc import IntegrityError
 from CTFd.plugins import register_plugin_assets_directory
@@ -33,6 +33,17 @@ def get_uploader():
     return UPLOADERS.get(get_app_config("UPLOAD_PROVIDER") or "filesystem")()
 
 
+def save_hikari_log_file(file_obj):
+    if file_obj is None or not file_obj.filename:
+        return None
+
+    filename = secure_filename(file_obj.filename)
+    location = get_uploader().upload(file_obj=file_obj, filename=filename)
+    log_file = hikari_models.HikariFiles(filename=filename, location=location)
+    db.session.add(log_file)
+    return filename
+
+
 def load(app):
     # Create all tables
     app.db.create_all()
@@ -50,53 +61,32 @@ def load(app):
     def hk_add_challenge():
         form = HikariAddChallengeForm()
         if form.validate_on_submit():
-            
-            # Upload the file
-            file_obj = form.file_log.data
-            filename = file_obj.filename
-            log_filename = None
-            if file_obj and filename:
-                try:
-                    uploader = get_uploader()
-                    location = uploader.upload(file_obj=file_obj, filename=filename)
-                    print('LOCATION:', location)
-                    hf = hikari_models.HikariFiles(filename=filename, location=location)
-                    db.session.add(hf)
-                    db.session.commit()
-                    
-                    log_filename = hikari_models.HikariFiles.query.filter_by(filename=filename).first().filename
-
-                except IntegrityError:
-                    flash(f'A log file with that name already exists and is probably used by another challenge. Change the filename if you want to uploaded it anyway.', 'danger')
-                    return redirect(url_for('admin.challenges_new'))
-                except Exception as e:
-                    flash(f'Error while creating the challenge: {e}', 'danger')
-                    return redirect(url_for('admin.challenges_new'))
-            
-            chall_name = form.name.data
-            chall_desc = form.description.data
-            chall_val = form.value.data
-            chall_type = form.type.data
-            chall_cat = form.category.data
-            nonce = form.nonce.data
-
-            session_cookie = request.cookies.get('session')
-            url = "http://127.0.0.1:8000/api/v1/challenges"
-            response = requests.post(
-                url,
-                json={
-                    'name':chall_name,
-                    'category':chall_cat,
-                    'description':chall_desc,
-                    'type':chall_type,
-                    'value':chall_val,
-                    'log_filename': log_filename,
-                },
-                headers={'Content-Type':'application/json', 'Csrf-token':nonce},
-                cookies={'session':session_cookie})
+            try:
+                log_filename = save_hikari_log_file(form.file_log.data)
+                challenge = hikari_models.HikariChallengeModel(
+                    name=form.name.data,
+                    category=form.category.data,
+                    description=form.description.data,
+                    type="hikari",
+                    value=form.value.data,
+                    state="visible",
+                    max_attempts=0,
+                    log_filename=log_filename,
+                )
+                db.session.add(challenge)
+                db.session.commit()
+            except IntegrityError:
+                db.session.rollback()
+                flash(
+                    'A log file with that name already exists. Use another filename.',
+                    'danger',
+                )
+                return redirect(url_for('admin.challenges_new'))
             return redirect(url_for('admin.challenges_listing'))
         else:
-            print(form.errors)
+            current_app.logger.warning(
+                "hikari.challenge: create form validation failed: %s", form.errors
+            )
             flash('Error while creating the challenge', 'danger')
             return redirect(url_for('admin.challenges_new'))
 
@@ -534,7 +524,6 @@ def load(app):
             "You have been assigned to a team. Kibana credentials:\n"
             f"USERNAME: {username}\nPASSWORD: {password}",
         )
-
 
 
 

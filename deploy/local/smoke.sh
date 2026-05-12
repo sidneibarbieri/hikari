@@ -5,6 +5,8 @@
 
 set -euo pipefail
 
+cd "$(dirname "$0")"
+
 WAIT=${1:-}
 CTFD_URL=${CTFD_URL:-http://localhost:8000}
 KIBANA_URL=${KIBANA_URL:-http://localhost:5601}

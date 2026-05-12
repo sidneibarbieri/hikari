@@ -12,13 +12,17 @@ steps=(
   "smoke.sh|stack health"
   "smoke.sh --wait|wait for services if cold-started"
   "setup_ctfd.sh|run setup wizard"
+  "ensure_admin.sh|ensure automation admin exists"
   "apply_theme.sh|apply Hikari design tokens"
+  "apply_branding.sh|apply Hikari home page and footer"
+  "verify_branding.sh|home page and footer render Hikari branding"
   "verify_plugin.sh|admin can reach Hikari plugin"
   "verify_pipeline.sh|Kafka -> Elasticsearch data plane"
   "verify_activity.sh|activity logging captured in DB and ES"
   "verify_player_flow.sh|lone-wolf competitor: register, login, own one-person team, challenges"
   "verify_team_flow.sh|team competitors: captain creates team, second member joins with team password"
   "verify_challenge_flow.sh|admin creates challenge, player solves it, solve and activity recorded"
+  "verify_progressive_unlock.sh|solving one Hikari challenge activates dependent log data"
   "verify_research.sh|researcher dashboard renders, JSONL export streams parseable records"
 )
 

@@ -6,7 +6,7 @@ Elasticsearch.
 
 ## Requirements
 
-- Docker Engine with Compose v2.
+- Docker Engine with `docker-compose`.
 - About 6 GB of RAM free for the containers. Elasticsearch alone is
   configured for a 1 GB heap.
 
@@ -14,12 +14,30 @@ Elasticsearch.
 
     cd deploy/local
     cp .env.example .env       # optional, only needed to override ports
-    docker compose up -d --build
-    docker compose ps          # all services should be healthy or running
+    docker-compose up -d --build
+    docker-compose ps          # services should be healthy or running
 
 First boot builds the CTFd image and pulls all other images. Expect a
 few minutes the first time. Elasticsearch needs roughly 30 seconds to
 report healthy.
+
+## Validate
+
+    bash run_acceptance.sh
+
+The acceptance suite verifies service health, CTFd setup, Hikari branding,
+the plugin, Kafka-to-Elasticsearch ingestion, activity logging, player and
+team flows, admin challenge creation, progressive log activation, and the
+research export.
+
+## Import a legacy backup
+
+    bash import_backup.sh /path/to/data_backup.zip --yes
+    bash run_acceptance.sh
+
+The import script snapshots the current database, restores the backup's CTFd
+database and uploads, restarts CTFd, and leaves the snapshot under
+`deploy/local/artifacts/`.
 
 ## Where to access
 
@@ -34,8 +52,8 @@ and start the competition from the plugin admin page.
 
 ## Tear down
 
-    docker compose down            # stop containers, keep volumes
-    docker compose down -v         # stop containers and delete data
+    docker-compose down            # stop containers, keep volumes
+    docker-compose down -v         # stop containers and delete data
 
 ## Notes
 

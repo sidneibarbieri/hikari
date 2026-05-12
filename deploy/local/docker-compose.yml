@@ -28,6 +28,8 @@ services:
       - ctfd-uploads:/var/uploads
       - ctfd-logs:/var/log/CTFd
     depends_on:
+      ctfd-permissions:
+        condition: service_completed_successfully
       db:
         condition: service_healthy
       cache:
@@ -36,6 +38,14 @@ services:
         condition: service_healthy
       elasticsearch:
         condition: service_healthy
+    networks: [hikari]
+
+  ctfd-permissions:
+    image: alpine:3.20
+    command: sh -c "chown -R 1001:1001 /var/uploads /var/log/CTFd"
+    volumes:
+      - ctfd-uploads:/var/uploads
+      - ctfd-logs:/var/log/CTFd
     networks: [hikari]
 
   db:
