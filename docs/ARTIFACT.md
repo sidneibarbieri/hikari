@@ -56,12 +56,17 @@ database and uploads. Generated snapshots and dry-run files stay under
 Hikari stores operational data that can support later analysis:
 
 - CTFd login, registration, team, challenge view, and submission events.
-- Kibana access and query requests routed through the Hikari gateway.
+- Kibana access and query requests routed through the Hikari gateway. Each
+  request is classified once and the structured facts stored alongside the
+  record: query kind (search, bsearch, console, saved-object), indices
+  touched, boolean clause counts (must, should, must_not, filter), result
+  size, time-range field with gte/lte bounds, and a KQL or query_string
+  excerpt when present.
 - Local feedback responses linked to user, team, and competition context.
 - Actor identifiers, team identifiers, timestamps, request metadata, and
   event payloads.
 - Competition logs streamed into Elasticsearch through Kafka.
-- Exportable activity records in JSONL format.
+- Exportable activity records in JSONL format from the research dashboard.
 
 Researchers decide how to anonymize or aggregate data before publication.
 The artifact keeps identifiable records locally because operational analysis
