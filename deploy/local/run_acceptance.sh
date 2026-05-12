@@ -33,6 +33,14 @@ steps=(
 passed=()
 failed=()
 
+# CTFd rate-limits POSTs to /login and /register at 10 per 5 seconds per IP.
+# The suite issues many admin logins in tight succession, so clear the
+# ratelimit counters before each step. The keys are namespaced under "rl:".
+clear_ratelimit_cache() {
+  docker-compose exec -T cache redis-cli --scan --pattern 'rl:*' 2>/dev/null \
+    | xargs -r docker-compose exec -T cache redis-cli del >/dev/null 2>&1 || true
+}
+
 for entry in "${steps[@]}"; do
   script="${entry%%|*}"
   label="${entry#*|}"
@@ -41,6 +49,7 @@ for entry in "${steps[@]}"; do
   echo "  $label"
   echo "  bash $script"
   echo "================================================================"
+  clear_ratelimit_cache
   if bash $script; then
     passed+=("$script")
   else
