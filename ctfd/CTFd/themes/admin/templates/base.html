@@ -22,7 +22,8 @@
 		.hikari-admin-brand img {
 			width: 1.9rem;
 			height: 1.9rem;
-			border-radius: 0.4rem;
+			border-radius: 50%;
+			object-fit: contain;
 		}
 		.admin-hikari-footer {
 			color: #9aa7b7;
@@ -63,7 +64,7 @@
 	<nav class="navbar navbar-expand-md navbar-dark bg-dark fixed-top">
 		<div class="container">
 			<a href="{{ url_for('views.static_html', route='/') }}" class="navbar-brand hikari-admin-brand">
-				<img src="{{ request.script_root }}/themes/hikari-theme/static/img/hikari-mark.svg" alt="" aria-hidden="true">
+				<img src="{{ request.script_root }}/themes/hikari-theme/static/img/hikari-emblem.png" alt="" aria-hidden="true">
 				<span>Hikari</span>
 			</a>
 			<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#base-navbars"

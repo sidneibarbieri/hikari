@@ -4,7 +4,7 @@
   <div class="jbig-header">
     <div class="container">
       <h1>
-        {% trans %}Scoreboard{% endtrans %}
+        Pontuação
       </h1>
     </div>
   </div>
@@ -22,7 +22,7 @@
       <template x-if="brackets.length && standings.length">
         <div class="col-md-12 py-3">
           <nav class="nav nav-pills nav-fill">
-            <button :class="{'nav-link': true, 'active': !activeBracket}" @click="activeBracket=null">{% trans %}All{% endtrans %}</button>
+            <button :class="{'nav-link': true, 'active': !activeBracket}" @click="activeBracket=null">Todos</button>
             <template x-for="bracket in brackets">
               <button :class="{'nav-link': true, 'active': activeBracket == bracket.id}" x-text="bracket.name" @click="activeBracket=bracket.id"></button>
             </template>
@@ -34,9 +34,9 @@
         <table class="table table-striped align-middle">
           <thead>
           <tr>
-            <th style="width: 10px">{% trans %}Place{% endtrans %}</th>
+            <th style="width: 10px">Posição</th>
             <th class="text-start ps-3">{{ get_mode_as_word(capitalize=True) }}</th>
-            <th>{% trans %}Score{% endtrans %}</th>
+            <th>Pontos</th>
           </tr>
           </thead>
 
@@ -58,7 +58,7 @@
       </div>
 
       <div class="col-md-12" x-show="! standings.length">
-        <h3 class="text-center text-muted">{% trans %}Scoreboard is empty{% endtrans %}</h3>
+        <h3 class="text-center text-muted">A pontuação ainda está vazia</h3>
       </div>
     </div>
   </div>
@@ -67,4 +67,3 @@
 {% block scripts %}
   {{ Assets.js("assets/js/scoreboard.js") }}
 {% endblock %}
-

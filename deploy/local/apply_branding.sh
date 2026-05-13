@@ -13,6 +13,7 @@ ADMIN_PASSWORD=${ADMIN_PASSWORD:-hikari-admin-pw}
 
 INDEX_CONTENT='<main class="hikari-landing">
   <section class="hikari-hero" aria-labelledby="hikari-home-title">
+    <img class="hikari-hero-mark" src="/themes/hikari-theme/static/img/hikari-emblem.png" alt="" aria-hidden="true">
     <p class="hikari-eyebrow">Plataforma de prontidão adversarial</p>
     <h1 id="hikari-home-title" class="hikari-wordmark">Hikari</h1>
     <p class="hikari-strapline">Treinar. Simular. Validar. Superar.</p>
@@ -48,6 +49,7 @@ INDEX_CONTENT='<main class="hikari-landing">
 
 FEEDBACK_CONTENT='<main class="hikari-landing hikari-landing-compact">
   <section class="hikari-hero" aria-labelledby="hikari-feedback-title">
+    <img class="hikari-hero-mark" src="/themes/hikari-theme/static/img/hikari-emblem.png" alt="" aria-hidden="true">
     <p class="hikari-eyebrow">Instrumento de pesquisa</p>
     <h1 id="hikari-feedback-title" class="hikari-wordmark">Feedback</h1>
     <p class="hikari-strapline">Antes. Depois. Refletir.</p>
