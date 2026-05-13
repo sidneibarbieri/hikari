@@ -14,9 +14,9 @@ ADMIN_PASSWORD=${ADMIN_PASSWORD:-hikari-admin-pw}
 INDEX_CONTENT='<main class="hikari-landing">
   <section class="hikari-hero" aria-labelledby="hikari-home-title">
     <img class="hikari-hero-mark" src="/themes/hikari-theme/static/img/hikari-emblem.png" alt="" aria-hidden="true">
-    <p class="hikari-eyebrow">Plataforma de prontidão adversarial</p>
+    <p class="hikari-eyebrow">Desafios reais, ameaças ocultas</p>
     <h1 id="hikari-home-title" class="hikari-wordmark">Hikari</h1>
-    <p class="hikari-strapline">Treinar. Simular. Validar. Superar.</p>
+    <p class="hikari-strapline">Threat hunting gamificado para blue teams.</p>
     <p class="hikari-tagline">
       Laboratório de operações de blue team. Os analistas caçam ameaças
       sobre fluxos de eventos ao vivo, evidências são liberadas
@@ -26,6 +26,7 @@ INDEX_CONTENT='<main class="hikari-landing">
     <nav class="hikari-actions" aria-label="Ações principais">
       <a class="hikari-action hikari-action-primary" href="/challenges">Entrar no laboratório</a>
       <a class="hikari-action hikari-action-secondary" href="/hikari/siem">Abrir o SIEM</a>
+      <a class="hikari-action hikari-action-secondary" href="/hikari/live">Placar ao vivo</a>
       <a class="hikari-action hikari-action-secondary" href="/feedback">Pesquisa de feedback</a>
     </nav>
   </section>
@@ -78,7 +79,7 @@ footer.footer { display: none; }
 .hikari-footer strong { color: var(--hikari-text); font-weight: 600; }
 </style>
 <div class="hikari-footer">
-  <strong>Hikari</strong> &middot; plataforma de prontidão adversarial &middot; construído sobre CTFd
+  <strong>Hikari</strong> &middot; desafios reais, ameaças ocultas &middot; construído sobre CTFd
 </div>'
 
 cookie_jar=$(mktemp)

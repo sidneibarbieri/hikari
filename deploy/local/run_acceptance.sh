@@ -27,6 +27,7 @@ steps=(
   "verify_team_flow.sh|team competitors: captain creates team, second member joins with team password"
   "verify_challenge_flow.sh|admin creates challenge, player solves it, solve and activity recorded"
   "verify_progressive_unlock.sh|solving one Hikari challenge activates dependent log data"
+  "verify_live_board.sh|live competition board renders standings and recent solves"
   "verify_research.sh|researcher dashboard renders, JSONL export streams parseable records"
 )
 

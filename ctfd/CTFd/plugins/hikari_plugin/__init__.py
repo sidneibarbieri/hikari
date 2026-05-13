@@ -24,6 +24,7 @@ import CTFd.plugins.hikari_plugin.hikari_importer as hikari_importer
 from CTFd.plugins.hikari_plugin import hikari_activity
 from CTFd.plugins.hikari_plugin import hikari_feedback
 from CTFd.plugins.hikari_plugin import hikari_kibana_gateway
+from CTFd.plugins.hikari_plugin import hikari_live
 from CTFd.plugins.hikari_plugin import hikari_research
 
 
@@ -448,6 +449,7 @@ def load(app):
     hikari_research.register(hikariplugin)
     hikari_feedback.register(hikariplugin)
     hikari_kibana_gateway.register(hikariplugin)
+    hikari_live.register(hikariplugin)
     app.register_blueprint(hikariplugin)
 
 
@@ -494,5 +496,4 @@ def load(app):
             "You have been assigned to a team. Kibana credentials:\n"
             f"USERNAME: {username}\nPASSWORD: {password}",
         )
-
 

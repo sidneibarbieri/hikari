@@ -15,6 +15,9 @@ controlled experiment.
 - **Hikari SIEM surface** at `/hikari/siem`, backed by Elasticsearch
   summaries and linked to Kibana Discover through a CTFd-authenticated proxy.
   Competitor requests stay attributable to user and team.
+- **Live competition board** at `/hikari/live`, with team standings,
+  individual contributions, recent solves, and a polling data feed for
+  projector use during an event.
 - **Activity logging** for login, registration, team operations, challenge
   view and submission, plus Kibana opens and queries; each row carries
   actor, team, target and structured forensic facts about the request.
@@ -44,14 +47,14 @@ The local stack is the supported path for development and artifact review.
     docker-compose up -d --build
     bash run_acceptance.sh
 
-The acceptance script runs nineteen focused checks: artifact hygiene, stack
+The acceptance script runs twenty focused checks: artifact hygiene, stack
 health, CTFd setup, branding application and rendering, plugin loading,
 Kafka-to-Elasticsearch data plane, default SIEM data view, activity logging
 into both DB and Elasticsearch, competitor SIEM access with query
 attribution, Kibana proxy forensic classification, local feedback capture
 and export, lone-wolf and team competitor flows, admin challenge creation
-and player submission, progressive log activation after solve, and the
-research dashboard plus JSONL export.
+and player submission, progressive log activation after solve, the live
+competition board, and the research dashboard plus JSONL export.
 
 See `docs/ARTIFACT.md` for execution scope, data captured, backup import
 path, and current limits.

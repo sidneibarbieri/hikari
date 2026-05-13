@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block stylesheets %}
+{{ super() }}
+<link rel="stylesheet" href="/plugins/hikari_plugin/assets/theme.css">
+<link rel="stylesheet" href="/plugins/hikari_plugin/assets/live.css">
+{% endblock %}
+
+{% block content %}
+<main class="hikari-live" data-live-board>
+  <header class="live-header">
+    <div>
+      <p class="hikari-eyebrow">Competição em tempo real</p>
+      <h1>Desafios reais, ameaças ocultas</h1>
+      <p class="live-subtitle">
+        Painel para acompanhar a corrida das equipes, a contribuição individual e os solves recentes.
+      </p>
+    </div>
+    <div class="live-clock">
+      <span>Atualizado</span>
+      <strong data-live-generated>{{ board.generated_at }}</strong>
+    </div>
+  </header>
+
+  <section class="live-metrics" aria-label="Resumo da competição">
+    <article><span>Solves</span><strong data-live-total-solves>{{ board.total_solves }}</strong></article>
+    <article><span>Equipes</span><strong data-live-active-teams>{{ board.active_teams }}</strong></article>
+    <article><span>Competidores</span><strong data-live-active-users>{{ board.active_users }}</strong></article>
+  </section>
+
+  <section class="live-grid">
+    <article class="live-panel live-panel--primary">
+      <header>
+        <h2>Equipes</h2>
+        <span>ranking por pontuação</span>
+      </header>
+      <div class="live-bars" data-live-teams></div>
+    </article>
+
+    <article class="live-panel">
+      <header>
+        <h2>Competidores</h2>
+        <span>contribuição individual</span>
+      </header>
+      <div class="live-bars live-bars--compact" data-live-users></div>
+    </article>
+  </section>
+
+  <section class="live-grid live-grid--lower">
+    <article class="live-panel live-panel--timeline">
+      <header>
+        <h2>Evolução</h2>
+        <span>progressão acumulada das equipes líderes</span>
+      </header>
+      <svg class="live-chart" data-live-timeline role="img" aria-label="Evolução da pontuação"></svg>
+    </article>
+
+    <article class="live-panel live-panel--ticker">
+      <header>
+        <h2>Últimos solves</h2>
+        <span>eventos de competição</span>
+      </header>
+      <div class="live-ticker" data-live-solves></div>
+    </article>
+  </section>
+</main>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="/plugins/hikari_plugin/assets/live.js"></script>
+{% endblock %}

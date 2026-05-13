@@ -28,8 +28,8 @@ report healthy.
 The acceptance suite verifies service health, CTFd setup, Hikari branding,
 the plugin, Kafka-to-Elasticsearch ingestion, SIEM data view setup, activity
 logging, SIEM access through the Hikari gateway, player and team flows, admin
-challenge creation, progressive log activation, local feedback, and the
-research export.
+challenge creation, progressive log activation, the live competition board,
+local feedback, and the research export.
 
 ## Import a legacy backup
 
@@ -44,6 +44,7 @@ database and uploads, restarts CTFd, and leaves the snapshot under
 
 - CTFd:           http://localhost:8000
 - SIEM gateway:   http://localhost:8000/hikari/siem
+- Live board:     http://localhost:8000/hikari/live
 - Feedback page:  http://localhost:8000/feedback
 - Questionnaire:  http://localhost:8000/hikari/feedback
 - Mailcatcher UI: http://localhost:1080
