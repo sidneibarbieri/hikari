@@ -1,10 +1,8 @@
 """Register the Flask before/after_request hooks that emit activity records.
 
-Failure policy: each I/O step is wrapped in its own ``try`` that catches the
-concrete exception type the step can raise and logs the full traceback via
-``logger.exception``. The user-facing response is preserved so a transient
-Kafka outage or a brief DB contention does not knock out every authenticated
-CTFd endpoint. The error is not masked; it is recorded in full with a tagged
+Failure policy: each I/O step catches its concrete exception type and logs the
+full traceback via ``logger.exception``. The user-facing response is preserved
+during transient Kafka or DB faults. The error is recorded with a tagged
 message that operations can alert on.
 """
 

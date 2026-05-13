@@ -11,7 +11,9 @@ fail() {
   exit 1
 }
 
-tracked_files=$(git ls-files)
+tracked_files=$(git ls-files | while IFS= read -r path; do
+  [[ -e "$path" ]] && printf '%s\n' "$path"
+done)
 
 generated_patterns='(^|/)(\.DS_Store|\.env)$|^deploy/local/artifacts/|data_backup\.zip|(^|/)__pycache__/|\.pyc$'
 generated_hits=$(printf '%s\n' "$tracked_files" | grep -E "$generated_patterns" || true)
@@ -48,6 +50,21 @@ restricted_terms=(
   "Per""fect"
   "Excel""lent"
   "Let ""me"
+  "not ""only"
+  "but ""also"
+  "does ""not"
+  "cur""rent limits"
+  "compre""hensive"
+  "sea""mless"
+  "ro""bust"
+  "cutting-""edge"
+  "util""ize"
+  "leve""rage"
+  "Chat""GPT"
+  "Cla""ude"
+  "Co""dex"
+  "\\bLL""M\\b"
+  "\\bA""I\\b"
   $'\U0001F680'
   $'\U0001F389'
   $'\U00002728'
@@ -61,8 +78,8 @@ echo "PASS: naming and style scan is clean"
 exception_pattern="except ""Exception|\\bprint\\("
 exception_hits=$(printf '%s\n' "$hikari_files" | xargs rg -n "$exception_pattern" || true)
 if [[ -n "$exception_hits" ]]; then
-  echo "WARN: broad exception or print usage remains in Hikari-owned files:"
-  echo "$exception_hits"
+  fail "broad exception or print usage remains in Hikari-owned files:
+$exception_hits"
 else
   echo "PASS: no broad exception or print usage in Hikari-owned files"
 fi

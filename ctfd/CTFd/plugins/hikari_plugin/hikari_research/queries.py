@@ -1,26 +1,50 @@
 """Aggregations over the hikari_activity table.
 
 Each function is a pure read against the database and returns Pydantic DTOs.
-The view layer composes them; this module does not know about HTTP.
+The view layer composes them; this module is independent from HTTP.
 """
 
-from typing import List
+from typing import List, Optional
 
 from sqlalchemy import func
 
 from CTFd.models import Teams, db
 from CTFd.plugins.hikari_plugin.hikari_activity.models import HikariActivity
 
-from .dto import EventCount, RecentEvent, TeamActivity
+from .dto import EventCount, RecentEvent, ResearchFilters, TeamActivity
 
 
-def total_events() -> int:
-    return db.session.query(func.count(HikariActivity.id)).scalar() or 0
+def _filtered_activity_query(filters: Optional[ResearchFilters] = None):
+    query = HikariActivity.query
+    if filters is None:
+        return query
+    if filters.event_type:
+        query = query.filter(HikariActivity.event_type == filters.event_type)
+    if filters.actor_id is not None:
+        query = query.filter(HikariActivity.actor_id == filters.actor_id)
+    if filters.team_id is not None:
+        query = query.filter(HikariActivity.team_id == filters.team_id)
+    return query
 
 
-def event_counts_by_type() -> List[EventCount]:
+def total_events(filters: Optional[ResearchFilters] = None) -> int:
+    return _filtered_activity_query(filters).count()
+
+
+def available_event_types() -> List[str]:
     rows = (
-        db.session.query(
+        db.session.query(HikariActivity.event_type)
+        .group_by(HikariActivity.event_type)
+        .order_by(HikariActivity.event_type.asc())
+        .all()
+    )
+    return [event_type for (event_type,) in rows]
+
+
+def event_counts_by_type(filters: Optional[ResearchFilters] = None) -> List[EventCount]:
+    rows = (
+        _filtered_activity_query(filters)
+        .with_entities(
             HikariActivity.event_type,
             func.count(HikariActivity.id),
         )
@@ -31,10 +55,14 @@ def event_counts_by_type() -> List[EventCount]:
     return [EventCount(label=event_type, count=count) for event_type, count in rows]
 
 
-def event_counts_by_team(limit: int = 25) -> List[TeamActivity]:
+def event_counts_by_team(
+    filters: Optional[ResearchFilters] = None,
+    limit: int = 25,
+) -> List[TeamActivity]:
     """Activity counts grouped by team, joined with team names where available."""
     rows = (
-        db.session.query(
+        _filtered_activity_query(filters)
+        .with_entities(
             HikariActivity.team_id,
             Teams.name,
             func.count(HikariActivity.id),
@@ -51,9 +79,15 @@ def event_counts_by_team(limit: int = 25) -> List[TeamActivity]:
     ]
 
 
-def recent_events(limit: int = 50) -> List[RecentEvent]:
+def recent_events(
+    filters: Optional[ResearchFilters] = None,
+    limit: int = 50,
+) -> List[RecentEvent]:
     rows = (
-        HikariActivity.query.order_by(HikariActivity.id.desc()).limit(limit).all()
+        _filtered_activity_query(filters)
+        .order_by(HikariActivity.id.desc())
+        .limit(limit)
+        .all()
     )
     return [
         RecentEvent(
@@ -72,13 +106,17 @@ def recent_events(limit: int = 50) -> List[RecentEvent]:
     ]
 
 
-def iter_all_events():
+def iter_all_events(filters: Optional[ResearchFilters] = None):
     """Yield every activity row as a RecentEvent in insertion order.
 
     Used by the JSONL exporter to stream without buffering the whole result
     set in memory.
     """
-    query = HikariActivity.query.order_by(HikariActivity.id.asc()).yield_per(500)
+    query = (
+        _filtered_activity_query(filters)
+        .order_by(HikariActivity.id.asc())
+        .yield_per(500)
+    )
     for row in query:
         yield RecentEvent(
             id=row.id,

@@ -25,9 +25,7 @@
 
               {{ form.q(class="jform-control-2 ", placeholder="Buscar equipes") }}
 
-              <button type="submit" class="btn btn-primary w-100">
-                <i class="fas fa-search" aria-hidden="true"></i>
-              </button>
+              <button type="submit" class="btn btn-primary">Buscar</button>
           </form>
         {% endwith %}
       </div>
@@ -119,10 +117,10 @@
       <div class="row">
         <div class="col-md-12">
           <div class="text-center">
-            {% trans %}Page{% endtrans %} <br>
+            Página <br>
 
             {% if teams.page != 1 %}
-              <a href="{{ prev_page }}">&lt;&lt;&lt;</a>
+              <a class="btn btn-secondary btn-sm" href="{{ prev_page }}">Anterior</a>
             {% endif %}
 
             <select class="page-select">
@@ -132,7 +130,7 @@
             </select>
 
             {% if teams.next_num %}
-              <a href="{{ next_page }}">&gt;&gt;&gt;</a>
+              <a class="btn btn-secondary btn-sm" href="{{ next_page }}">Próxima</a>
             {% endif %}
           </div>
         </div>

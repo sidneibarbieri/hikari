@@ -1,8 +1,8 @@
 # Artifact guide
 
 This document describes how to run the Hikari artifact and what the current
-automation proves. It is intentionally limited to execution and evidence. It
-does not generate papers and does not encode submission-specific assumptions.
+automation proves. It is limited to execution scope, captured data and
+evidence.
 
 ## Scope
 
@@ -17,7 +17,8 @@ The artifact provides a local training and research stack:
   refreshed through a JSON feed.
 - Activity logging for observed CTFd and Kibana actions.
 - A local feedback questionnaire stored in the Hikari database.
-- A read-only research surface for activity summaries and JSONL export.
+- A read-only research surface for activity summaries, event filters, and
+  JSONL export.
 
 The artifact preserves the competitive mechanic used by Hikari: when a
 challenge is solved, dependent challenge logs may be activated and streamed
@@ -39,7 +40,7 @@ The acceptance script is the main executable claim. It verifies service
 health, CTFd setup, branding, plugin loading, Kafka-to-Elasticsearch ingestion,
 activity logging, SIEM query attribution, local feedback, player and team
 flows, admin challenge creation, progressive log activation, the live
-competition board, and research export.
+competition board, research filters, and JSONL export.
 
 ## Legacy data
 
@@ -88,8 +89,8 @@ Researchers decide how to anonymize or aggregate data before publication.
 The artifact keeps identifiable records locally because operational analysis
 requires attribution during and after a competition.
 
-## Current limits
+## Production deployment
 
 The local compose file is an executable artifact and development target. A
-production deployment still needs deployment-specific TLS, hostnames, secrets,
-backup policy, and access-control review before being exposed to participants.
+production deployment defines its TLS, hostnames, secrets, backup policy and
+access-control settings for the target environment.

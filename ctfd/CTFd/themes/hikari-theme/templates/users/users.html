@@ -22,9 +22,7 @@
           <form method="GET" class="jsearch-form">
               {{ form.field(class="jform-control-2",) }}
               {{ form.q(class="jform-control-2", placeholder=form.q.description) }}
-              <button type="submit" class="">
-                <i class="fas fa-search" aria-hidden="true"></i>
-              </button>
+              <button type="submit" class="btn btn-primary">Buscar</button>
           </form>
         {% endwith %}
       </div>
@@ -109,10 +107,10 @@
       <div class="row">
         <div class="col-md-12">
           <div class="text-center">
-            {% trans %}Page{% endtrans %} <br>
+            Página <br>
 
             {% if users.page != 1 %}
-              <a href="{{ prev_page }}">&lt;&lt;&lt;</a>
+              <a class="btn btn-secondary btn-sm" href="{{ prev_page }}">Anterior</a>
             {% endif %}
 
             <select class="page-select">
@@ -122,7 +120,7 @@
             </select>
 
             {% if users.next_num %}
-              <a href="{{ next_page }}">&gt;&gt;&gt;</a>
+              <a class="btn btn-secondary btn-sm" href="{{ next_page }}">Próxima</a>
             {% endif %}
           </div>
         </div>

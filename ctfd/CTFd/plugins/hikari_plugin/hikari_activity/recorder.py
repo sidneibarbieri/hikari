@@ -1,9 +1,7 @@
 """Persist an activity record to the database and publish it to Kafka.
 
-These functions do not catch their own exceptions. Callers wrap them at the
-boundary with concrete except clauses and log via ``logger.exception`` so the
-underlying error is visible in operational logs without crashing the
-user-facing request that triggered the record.
+Callers handle concrete boundary failures and log via ``logger.exception`` so
+the underlying error remains visible in operational logs.
 """
 
 from typing import Final
@@ -27,7 +25,7 @@ def persist(record: ActivityRecord) -> HikariActivity:
 
 
 def publish(record: ActivityRecord) -> None:
-    """Send the record to the Kafka activity topic. Does not flush."""
+    """Send the record to the Kafka activity topic."""
     producer = get_producer()
     producer.produce(ACTIVITY_TOPIC, value=record.json().encode("utf-8"))
     producer.poll(0)

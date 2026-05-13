@@ -1,44 +1,31 @@
 {% extends "base.html" %}
 
 {% block content %}
-  <div class="jumbotron">
+  <div class="jbig-header">
     <div class="container">
-      <h1>{% trans %}Team{% endtrans %}</h1>
+      <h1>Equipe</h1>
     </div>
   </div>
   <div class="container">
-    <div class="row">
-      <div class="col-md-6 offset-md-3 text-center">
-        <p class="h2">{% trans %}Welcome to{% endtrans %} {{ Configs.ctf_name }}!</p>
-        <p>
-          {% trans %}In order to participate you must either join or create a team.{% endtrans %}
-        </p>
-      </div>
-    </div>
+    <div class="team-join-panel">
+      <h2>Entrar na competição</h2>
+      <p>
+        Para participar dos desafios, entre em uma equipe existente ou crie uma
+        nova equipe para competir com seus integrantes.
+      </p>
 
-    {% if integrations.mlc() %}
-      <div class="row">
-        <div class="col-md-6 offset-md-3 text-center">
-          <a class="btn btn-primary w-100" href="{{ url_for('auth.oauth_login') }}">{% trans %}Play with Official Team{% endtrans %}</a>
+      {% if integrations.mlc() %}
+        <a class="btn btn-primary w-100" href="{{ url_for('auth.oauth_login') }}">Jogar com equipe oficial</a>
+        <div class="team-join-actions">
+          <a class="btn btn-outline-primary" href="{{ url_for('teams.join') }}">Entrar em equipe não oficial</a>
+          <a class="btn btn-outline-primary" href="{{ url_for('teams.new') }}">Criar equipe não oficial</a>
         </div>
-      </div>
-      <div class="row">
-        <div class="mt-3 col-md-3 offset-md-3 text-center">
-          <a class="btn btn-outline-info w-100" href="{{ url_for('teams.join') }}">{% trans %}Join Unofficial Team{% endtrans %}</a>
+      {% else %}
+        <div class="team-join-actions">
+          <a class="btn btn-primary" href="{{ url_for('teams.join') }}">Entrar em equipe</a>
+          <a class="btn btn-primary" href="{{ url_for('teams.new') }}">Criar equipe</a>
         </div>
-        <div class="mt-3 col-md-3 text-center">
-          <a class="btn btn-outline-info w-100" href="{{ url_for('teams.new') }}">{% trans %}Create Unofficial Team{% endtrans %}</a>
-        </div>
-      </div>
-    {% else %}
-      <div class="row">
-        <div class="mt-3 col-sm-4 col-md-3 offset-sm-2 offset-md-3 text-center">
-          <a class="btn btn-primary w-100" href="{{ url_for('teams.join') }}">{% trans %}Join Team{% endtrans %}</a>
-        </div>
-        <div class="mt-3 col-sm-4 col-md-3 text-center">
-          <a class="btn btn-primary w-100" href="{{ url_for('teams.new') }}">{% trans %}Create Team{% endtrans %}</a>
-        </div>
-      </div>
-    {% endif %}
+      {% endif %}
+    </div>
   </div>
 {% endblock %}

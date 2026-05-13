@@ -3,9 +3,8 @@
 #
 # Strategy: bring up a side-car mariadbd against the backup's data files,
 # mariadb-dump it to SQL, drop the running ctfd database, restore the dump.
-# This is more robust than copying raw InnoDB tablespaces into the running
-# volume because mariadb-dump produces version-portable SQL that any MariaDB
-# can replay; copying tablespaces depends on internal ids matching.
+# mariadb-dump produces version-portable SQL that any MariaDB can replay;
+# copying tablespaces depends on internal ids matching.
 #
 # Uploads (.data/CTFd/uploads/) ride along by way of a one-shot Alpine
 # container that wipes the running ctfd-uploads volume and lays the backup

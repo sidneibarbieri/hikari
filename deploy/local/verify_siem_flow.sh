@@ -51,9 +51,9 @@ code=$(curl -sS -c "$cookie_jar" -b "$cookie_jar" \
   -o /tmp/hikari-siem-entry.html -w '%{http_code}' "$CTFD_URL/hikari/siem")
 [[ "$code" == "200" ]] || { echo "SIEM entrypoint returned $code"; cat /tmp/hikari-siem-entry.html; exit 1; }
 grep -q "Visão SIEM" /tmp/hikari-siem-entry.html \
-  || { echo "SIEM entrypoint does not render the Hikari SIEM surface"; exit 1; }
+  || { echo "SIEM entrypoint missing Hikari SIEM surface"; exit 1; }
 grep -q "Abrir Kibana Discover" /tmp/hikari-siem-entry.html \
-  || { echo "SIEM entrypoint does not expose Kibana Discover"; exit 1; }
+  || { echo "SIEM entrypoint missing Kibana Discover"; exit 1; }
 echo "PASS: SIEM entrypoint renders the Hikari SIEM surface"
 
 status_body=/tmp/hikari-siem-status.json

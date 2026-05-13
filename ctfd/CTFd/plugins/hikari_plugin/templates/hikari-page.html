@@ -35,7 +35,7 @@
                     <span>Status dos zerotiers</span>
                 </div>
                 <div class="item-status {{stats['zerotier']['class']}}">
-                    <span class="">{{stats['zerotier']['status']}}</span>
+                    <span>{{stats['zerotier']['label']}}</span>
                 </div>
             </div>
             {% if stats['zerotier']['status'] == 'error' %}
@@ -52,7 +52,7 @@
                     <span>Status dos times</span>
                 </div>
                 <div class="item-status {{stats['teams']['class']}}">
-                    <span class="">{{stats['teams']['status']}}</span>
+                    <span>{{stats['teams']['label']}}</span>
                 </div>
             </div>
             {% if stats['teams']['status'] == 'error' %}
@@ -68,7 +68,7 @@
                     <span>Status da competição</span>
                 </div>
                 <div class="item-status {{stats['competition']['class']}}">
-                    <span class="">{{stats['competition']['status']}}</span>
+                    <span>{{stats['competition']['label']}}</span>
                 </div>
             </div>
             {% if stats['competition']['status'] == 'error' %}

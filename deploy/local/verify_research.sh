@@ -32,13 +32,14 @@ code=$(curl -sS -c "$cookie_jar" -b "$cookie_jar" -o "$dashboard" \
   || { echo "FAIL: dashboard returned $code"; exit 1; }
 echo "PASS: /admin/hikari/research returned 200"
 
-# Content-level assertions: the rendered page contains the metric block and
-# at least one of the structured sections. HTTP 200 alone would not catch a
-# template rendering error that produces an empty page.
+# Content-level assertions: the rendered page contains the metric block,
+# filter controls, and structured sections.
 grep -q "Análise científica" "$dashboard" \
-  || { echo "FAIL: dashboard does not contain the heading"; exit 1; }
+  || { echo "FAIL: dashboard heading missing"; exit 1; }
 grep -q "Total de eventos" "$dashboard" \
   || { echo "FAIL: dashboard missing total events metric"; exit 1; }
+grep -q "Aplicar filtros" "$dashboard" \
+  || { echo "FAIL: dashboard missing filter controls"; exit 1; }
 grep -q "Eventos por tipo" "$dashboard" \
   || { echo "FAIL: dashboard missing events-by-type section"; exit 1; }
 grep -q "Eventos recentes" "$dashboard" \
@@ -65,6 +66,15 @@ fi
 head -1 "$export_file" | jq -e '.event_type and .occurred_at' >/dev/null \
   || { echo "FAIL: first export line is not a valid activity record"; head -3 "$export_file"; exit 1; }
 echo "PASS: JSONL export has $line_count parseable records (sample line valid)"
+
+filtered_file=/tmp/hikari-research-export-filtered.jsonl
+code=$(curl -sS -c "$cookie_jar" -b "$cookie_jar" -o "$filtered_file" \
+  -w '%{http_code}' "$CTFD_URL/admin/hikari/research/export.jsonl?event_type=user.login")
+[[ "$code" == "200" ]] \
+  || { echo "FAIL: filtered export returned $code"; exit 1; }
+head -1 "$filtered_file" | jq -e '.event_type == "user.login"' >/dev/null \
+  || { echo "FAIL: filtered export returned another event type"; head -3 "$filtered_file"; exit 1; }
+echo "PASS: filtered export returns matching event records"
 
 echo
 echo "Research surface verified."

@@ -3,7 +3,7 @@
 #   * the home page no longer carries the CTFd marketing block
 #   * the rendered footer reads as Hikari, not "Powered by CTFd"
 #   * the theme stylesheet is linked
-# Each check looks for a real string in the rendered HTML, not only HTTP 200.
+# Each check looks for Hikari content in rendered HTML.
 
 set -euo pipefail
 

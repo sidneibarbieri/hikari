@@ -35,8 +35,16 @@ class RecentEvent(BaseModel):
     payload: Optional[Dict[str, Any]] = None
 
 
+class ResearchFilters(BaseModel):
+    event_type: Optional[str] = None
+    actor_id: Optional[int] = None
+    team_id: Optional[int] = None
+
+
 class ResearchSummary(BaseModel):
+    filters: ResearchFilters
     total_events: int
     events_by_type: List[EventCount]
     teams_by_event_count: List[TeamActivity]
+    available_event_types: List[str]
     recent: List[RecentEvent]

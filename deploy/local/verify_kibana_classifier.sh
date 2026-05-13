@@ -1,8 +1,6 @@
 #!/usr/bin/env bash
-# Sends a realistic Kibana search request through the authenticated proxy and
-# asserts the resulting activity record carries the structured forensic facts
-# the classifier is supposed to extract (kind, indices, query/filter counts,
-# time-range bounds), not only a sha256 of the body.
+# Sends a Kibana search request through the authenticated proxy and verifies
+# the activity record carries structured forensic facts.
 
 set -euo pipefail
 

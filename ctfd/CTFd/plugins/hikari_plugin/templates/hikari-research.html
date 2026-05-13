@@ -13,14 +13,41 @@
     <h1>Análise científica</h1>
     <p class="research-subtitle">Agregações sobre o log hikari_activity. Superfície somente leitura.</p>
     <div class="research-actions">
-      <a class="btn btn-outline-primary" href="/admin/hikari/research/export.jsonl">
+      <a class="btn btn-outline-primary" href="/admin/hikari/research/export.jsonl{% if request.query_string %}?{{ request.query_string.decode() }}{% endif %}">
         Exportar atividades (JSONL)
       </a>
-      <a class="btn btn-outline-primary" href="/admin/hikari/research/feedback.jsonl">
+      <a class="btn btn-outline-primary" href="/admin/hikari/research/feedback.jsonl{% if request.query_string %}?{{ request.query_string.decode() }}{% endif %}">
         Exportar feedback (JSONL)
       </a>
     </div>
   </header>
+
+  <form class="research-filter-bar" method="get" action="/admin/hikari/research">
+    <label>
+      <span>Evento</span>
+      <select name="event_type">
+        <option value="">Todos</option>
+        {% for event_type in summary.available_event_types %}
+        <option value="{{ event_type }}" {% if summary.filters.event_type == event_type %}selected{% endif %}>
+          {{ event_type }}
+        </option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>
+      <span>Ator</span>
+      <input name="actor_id" type="number" min="1" inputmode="numeric" value="{{ summary.filters.actor_id or '' }}" placeholder="ID do usuário">
+    </label>
+    <label>
+      <span>Equipe</span>
+      <input name="team_id" type="number" min="1" inputmode="numeric" value="{{ summary.filters.team_id or '' }}" placeholder="ID da equipe">
+    </label>
+    <div class="research-filter-actions">
+      <button class="btn btn-primary" type="submit">Aplicar filtros</button>
+      <a class="btn btn-outline-primary" href="/admin/hikari/research">Limpar</a>
+      <a class="btn btn-outline-primary" href="/admin/hikari/research/export.jsonl{% if request.query_string %}?{{ request.query_string.decode() }}{% endif %}">Exportar filtro</a>
+    </div>
+  </form>
 
   <section class="research-grid">
 

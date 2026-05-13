@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 # Single command that takes a reviewer from a clean checkout to a verified
 # stack. Each step is one of the existing focused scripts; this file only
-# orchestrates them and prints a final summary so the reviewer does not have
-# to remember the order or stitch outputs together.
+# orchestrates them and prints a final summary with the full execution order.
 
 set -uo pipefail
 
@@ -16,6 +15,7 @@ steps=(
   "apply_theme.sh|apply Hikari design tokens"
   "apply_branding.sh|apply Hikari home page and footer"
   "verify_branding.sh|home page and footer render Hikari branding"
+  "verify_public_pages.sh|public pages render without server errors"
   "verify_plugin.sh|admin can reach Hikari plugin"
   "verify_pipeline.sh|Kafka -> Elasticsearch data plane"
   "configure_siem.sh|default SIEM data view"

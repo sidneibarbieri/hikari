@@ -7,8 +7,9 @@ to a HTTP response without materialising the whole result set.
 from typing import Iterator
 
 from . import queries
+from .dto import ResearchFilters
 
 
-def jsonl_lines() -> Iterator[str]:
-    for record in queries.iter_all_events():
+def jsonl_lines(filters: ResearchFilters) -> Iterator[str]:
+    for record in queries.iter_all_events(filters):
         yield record.json() + "\n"

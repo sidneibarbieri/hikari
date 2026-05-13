@@ -145,25 +145,23 @@ def load(app):
     @hikariplugin.route('/admin/hikari/init-competition', methods=['GET'])
     @admins_only
     def init_competition():
-        # If the competition is already running, no need to start it again.
-        if check_competition_status()['status'] == 'Ok':
-            return redirect(url_for('hikariplugin.hikari_main'))
-        
         challs = list(hikari_models.HikariChallengeModel.query.all())
         for chall in challs:
-            if chall.requirements and len(set(chall.requirements.get("prerequisites"))) != 0:
+            prerequisites = []
+            if chall.requirements:
+                prerequisites = chall.requirements.get("prerequisites", [])
+            if prerequisites:
                 continue
-            else:
-                # Activate logs for the challenges that do not have prerequisites
-                # and are visible
-                if chall.state == 'visible':
-                    current_app.logger.info(
-                        "hikari.challenge: activating initial logs for challenge_id=%s",
-                        chall.id,
-                    )
-                    hikari_challenge.HikariController.activate_logs(chall.id)
-                    setattr(chall, "logs_activated", True)
-                    db.session.commit()
+            if chall.logs_activated:
+                continue
+            if chall.state == 'visible':
+                current_app.logger.info(
+                    "hikari.challenge: activating initial logs for challenge_id=%s",
+                    chall.id,
+                )
+                hikari_challenge.HikariController.activate_logs(chall.id)
+                chall.logs_activated = True
+                db.session.commit()
 
         return redirect(url_for('hikariplugin.hikari_main'))
     
@@ -195,24 +193,32 @@ def load(app):
         zerotiers = hikari_models.ZerotierConfig.query.all()
 
         if len(teams) != len(zerotiers):
-            return {"message":"There are teams that do not have zerotiers associated with it.", "status":"warning", "class":"hikari-warning"}
-        else:
-            return {"message": "Ok", "status":"Ok", "class":"hikari-success"}
+            return {
+                "message": "Há equipes sem rede Zerotier associada.",
+                "status": "warning",
+                "label": "Atenção",
+                "class": "hikari-warning",
+            }
+        return {"message": "Configuração completa.", "status": "ok", "label": "Pronto", "class": "hikari-success"}
 
     def check_zerotiers():
         zerotiers = hikari_models.Zerotier.query.all()
         
         if len(zerotiers) == 0:
-            return {"message": "No zerotiers registered", "status":"warning", "class":"hikari-warning"}
-        else:
-            return {"message": "Ok", "status":"Ok", "class":"hikari-success"}
+            return {
+                "message": "Nenhuma rede Zerotier cadastrada.",
+                "status": "warning",
+                "label": "Atenção",
+                "class": "hikari-warning",
+            }
+        return {"message": "Redes cadastradas.", "status": "ok", "label": "Pronto", "class": "hikari-success"}
 
     def check_competition_status():
         if check_all():
             chall = hikari_models.HikariChallengeModel.query.filter_by(logs_activated=True).first()
             if chall and chall.logs_activated:
-                return {"message":"Ok", "status":"Started", "class":"hikari-success"}
-        return {"message":"Not running", "status":"Not running", "class":"hikari-error"}
+                return {"message": "Execução iniciada.", "status": "started", "label": "Iniciada", "class": "hikari-success"}
+        return {"message": "Execução aguardando início.", "status": "not_running", "label": "Parada", "class": "hikari-error"}
 
     # Route: main page
     @hikariplugin.route('/admin/hikari', methods=['GET'])
@@ -496,4 +502,3 @@ def load(app):
             "You have been assigned to a team. Kibana credentials:\n"
             f"USERNAME: {username}\nPASSWORD: {password}",
         )
-

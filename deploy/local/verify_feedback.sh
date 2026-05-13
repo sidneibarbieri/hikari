@@ -152,9 +152,9 @@ export_body=$(curl -sS -c "$admin_cookie_jar" -b "$admin_cookie_jar" \
   "$CTFD_URL/admin/hikari/research/feedback.jsonl")
 echo "$export_body" | python3 -c 'import json, sys; [json.loads(line) for line in sys.stdin if line.strip()]'
 echo "$export_body" | grep -q "\"user_id\": $player_id" \
-  || { echo "feedback export does not include user_id $player_id"; exit 1; }
+  || { echo "feedback export missing user_id $player_id"; exit 1; }
 echo "$export_body" | grep -q "tlx_mental_demand" \
-  || { echo "feedback export does not include NASA-TLX fields"; exit 1; }
+  || { echo "feedback export missing NASA-TLX fields"; exit 1; }
 echo "PASS: feedback export contains parseable records with research fields"
 
 echo

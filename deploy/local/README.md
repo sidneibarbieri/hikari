@@ -13,13 +13,13 @@ Elasticsearch.
 ## Bring up
 
     cd deploy/local
-    cp .env.example .env       # optional, only needed to override ports
+    cp .env.example .env       # use this file to override ports
     docker-compose up -d --build
     docker-compose ps          # services should be healthy or running
 
-First boot builds the CTFd image and pulls all other images. Expect a
-few minutes the first time. Elasticsearch needs roughly 30 seconds to
-report healthy.
+First boot builds the CTFd image and pulls the service images. Expect a few
+minutes the first time. Elasticsearch needs roughly 30 seconds to report
+healthy.
 
 ## Validate
 

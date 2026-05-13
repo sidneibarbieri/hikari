@@ -3,10 +3,10 @@
 Hikari is a blue-team training platform. Competitors hunt through live log
 streams in Kibana and submit indicators of compromise as flags through a
 CTFd-based interface. As challenges are solved, dependent log files stream
-into Elasticsearch through Kafka, so faster teams hunt over a leaner dataset
-and slower teams have to sift through more noise. Every observed action on
-either surface is captured with attribution, so a competition doubles as a
-controlled experiment.
+into Elasticsearch through Kafka. Faster teams hunt over a leaner dataset;
+later teams inspect a larger event set. Every observed action on either
+surface is captured with attribution, so each competition produces data for
+training review and research analysis.
 
 ## What ships in this artifact
 
@@ -23,8 +23,8 @@ controlled experiment.
   actor, team, target and structured forensic facts about the request.
 - **Local feedback questionnaire** stored in MariaDB, replacing the external
   form used in previous competitions.
-- **Research dashboard** with aggregations and a JSONL export of the full
-  activity log.
+- **Research dashboard** with aggregations, filters by event, actor and team,
+  plus JSONL export.
 - **Local stack** as one `docker-compose` (CTFd, MariaDB, Redis, Kafka,
   Elasticsearch, Kibana, Logstash, fake SMTP).
 
@@ -42,22 +42,26 @@ controlled experiment.
 
 The local stack is the supported path for development and artifact review.
 
+    make review
+
+The same run can be executed step by step:
+
     cd deploy/local
     cp .env.example .env
     docker-compose up -d --build
     bash run_acceptance.sh
 
-The acceptance script runs twenty focused checks: artifact hygiene, stack
-health, CTFd setup, branding application and rendering, plugin loading,
-Kafka-to-Elasticsearch data plane, default SIEM data view, activity logging
-into both DB and Elasticsearch, competitor SIEM access with query
-attribution, Kibana proxy forensic classification, local feedback capture
-and export, lone-wolf and team competitor flows, admin challenge creation
-and player submission, progressive log activation after solve, the live
-competition board, and the research dashboard plus JSONL export.
+The acceptance script runs focused checks for artifact hygiene, stack health,
+CTFd setup, branding application and rendering, plugin loading,
+Kafka-to-Elasticsearch data flow, default SIEM data view, activity logging in
+DB and Elasticsearch, competitor SIEM access with query attribution, Kibana
+proxy forensic classification, local feedback capture and export, lone-wolf
+and team competitor flows, admin challenge creation and player submission,
+progressive log activation after solve, the live competition board, and the
+research dashboard plus JSONL export.
 
-See `docs/ARTIFACT.md` for execution scope, data captured, backup import
-path, and current limits.
+See `docs/ARTIFACT.md` for execution evidence, `docs/ARCHITECTURE.md` for
+the runtime design, and `docs/DATA.md` for the captured research data.
 
 ## Compatibility
 
