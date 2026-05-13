@@ -40,6 +40,7 @@
     grid-template-columns: 1fr 2fr 2fr;
     gap: 1rem;
     margin-bottom: 1rem;
+    align-items: start;
 }
 
 .research-card {
@@ -65,6 +66,7 @@
     display: flex;
     flex-direction: column;
     justify-content: center;
+    min-height: 9rem;
 }
 
 .metric-label {
@@ -128,10 +130,7 @@
     }
 }
 
-/* Research questionnaire layout (NASA-TLX + SUS + NICE + ATT&CK).
-   Sectioned form with one card per instrument; each question is a labelled
-   input with breathing room so the cognitive load comes from the items, not
-   from the chrome. */
+/* Questionnaire layout. The spacing keeps long instrument labels readable. */
 .hikari-questionnaire {
     width: min(1080px, 100% - 2rem);
     margin: 2rem auto 4rem;
@@ -217,7 +216,8 @@
 .hikari-input--integer {
     max-width: 7rem;
 }
-.hikari-question--selectmultiplefield {
+.hikari-question--selectmultiplefield,
+.hikari-question--_multicheckbox {
     grid-column: 1 / -1;
 }
 .hikari-checkboxes {
@@ -256,4 +256,123 @@
     display: flex;
     justify-content: flex-end;
     padding-top: 0.5rem;
+}
+
+.hikari-siem {
+    width: min(1180px, 100% - 2rem);
+    margin: 2rem auto 4rem;
+    color: var(--hikari-text);
+}
+.siem-header {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 1.25rem;
+    align-items: end;
+    padding-bottom: 1.5rem;
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid var(--hikari-border);
+}
+.siem-header h1 {
+    font-family: var(--hikari-font-display);
+    font-size: clamp(2.4rem, 5vw, 4.5rem);
+    line-height: 0.95;
+    margin: 0.25rem 0 0.8rem;
+}
+.siem-subtitle {
+    max-width: 68ch;
+    color: var(--hikari-text-muted);
+    font-size: 0.98rem;
+}
+.siem-actions {
+    display: flex;
+    gap: 0.65rem;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+.siem-metrics,
+.siem-grid {
+    display: grid;
+    gap: 1rem;
+}
+.siem-metrics {
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    margin-bottom: 1rem;
+}
+.siem-metrics article,
+.siem-panel {
+    background: var(--hikari-surface);
+    border: 1px solid var(--hikari-border);
+    border-radius: 10px;
+}
+.siem-metrics article {
+    padding: 1rem 1.15rem;
+}
+.siem-metrics span {
+    display: block;
+    color: var(--hikari-text-muted);
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+.siem-metrics strong {
+    display: block;
+    color: var(--hikari-primary-strong);
+    font-family: var(--hikari-font-display);
+    font-size: 2.2rem;
+    line-height: 1.1;
+    margin-top: 0.35rem;
+}
+.siem-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    margin-bottom: 1rem;
+}
+.siem-panel {
+    padding: 1.15rem;
+}
+.siem-panel h2 {
+    font-size: 1.05rem;
+    margin: 0 0 1rem;
+}
+.siem-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.55rem 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+.siem-row:last-child {
+    border-bottom: 0;
+}
+.siem-row span {
+    overflow-wrap: anywhere;
+}
+.siem-row strong {
+    color: var(--hikari-primary-strong);
+}
+.siem-panel--wide {
+    overflow: hidden;
+}
+.siem-panel--wide .table-responsive {
+    overflow-x: auto;
+}
+.siem-panel--wide .table {
+    min-width: 900px;
+}
+.siem-panel--wide th,
+.siem-panel--wide td {
+    white-space: nowrap;
+}
+.siem-panel--wide td:last-child {
+    white-space: normal;
+    min-width: 18rem;
+}
+
+@media (max-width: 900px) {
+    .siem-header,
+    .siem-grid {
+        grid-template-columns: 1fr;
+    }
+    .siem-actions {
+        justify-content: flex-start;
+    }
 }

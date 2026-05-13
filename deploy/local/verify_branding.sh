@@ -16,12 +16,12 @@ code=$(curl -sSL -o "$page" -w '%{http_code}' "$CTFD_URL/")
 [[ "$code" == "200" ]] || { echo "FAIL: home page returned $code"; exit 1; }
 echo "PASS: home page 200"
 
-grep -q "Adversarial readiness platform" "$page" \
-  || { echo "FAIL: home page missing adversarial-readiness eyebrow"; exit 1; }
+grep -q "Plataforma de prontidão adversarial" "$page" \
+  || { echo "FAIL: home page missing readiness eyebrow"; exit 1; }
 grep -q 'class="hikari-wordmark">Hikari</h1>' "$page" \
   || { echo "FAIL: home page missing Hikari wordmark"; exit 1; }
-grep -q "hikari-strapline" "$page" \
-  || { echo "FAIL: home page missing strapline (Train. Simulate. Validate. Outperform.)"; exit 1; }
+grep -q "Treinar. Simular. Validar. Superar." "$page" \
+  || { echo "FAIL: home page missing operational strapline"; exit 1; }
 grep -q "hikari-support-item" "$page" \
   || { echo "FAIL: home page missing support section"; exit 1; }
 echo "PASS: home page renders the Hikari landing block"

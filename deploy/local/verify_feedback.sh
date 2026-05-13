@@ -1,8 +1,6 @@
 #!/usr/bin/env bash
-# Exercises the local Hikari research questionnaire as a competitor and
-# verifies that the response is persisted as structured JSON and exported
-# as JSONL with the validated-instrument fields (NASA-TLX, SUS, NICE
-# competencies, MITRE ATT&CK tactics).
+# Exercises the local Hikari questionnaire as a competitor and verifies that
+# the response is persisted as structured JSON and exported as JSONL.
 
 set -euo pipefail
 
@@ -50,7 +48,7 @@ player_id=$(db_value "SELECT id FROM users WHERE email='$PLAYER_EMAIL';" | tr -d
 [[ -n "$player_id" ]] || { echo "user not found after register"; exit 1; }
 echo "PASS: competitor persisted with id $player_id"
 
-echo "== submit research questionnaire =="
+echo "== submit questionnaire =="
 page=/tmp/hikari-feedback-form.html
 code=$(curl -sS -c "$cookie_jar" -b "$cookie_jar" -o "$page" \
   -w '%{http_code}' "$CTFD_URL/hikari/feedback")

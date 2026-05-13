@@ -11,6 +11,8 @@ The artifact provides a local training and research stack:
 - CTFd with the Hikari plugin and Hikari challenge type.
 - MariaDB and Redis for CTFd state.
 - Kafka, Logstash, Elasticsearch, and Kibana for log ingestion and hunting.
+- A Hikari SIEM surface that summarizes the active Elasticsearch index and
+  opens Kibana Discover through the authenticated gateway.
 - Activity logging for observed CTFd and Kibana actions.
 - A local feedback questionnaire stored in the Hikari database.
 - A read-only research surface for activity summaries and JSONL export.

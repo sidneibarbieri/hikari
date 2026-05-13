@@ -39,7 +39,7 @@ def feedback():
         )
         db.session.add(response)
         db.session.commit()
-        flash("Feedback submitted.", "success")
+        flash("Feedback registrado.", "success")
         return redirect(url_for("hikariplugin.feedback"))
 
     return render_template(

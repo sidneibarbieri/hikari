@@ -1,36 +1,15 @@
-"""Research-grade feedback DTO.
+"""DTO for a feedback submission.
 
-Instruments adopted:
-  - NASA Task Load Index (Hart & Staveland, 1988): five dimensions on a 1-7
-    Likert (physical demand is dropped as desk-based threat hunting does not
-    exercise the physical channel meaningfully).
-  - System Usability Scale (Brooke, 1986): the canonical 10 items on a 1-5
-    Likert, with alternating valence; total is computed downstream.
-  - NICE Cybersecurity Workforce Framework (NIST SP 800-181) work roles for
-    self-assessment of competency before/after an exercise.
-  - MITRE ATT&CK Enterprise tactics as the vocabulary for kill-chain stages
-    the participant claims to have practised.
-  - Bloom's cognitive verbs are not encoded explicitly but the learning
-    outcomes set targets the procedural-knowledge band.
-
-The payload is wide on purpose: the model stores it as JSON, so the
-analytical schema can evolve without a migration.
+The response is stored as JSON so the questionnaire can evolve without a
+database migration for every new analytical field.
 """
 
 from typing import List, Optional
 
-from pydantic import BaseModel, conint, validator
+from pydantic import BaseModel, Field, conint, validator
 
 
 _PHASES = {"pre", "post", "followup"}
-
-_NICE_ROLES = {
-    "cyber_defense_analyst",
-    "cyber_defense_incident_responder",
-    "threat_warning_analyst",
-    "cyber_defense_forensics_analyst",
-    "vulnerability_assessment_analyst",
-}
 
 _PRIMARY_ROLES = {
     "student",
@@ -76,7 +55,7 @@ Score10 = conint(ge=0, le=10)
 
 
 class FeedbackPayload(BaseModel):
-    """Single submission of the research questionnaire."""
+    """Single questionnaire response."""
 
     # Identification
     phase: str
@@ -102,7 +81,7 @@ class FeedbackPayload(BaseModel):
     tool_other_siem: Optional[Score5] = None
 
     # MITRE ATT&CK tactics practised (multiselect)
-    mitre_tactics_practised: List[str] = []
+    mitre_tactics_practised: List[str] = Field(default_factory=list)
 
     # NASA Task Load Index (post-event; 1-7)
     tlx_mental_demand: Optional[Score7] = None

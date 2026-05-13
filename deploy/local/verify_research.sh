@@ -35,14 +35,18 @@ echo "PASS: /admin/hikari/research returned 200"
 # Content-level assertions: the rendered page contains the metric block and
 # at least one of the structured sections. HTTP 200 alone would not catch a
 # template rendering error that produces an empty page.
-grep -q "Research analytics" "$dashboard" \
+grep -q "Análise científica" "$dashboard" \
   || { echo "FAIL: dashboard does not contain the heading"; exit 1; }
-grep -q "Total events" "$dashboard" \
+grep -q "Total de eventos" "$dashboard" \
   || { echo "FAIL: dashboard missing total events metric"; exit 1; }
-grep -q "Events by type" "$dashboard" \
+grep -q "Eventos por tipo" "$dashboard" \
   || { echo "FAIL: dashboard missing events-by-type section"; exit 1; }
-grep -q "Recent events" "$dashboard" \
+grep -q "Eventos recentes" "$dashboard" \
   || { echo "FAIL: dashboard missing recent events section"; exit 1; }
+if grep -q "A new CTFd version is available" "$dashboard"; then
+  echo "FAIL: admin dashboard still renders the upstream version banner"
+  exit 1
+fi
 echo "PASS: dashboard rendered with all expected sections"
 
 export_file=/tmp/hikari-research-export.jsonl
@@ -63,4 +67,4 @@ head -1 "$export_file" | jq -e '.event_type and .occurred_at' >/dev/null \
 echo "PASS: JSONL export has $line_count parseable records (sample line valid)"
 
 echo
-echo "Researcher surface verified."
+echo "Research surface verified."

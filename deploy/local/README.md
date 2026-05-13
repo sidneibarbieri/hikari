@@ -44,7 +44,8 @@ database and uploads, restarts CTFd, and leaves the snapshot under
 
 - CTFd:           http://localhost:8000
 - SIEM gateway:   http://localhost:8000/hikari/siem
-- Feedback:       http://localhost:8000/feedback
+- Feedback page:  http://localhost:8000/feedback
+- Questionnaire:  http://localhost:8000/hikari/feedback
 - Mailcatcher UI: http://localhost:1080
 
 CTFd's first-time setup wizard runs on first visit. After that, log in,

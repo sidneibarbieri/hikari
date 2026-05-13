@@ -12,8 +12,9 @@ controlled experiment.
 
 - **CTFd platform** with a Hikari plugin, a Hikari challenge type, and a
   Hikari theme that owns the visual identity.
-- **Kibana SIEM gateway** at `/hikari/siem`: competitors reach Kibana only
-  through a CTFd-authenticated proxy, so every request is attributable.
+- **Hikari SIEM surface** at `/hikari/siem`, backed by Elasticsearch
+  summaries and linked to Kibana Discover through a CTFd-authenticated proxy.
+  Competitor requests stay attributable to user and team.
 - **Activity logging** for login, registration, team operations, challenge
   view and submission, plus Kibana opens and queries; each row carries
   actor, team, target and structured forensic facts about the request.

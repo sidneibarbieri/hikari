@@ -1,16 +1,8 @@
 <nav class="navbar navbar-expand-md fixed-top bg-white">
   <div class="container">
-    <a href="{{ url_for('views.static_html', route='/') }}" class="navbar-brand">
-      {% if Configs.ctf_logo %}
-        <img
-            class="img-responsive ctf_logo"
-            src="{{ url_for('views.files', path=Configs.ctf_logo) }}"
-            alt="{{ Configs.ctf_name }}"
-            height="25"
-        >
-      {% else %}
-        {{ Configs.ctf_name }}
-      {% endif %}
+    <a href="{{ url_for('views.static_html', route='/') }}" class="navbar-brand" aria-label="Hikari">
+      <img class="hikari-nav-mark" src="/themes/hikari-theme/static/img/hikari-mark.svg" alt="" aria-hidden="true">
+      <span class="hikari-nav-wordmark">Hikari</span>
     </a>
 
     <button
@@ -153,7 +145,7 @@
                 </span>
                 <span class="d-sm-inline d-md-none d-lg-inline">
                   <i class="fas fa-user-plus pe-1"></i>
-                  {% trans %}Register{% endtrans %}
+                  Cadastro
                 </span>
               </a>
             </li>
@@ -164,9 +156,9 @@
               <span data-bs-toggle="tooltip" data-bs-placement="bottom" title="{% trans %}Login{% endtrans %}">
                 <i class="fas fa-sign-in-alt d-none d-md-inline d-lg-none"></i>
               </span>
-              <span class="d-sm-inline d-md-none d-lg-inline">
+                <span class="d-sm-inline d-md-none d-lg-inline">
                 <i class="fas fa-sign-in-alt pe-1"></i>
-                {% trans %}Login{% endtrans %}
+                Entrar
               </span>
             </a>
           </li>

@@ -1,10 +1,11 @@
-from flask import redirect, request, url_for
+from flask import render_template, request, url_for
 
 from CTFd.plugins import bypass_csrf_protection
 from CTFd.utils.decorators import authed_only
 
 from .activity import record_kibana_activity
 from .proxy import proxy_to_kibana
+from .summary import build_siem_summary
 
 
 KIBANA_METHODS = ("GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS")
@@ -34,7 +35,11 @@ def register(blueprint):
 
 @authed_only
 def siem_entrypoint():
-    return redirect(url_for("hikariplugin.kibana_gateway", proxy_path="app/discover"))
+    return render_template(
+        "hikari-siem.html",
+        summary=build_siem_summary(),
+        discover_url=url_for("hikariplugin.kibana_gateway", proxy_path="app/discover"),
+    )
 
 
 @bypass_csrf_protection

@@ -9,16 +9,16 @@
 {% block content %}
 <main class="hikari-questionnaire">
   <header class="hikari-questionnaire-header">
-    <p class="hikari-eyebrow">Research instrument</p>
-    <h1>Hikari feedback questionnaire</h1>
+    <p class="hikari-eyebrow">Instrumento de pesquisa</p>
+    <h1>Questionário Hikari</h1>
     <p>
-      Responses are stored inside Hikari and linked to your account and team for the
-      current competition. The questionnaire follows validated instruments — NASA
-      Task Load Index (Hart &amp; Staveland, 1988) and System Usability Scale
-      (Brooke, 1986) — alongside self-assessment of competencies from the NIST
-      NICE Workforce Framework and a multi-select over the MITRE ATT&amp;CK
-      Enterprise tactics. Pre-event submissions establish the baseline; post-event
-      submissions are the analytical core; follow-up captures retention.
+      As respostas ficam armazenadas no Hikari e vinculadas à sua conta, equipe
+      e execução atual. O formulário combina instrumentos consolidados, como
+      NASA Task Load Index e System Usability Scale, com autoavaliação baseada
+      no framework NIST NICE e marcação de táticas MITRE ATT&amp;CK. Respostas
+      antes do exercício estabelecem a linha de base; respostas posteriores
+      registram carga de trabalho, usabilidade, aprendizado percebido e
+      observações qualitativas.
     </p>
   </header>
 
@@ -37,7 +37,7 @@
               <label for="{{ field.id }}">{{ field.label.text }}</label>
               {% if field.type == 'TextAreaField' %}
                 {{ field(rows=3, class="hikari-input hikari-input--text") }}
-              {% elif field.type == 'SelectMultipleField' %}
+              {% elif field.type in ['SelectMultipleField', '_MultiCheckbox'] %}
                 {{ field(class="hikari-checkboxes") }}
               {% elif field.type == 'SelectField' %}
                 {{ field(class="hikari-input hikari-input--select") }}

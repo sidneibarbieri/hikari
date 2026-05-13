@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block stylesheets %}
+{{ super() }}
+<link rel="stylesheet" href="/plugins/hikari_plugin/assets/theme.css">
+<link rel="stylesheet" href="/plugins/hikari_plugin/assets/research.css">
+{% endblock %}
+
+{% block content %}
+<main class="hikari-siem">
+  <header class="siem-header">
+    <div>
+      <p class="hikari-eyebrow">Superfície de investigação</p>
+      <h1>Visão SIEM</h1>
+      <p class="siem-subtitle">
+        Resumo operacional de <code>{{ summary.index_name }}</code>. Use o Kibana Discover para
+        pivotar, filtrar e escrever consultas durante o threat hunting.
+      </p>
+    </div>
+    <div class="siem-actions">
+      <a class="hikari-action hikari-action-primary" href="{{ discover_url }}">Abrir Kibana Discover</a>
+      <a class="hikari-action hikari-action-secondary" href="/challenges">Ver desafios</a>
+    </div>
+  </header>
+
+  <section class="siem-metrics" aria-label="Indicadores">
+    <article>
+      <span>Total de eventos</span>
+      <strong>{{ summary.total_events }}</strong>
+    </article>
+    {% for row in summary.severity[:3] %}
+    <article>
+      <span>Severidade {{ row.key }}</span>
+      <strong>{{ row.count }}</strong>
+    </article>
+    {% endfor %}
+  </section>
+
+  <section class="siem-grid">
+    <article class="siem-panel">
+      <h2>Origens mais frequentes</h2>
+      {% for row in summary.source_ips %}
+        <div class="siem-row"><span>{{ row.key }}</span><strong>{{ row.count }}</strong></div>
+      {% else %}
+        <p class="text-muted">Sem dados agregados.</p>
+      {% endfor %}
+    </article>
+
+    <article class="siem-panel">
+      <h2>Destinos mais frequentes</h2>
+      {% for row in summary.destination_ips %}
+        <div class="siem-row"><span>{{ row.key }}</span><strong>{{ row.count }}</strong></div>
+      {% else %}
+        <p class="text-muted">Sem dados agregados.</p>
+      {% endfor %}
+    </article>
+
+    <article class="siem-panel">
+      <h2>Portas de destino</h2>
+      {% for row in summary.destination_ports %}
+        <div class="siem-row"><span>{{ row.key }}</span><strong>{{ row.count }}</strong></div>
+      {% else %}
+        <p class="text-muted">Sem dados agregados.</p>
+      {% endfor %}
+    </article>
+  </section>
+
+  <section class="siem-panel siem-panel--wide">
+    <h2>Eventos recentes</h2>
+    <div class="table-responsive">
+      <table class="table table-sm">
+        <thead>
+          <tr>
+            <th>Quando</th>
+            <th>Origem</th>
+            <th>Destino</th>
+            <th>Porta</th>
+            <th>Serviço</th>
+            <th>Severidade</th>
+            <th>Mensagem</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for event in summary.recent %}
+          <tr>
+            <td><code>{{ event.timestamp or "-" }}</code></td>
+            <td><code>{{ event.source_ip or "-" }}</code></td>
+            <td><code>{{ event.destination_ip or "-" }}</code></td>
+            <td>{{ event.destination_port or "-" }}</td>
+            <td>{{ event.service or "-" }}</td>
+            <td>{{ event.severity or "-" }}</td>
+            <td>{{ event.message or event.url or "-" }}</td>
+          </tr>
+          {% else %}
+          <tr><td colspan="7">Nenhum evento recente.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+</main>
+{% endblock %}

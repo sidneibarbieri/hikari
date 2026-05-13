@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 900" role="img" aria-label="Hikari operations surface">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#05080d"/>
+      <stop offset="0.58" stop-color="#0c121b"/>
+      <stop offset="1" stop-color="#121b27"/>
+    </linearGradient>
+    <radialGradient id="scan" cx="70%" cy="38%" r="58%">
+      <stop offset="0" stop-color="#10b981" stop-opacity=".28"/>
+      <stop offset=".54" stop-color="#10b981" stop-opacity=".08"/>
+      <stop offset="1" stop-color="#10b981" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#d4a35a"/>
+      <stop offset="1" stop-color="#8a6d1f"/>
+    </linearGradient>
+    <linearGradient id="green" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#34d399"/>
+      <stop offset="1" stop-color="#0f766e"/>
+    </linearGradient>
+    <pattern id="grid" width="48" height="48" patternUnits="userSpaceOnUse">
+      <path d="M48 0H0v48" fill="none" stroke="#34d399" stroke-opacity=".09" stroke-width="1"/>
+    </pattern>
+    <filter id="soft-glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  <rect width="1200" height="900" rx="28" fill="url(#bg)"/>
+  <rect width="1200" height="900" fill="url(#grid)"/>
+  <rect width="1200" height="900" fill="url(#scan)"/>
+
+  <g opacity=".8">
+    <path d="M95 670c170-210 345-140 500-285 136-127 300-135 504-72" fill="none" stroke="#34d399" stroke-opacity=".2" stroke-width="3"/>
+    <path d="M112 731c210-156 365-110 525-228 150-111 272-96 462 22" fill="none" stroke="#d4a35a" stroke-opacity=".18" stroke-width="2"/>
+    <path d="M152 770c196-48 410-50 582-16 120 24 222 20 330-42" fill="none" stroke="#9aa7b7" stroke-opacity=".16" stroke-width="2"/>
+  </g>
+
+  <g transform="translate(650 134)" filter="url(#soft-glow)">
+    <path d="M136 0A238 238 0 0 0 136 476" fill="none" stroke="url(#gold)" stroke-width="16" stroke-linecap="round"/>
+    <path d="M232 0A238 238 0 0 1 232 476" fill="none" stroke="url(#green)" stroke-width="16" stroke-linecap="round"/>
+    <path d="M184 20v170l-52 38V72L52 118v240l80 46V248l52 38v170L0 350V106z" fill="#eef5f8" opacity=".94"/>
+    <path d="M184 20v170l52 38V72l80 46v240l-80 46V248l-52 38v170l184-106V106z" fill="#c6d0da" opacity=".9"/>
+    <rect x="110" y="216" width="148" height="44" rx="4" fill="#edf3f8"/>
+    <path d="M260 148h54m-54 90h76m-76 90h54" fill="none" stroke="#10b981" stroke-width="8" stroke-linecap="round"/>
+    <circle cx="332" cy="148" r="11" fill="#10b981"/>
+    <circle cx="356" cy="238" r="11" fill="#10b981"/>
+    <circle cx="332" cy="328" r="11" fill="#10b981"/>
+  </g>
+
+  <g transform="translate(92 575)" opacity=".86">
+    <rect x="0" y="0" width="470" height="190" rx="10" fill="#0c121b" stroke="#253244"/>
+    <polyline points="34,138 90,104 146,120 202,74 258,96 314,58 370,82 432,42" fill="none" stroke="#34d399" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+    <g fill="#253244">
+      <rect x="34" y="158" width="398" height="2"/>
+      <rect x="34" y="118" width="398" height="2"/>
+      <rect x="34" y="78" width="398" height="2"/>
+      <rect x="34" y="38" width="398" height="2"/>
+    </g>
+  </g>
+</svg>

@@ -13,33 +13,34 @@ ADMIN_PASSWORD=${ADMIN_PASSWORD:-hikari-admin-pw}
 
 INDEX_CONTENT='<main class="hikari-landing">
   <section class="hikari-hero" aria-labelledby="hikari-home-title">
-    <p class="hikari-eyebrow">Adversarial readiness platform</p>
+    <p class="hikari-eyebrow">Plataforma de prontidão adversarial</p>
     <h1 id="hikari-home-title" class="hikari-wordmark">Hikari</h1>
-    <p class="hikari-strapline">Train. Simulate. Validate. Outperform.</p>
+    <p class="hikari-strapline">Treinar. Simular. Validar. Superar.</p>
     <p class="hikari-tagline">
-      A blue-team operations lab where analysts hunt over live event
-      streams, evidence is unlocked progressively as challenges fall, and
-      every action is captured as attributed research data.
+      Laboratório de operações de blue team. Os analistas caçam ameaças
+      sobre fluxos de eventos ao vivo, evidências são liberadas
+      progressivamente conforme os desafios caem, e cada ação é registrada
+      como dado de pesquisa atribuído.
     </p>
-    <nav class="hikari-actions" aria-label="Primary actions">
-      <a class="hikari-action hikari-action-primary" href="/challenges">Enter the lab</a>
-      <a class="hikari-action hikari-action-secondary" href="/hikari/siem">Open SIEM</a>
-      <a class="hikari-action hikari-action-secondary" href="/feedback">Research feedback</a>
+    <nav class="hikari-actions" aria-label="Ações principais">
+      <a class="hikari-action hikari-action-primary" href="/challenges">Entrar no laboratório</a>
+      <a class="hikari-action hikari-action-secondary" href="/hikari/siem">Abrir o SIEM</a>
+      <a class="hikari-action hikari-action-secondary" href="/feedback">Pesquisa de feedback</a>
     </nav>
   </section>
-  <section class="hikari-support" aria-label="Platform scope">
+  <section class="hikari-support" aria-label="Escopo da plataforma">
     <div class="hikari-support-inner">
       <div class="hikari-support-item">
-        <span>Compete</span>
-        <p>Teams race to unlock attacker telemetry and submit indicators as flags.</p>
+        <span>Competir</span>
+        <p>Equipes correm para liberar a telemetria do adversário e submeter indicadores como flags.</p>
       </div>
       <div class="hikari-support-item">
-        <span>Hunt</span>
-        <p>Analysts pivot through Kibana under a gateway that attributes every query.</p>
+        <span>Caçar</span>
+        <p>Analistas investigam no Kibana através de um gateway que atribui cada consulta.</p>
       </div>
       <div class="hikari-support-item">
-        <span>Study</span>
-        <p>Researchers replay attributed activity, validated questionnaires, and exports.</p>
+        <span>Estudar</span>
+        <p>Pesquisadores reanalisam atividade atribuída, questionários validados e exportações.</p>
       </div>
     </div>
   </section>
@@ -47,17 +48,17 @@ INDEX_CONTENT='<main class="hikari-landing">
 
 FEEDBACK_CONTENT='<main class="hikari-landing hikari-landing-compact">
   <section class="hikari-hero" aria-labelledby="hikari-feedback-title">
-    <p class="hikari-eyebrow">Research instrument</p>
+    <p class="hikari-eyebrow">Instrumento de pesquisa</p>
     <h1 id="hikari-feedback-title" class="hikari-wordmark">Feedback</h1>
-    <p class="hikari-strapline">Pre. Post. Reflect.</p>
+    <p class="hikari-strapline">Antes. Depois. Refletir.</p>
     <p class="hikari-tagline">
-      The questionnaire is hosted inside Hikari so responses stay attached
-      to the participant, team, and exercise. Items follow validated
-      instruments (NASA-TLX, SUS) plus competency self-assessment aligned
-      to the NIST NICE framework.
+      O questionário fica hospedado dentro do Hikari para que as respostas
+      permaneçam vinculadas ao participante, à equipe e ao exercício. Os
+      itens seguem instrumentos validados (NASA-TLX, SUS) e autoavaliação
+      de competências alinhada ao framework NIST NICE.
     </p>
-    <nav class="hikari-actions" aria-label="Feedback action">
-      <a class="hikari-action hikari-action-primary" href="/hikari/feedback">Open questionnaire</a>
+    <nav class="hikari-actions" aria-label="Acessar o questionário">
+      <a class="hikari-action hikari-action-primary" href="/hikari/feedback">Abrir o questionário</a>
     </nav>
   </section>
 </main>'
@@ -75,7 +76,7 @@ footer.footer { display: none; }
 .hikari-footer strong { color: var(--hikari-text); font-weight: 600; }
 </style>
 <div class="hikari-footer">
-  <strong>Hikari</strong> &middot; threat-hunting training platform &middot; built on CTFd
+  <strong>Hikari</strong> &middot; plataforma de prontidão adversarial &middot; construído sobre CTFd
 </div>'
 
 cookie_jar=$(mktemp)
@@ -172,6 +173,22 @@ if [[ "$current_footer" != "$THEME_FOOTER" ]]; then
   echo "theme_footer updated"
 else
   echo "theme_footer already up to date"
+fi
+
+version_response=$(curl -sS -c "$cookie_jar" -b "$cookie_jar" \
+  "$CTFD_URL/api/v1/configs/version_latest")
+version_value=$(echo "$version_response" | jq -r '.data.value // empty')
+if [[ -n "$version_value" ]]; then
+  response=$(curl -sS -c "$cookie_jar" -b "$cookie_jar" \
+    -H "Content-Type: application/json" -H "Csrf-Token: $csrf" \
+    -X PATCH "$CTFD_URL/api/v1/configs/version_latest" \
+    -d '{"value":null}')
+  success=$(echo "$response" | jq -r '.success')
+  [[ "$success" == "true" ]] \
+    || { echo "FAIL: version_latest clear returned $response"; exit 1; }
+  echo "version banner cleared"
+else
+  echo "version banner already clear"
 fi
 
 echo "branding applied"

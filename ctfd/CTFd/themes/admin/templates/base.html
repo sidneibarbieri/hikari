@@ -2,7 +2,7 @@
 <html>
 
 <head>
-	<title>Admin Panel</title>
+	<title>Hikari Admin</title>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<link rel="shortcut icon" href="{{ url_for('views.themes', theme='admin', path='img/favicon.ico') }}" type="image/x-icon">
@@ -11,6 +11,28 @@
 	{{ Assets.css("assets/css/fonts.scss", theme="admin") }}
 	{{ Assets.css("assets/css/admin.scss", theme="admin") }}
 	{{ Assets.css("assets/css/codemirror.scss", theme="admin") }}
+	<style>
+		.hikari-admin-brand {
+			display: inline-flex;
+			align-items: center;
+			gap: 0.55rem;
+			font-weight: 700;
+			letter-spacing: 0;
+		}
+		.hikari-admin-brand img {
+			width: 1.9rem;
+			height: 1.9rem;
+			border-radius: 0.4rem;
+		}
+		.admin-hikari-footer {
+			color: #9aa7b7;
+			font-size: 0.8rem;
+			letter-spacing: 0.02em;
+		}
+		.admin-hikari-footer strong {
+			color: #edf3f8;
+		}
+	</style>
 	<script type="text/javascript">
 		var init = {
 			'urlRoot': "{{ request.script_root }}",
@@ -40,39 +62,42 @@
 <body>
 	<nav class="navbar navbar-expand-md navbar-dark bg-dark fixed-top">
 		<div class="container">
-			<a href="{{ url_for('views.static_html', route='/') }}" class="navbar-brand">CTFd</a>
+			<a href="{{ url_for('views.static_html', route='/') }}" class="navbar-brand hikari-admin-brand">
+				<img src="{{ request.script_root }}/themes/hikari-theme/static/img/hikari-mark.svg" alt="" aria-hidden="true">
+				<span>Hikari</span>
+			</a>
 			<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#base-navbars"
 					aria-controls="base-navbars" aria-expanded="false" aria-label="Toggle navigation">
 				<span class="navbar-toggler-icon"></span>
 			</button>
 			<div class="collapse navbar-collapse" id="base-navbars">
 				<ul class="navbar-nav mr-auto">
-					<li class="nav-item"><a class="nav-link" href="{{ url_for('admin.statistics') }}">Statistics</a></li>
-					<li class="nav-item"><a class="nav-link" href="{{ url_for('admin.notifications') }}">Notifications</a>
+					<li class="nav-item"><a class="nav-link" href="{{ url_for('admin.statistics') }}">Estatísticas</a></li>
+					<li class="nav-item"><a class="nav-link" href="{{ url_for('admin.notifications') }}">Notificações</a>
 					</li>
 					<li class="nav-item dropdown">
-						<a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="true">Pages</a>
+						<a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="true">Páginas</a>
 						<div class="dropdown-menu">
-							<a class="dropdown-item" href="{{ url_for('admin.pages_listing') }}">All Pages</a>
-							<a class="dropdown-item" href="{{ url_for('admin.pages_new') }}">New Page</a>
+							<a class="dropdown-item" href="{{ url_for('admin.pages_listing') }}">Todas as páginas</a>
+							<a class="dropdown-item" href="{{ url_for('admin.pages_new') }}">Nova página</a>
 						</div>
 					</li>
-					<li class="nav-item"><a class="nav-link" href="{{ url_for('admin.users_listing') }}">Users</a></li>
+					<li class="nav-item"><a class="nav-link" href="{{ url_for('admin.users_listing') }}">Usuários</a></li>
 					{% if get_config('user_mode') == 'teams' %}
-					<li class="nav-item"><a class="nav-link" href="{{ url_for('admin.teams_listing') }}">Teams</a></li>
+					<li class="nav-item"><a class="nav-link" href="{{ url_for('admin.teams_listing') }}">Equipes</a></li>
 					{% endif %}
-					<li class="nav-item"><a class="nav-link" href="{{ url_for('admin.scoreboard_listing') }}">Scoreboard</a></li>
-					<li class="nav-item"><a class="nav-link" href="{{ url_for('admin.challenges_listing') }}">Challenges</a></li>
+					<li class="nav-item"><a class="nav-link" href="{{ url_for('admin.scoreboard_listing') }}">Pontuação</a></li>
+					<li class="nav-item"><a class="nav-link" href="{{ url_for('admin.challenges_listing') }}">Desafios</a></li>
 					<li class="nav-item dropdown">
 						<a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown" role="button"
-						   aria-haspopup="true" aria-expanded="true">Submissions</a>
+						   aria-haspopup="true" aria-expanded="true">Submissões</a>
 						<div class="dropdown-menu">
-							<a class="dropdown-item" href="{{ url_for('admin.submissions_listing') }}">All Submissions</a>
-							<a class="dropdown-item" href="{{ url_for('admin.submissions_listing', submission_type='correct') }}">Correct Submissions</a>
-							<a class="dropdown-item" href="{{ url_for('admin.submissions_listing', submission_type='incorrect') }}">Incorrect Submissions</a>
+							<a class="dropdown-item" href="{{ url_for('admin.submissions_listing') }}">Todas as submissões</a>
+							<a class="dropdown-item" href="{{ url_for('admin.submissions_listing', submission_type='correct') }}">Submissões corretas</a>
+							<a class="dropdown-item" href="{{ url_for('admin.submissions_listing', submission_type='incorrect') }}">Submissões incorretas</a>
 						</div>
 					</li>
-					<li class="nav-item"><a class="nav-link" href="{{ url_for('admin.config') }}">Config</a></li>
+					<li class="nav-item"><a class="nav-link" href="{{ url_for('admin.config') }}">Configuração</a></li>
 
 					{% set plugin_menu = get_admin_plugin_menu_bar() %}
 					{% set plugins = get_menubar_plugins() %}
@@ -135,14 +160,9 @@
 
 	<footer class="footer pt-2">
 		<div class="container text-center">
-			<a href="https://ctfd.io" class="text-secondary">
-				<small class="text-muted">
-					Powered by CTFd
-				</small>
-			</a>
-			<span>
-				<small class="text-muted"><br> Version {{ get_config('ctf_version') }}</small>
-			</span>
+			<div class="admin-hikari-footer">
+				<strong>Hikari</strong> &middot; painel administrativo
+			</div>
 		</div>
 	</footer>
 
