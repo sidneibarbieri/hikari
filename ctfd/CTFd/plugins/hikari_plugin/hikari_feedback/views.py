@@ -9,7 +9,7 @@ from CTFd.utils.decorators import admins_only, authed_only
 from CTFd.utils.user import get_current_user, get_ip
 
 from .dto import FeedbackPayload
-from .forms import FeedbackForm
+from .forms import FeedbackForm, iter_groups
 from .models import FeedbackResponse
 
 
@@ -42,7 +42,11 @@ def feedback():
         flash("Feedback submitted.", "success")
         return redirect(url_for("hikariplugin.feedback"))
 
-    return render_template("hikari-feedback.html", form=form)
+    return render_template(
+        "hikari-feedback.html",
+        form=form,
+        sections=list(iter_groups(form)),
+    )
 
 
 @admins_only
@@ -54,30 +58,69 @@ def feedback_export_jsonl():
     )
 
 
+_DTO_FIELDS = (
+    "phase",
+    "years_cyber_experience",
+    "primary_role",
+    "prior_ctf_count",
+    "years_soc_experience",
+    "formal_education",
+    "self_cyber_defense_analyst",
+    "self_incident_responder",
+    "self_threat_warning_analyst",
+    "self_forensics_analyst",
+    "self_vuln_assessment_analyst",
+    "tool_kibana",
+    "tool_kql",
+    "tool_attack_framework",
+    "tool_other_siem",
+    "mitre_tactics_practised",
+    "tlx_mental_demand",
+    "tlx_temporal_demand",
+    "tlx_performance",
+    "tlx_effort",
+    "tlx_frustration",
+    "sus_would_use_frequently",
+    "sus_unnecessarily_complex",
+    "sus_easy_to_use",
+    "sus_needed_support",
+    "sus_functions_well_integrated",
+    "sus_too_much_inconsistency",
+    "sus_quick_to_learn",
+    "sus_cumbersome",
+    "sus_felt_confident",
+    "sus_needed_to_learn_a_lot",
+    "learning_log_analysis",
+    "learning_pattern_correlation",
+    "learning_hypothesis_generation",
+    "learning_tool_fluency",
+    "learning_time_to_detect",
+    "learning_documentation",
+    "realism_attack_chain",
+    "realism_telemetry",
+    "realism_pace",
+    "methodology_coherence",
+    "nps_recommend",
+    "most_valuable_technique",
+    "biggest_learning_blocker",
+    "suggested_scenarios",
+    "other_comments",
+)
+
+
 def payload_from_form(form):
+    """Build the Pydantic payload from the WTForm, coercing empty strings to None."""
+    raw = {name: _normalise(getattr(form, name).data) for name in _DTO_FIELDS}
     try:
-        return FeedbackPayload(
-            phase=form.phase.data,
-            experience_level=form.experience_level.data,
-            prior_ctf=bool(form.prior_ctf.data),
-            blue_team_familiarity=form.blue_team_familiarity.data,
-            interface_rating=form.interface_rating.data,
-            challenge_difficulty=form.challenge_difficulty.data,
-            dashboard_relevance=form.dashboard_relevance.data,
-            useful_dashboard_elements=form.useful_dashboard_elements.data or "",
-            unused_dashboard_elements=form.unused_dashboard_elements.data or "",
-            technical_issues=bool(form.technical_issues.data),
-            technical_issue_notes=form.technical_issue_notes.data,
-            learning_effectiveness=form.learning_effectiveness.data,
-            learned_areas=form.learned_areas.data,
-            operational_confidence_before=form.operational_confidence_before.data,
-            operational_confidence_after=form.operational_confidence_after.data,
-            realism=form.realism.data,
-            methodology_notes=form.methodology_notes.data,
-            suggested_improvements=form.suggested_improvements.data,
-        )
+        return FeedbackPayload(**raw)
     except ValidationError as error:
         raise ValueError(str(error)) from error
+
+
+def _normalise(value):
+    if value == "" or value == []:
+        return None if value == "" else []
+    return value
 
 
 def feedback_jsonl_lines():

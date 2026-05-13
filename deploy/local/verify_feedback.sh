@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
-# Exercises the local Hikari questionnaire as a competitor and verifies that
-# the response is persisted and exported as JSONL for research use.
+# Exercises the local Hikari research questionnaire as a competitor and
+# verifies that the response is persisted as structured JSON and exported
+# as JSONL with the validated-instrument fields (NASA-TLX, SUS, NICE
+# competencies, MITRE ATT&CK tactics).
 
 set -euo pipefail
 
@@ -16,7 +18,7 @@ PLAYER_PASSWORD="feedback-pw-${stamp}"
 
 cookie_jar=$(mktemp)
 admin_cookie_jar=$(mktemp)
-trap 'rm -f "$cookie_jar" "$admin_cookie_jar" /tmp/hikari-feedback-*.html' EXIT
+trap 'rm -f "$cookie_jar" "$admin_cookie_jar" /tmp/hikari-feedback-*.html /tmp/hikari-feedback-login-code' EXIT
 
 extract_nonce() {
   grep -oE 'name="nonce"[^>]*value="[^"]+"' "$1" \
@@ -48,7 +50,7 @@ player_id=$(db_value "SELECT id FROM users WHERE email='$PLAYER_EMAIL';" | tr -d
 [[ -n "$player_id" ]] || { echo "user not found after register"; exit 1; }
 echo "PASS: competitor persisted with id $player_id"
 
-echo "== submit questionnaire =="
+echo "== submit research questionnaire =="
 page=/tmp/hikari-feedback-form.html
 code=$(curl -sS -c "$cookie_jar" -b "$cookie_jar" -o "$page" \
   -w '%{http_code}' "$CTFD_URL/hikari/feedback")
@@ -56,36 +58,85 @@ code=$(curl -sS -c "$cookie_jar" -b "$cookie_jar" -o "$page" \
 nonce=$(extract_nonce "$page")
 [[ -n "$nonce" ]] || { echo "no nonce on /hikari/feedback"; exit 1; }
 
+grep -q "NASA Task Load Index" "$page" \
+  || { echo "feedback page missing NASA-TLX section"; exit 1; }
+grep -q "System Usability Scale" "$page" \
+  || { echo "feedback page missing SUS section"; exit 1; }
+grep -q "NIST NICE" "$page" \
+  || { echo "feedback page missing NICE self-assessment section"; exit 1; }
+grep -q "MITRE ATT" "$page" \
+  || { echo "feedback page missing MITRE tactics section"; exit 1; }
+echo "PASS: questionnaire surfaces all instrument sections"
+
 code=$(curl -sS -c "$cookie_jar" -b "$cookie_jar" \
   -o /dev/null -w '%{http_code}' \
   -X POST "$CTFD_URL/hikari/feedback" \
   --data-urlencode "nonce=$nonce" \
   --data-urlencode "phase=post" \
-  --data-urlencode "experience_level=intermediate" \
-  --data-urlencode "prior_ctf=y" \
-  --data-urlencode "blue_team_familiarity=moderate" \
-  --data-urlencode "interface_rating=4" \
-  --data-urlencode "challenge_difficulty=adequate" \
-  --data-urlencode "dashboard_relevance=high" \
-  --data-urlencode "useful_dashboard_elements=timeline and host filters" \
-  --data-urlencode "unused_dashboard_elements=none observed" \
-  --data-urlencode "learning_effectiveness=4" \
-  --data-urlencode "learned_areas=log_analysis" \
-  --data-urlencode "learned_areas=incident_response" \
-  --data-urlencode "operational_confidence_before=2" \
-  --data-urlencode "operational_confidence_after=4" \
-  --data-urlencode "realism=partial" \
-  --data-urlencode "methodology_notes=Started with timeline triage, then filtered hosts." \
-  --data-urlencode "suggested_improvements=Add more guided debrief data.")
+  --data-urlencode "years_cyber_experience=3_5" \
+  --data-urlencode "primary_role=soc_analyst_t2" \
+  --data-urlencode "prior_ctf_count=4_10" \
+  --data-urlencode "years_soc_experience=1_2" \
+  --data-urlencode "formal_education=vendor_certification" \
+  --data-urlencode "self_cyber_defense_analyst=4" \
+  --data-urlencode "self_incident_responder=3" \
+  --data-urlencode "self_threat_warning_analyst=3" \
+  --data-urlencode "self_forensics_analyst=2" \
+  --data-urlencode "self_vuln_assessment_analyst=2" \
+  --data-urlencode "tool_kibana=4" \
+  --data-urlencode "tool_kql=3" \
+  --data-urlencode "tool_attack_framework=4" \
+  --data-urlencode "tool_other_siem=3" \
+  --data-urlencode "mitre_tactics_practised=initial_access" \
+  --data-urlencode "mitre_tactics_practised=execution" \
+  --data-urlencode "mitre_tactics_practised=defense_evasion" \
+  --data-urlencode "mitre_tactics_practised=command_and_control" \
+  --data-urlencode "tlx_mental_demand=6" \
+  --data-urlencode "tlx_temporal_demand=4" \
+  --data-urlencode "tlx_performance=3" \
+  --data-urlencode "tlx_effort=5" \
+  --data-urlencode "tlx_frustration=3" \
+  --data-urlencode "sus_would_use_frequently=5" \
+  --data-urlencode "sus_unnecessarily_complex=2" \
+  --data-urlencode "sus_easy_to_use=4" \
+  --data-urlencode "sus_needed_support=2" \
+  --data-urlencode "sus_functions_well_integrated=5" \
+  --data-urlencode "sus_too_much_inconsistency=1" \
+  --data-urlencode "sus_quick_to_learn=4" \
+  --data-urlencode "sus_cumbersome=2" \
+  --data-urlencode "sus_felt_confident=4" \
+  --data-urlencode "sus_needed_to_learn_a_lot=2" \
+  --data-urlencode "learning_log_analysis=4" \
+  --data-urlencode "learning_pattern_correlation=4" \
+  --data-urlencode "learning_hypothesis_generation=3" \
+  --data-urlencode "learning_tool_fluency=5" \
+  --data-urlencode "learning_time_to_detect=3" \
+  --data-urlencode "learning_documentation=3" \
+  --data-urlencode "realism_attack_chain=4" \
+  --data-urlencode "realism_telemetry=4" \
+  --data-urlencode "realism_pace=4" \
+  --data-urlencode "methodology_coherence=4" \
+  --data-urlencode "nps_recommend=9" \
+  --data-urlencode "most_valuable_technique=Pivoting on user agent + process tree." \
+  --data-urlencode "biggest_learning_blocker=Documentation drift between scenarios." \
+  --data-urlencode "suggested_scenarios=Cloud-native lateral movement." \
+  --data-urlencode "other_comments=Solid pacing.")
 [[ "$code" == "302" ]] || { echo "POST /hikari/feedback returned $code"; exit 1; }
+echo "PASS: questionnaire submission accepted (302)"
 
 rows=$(db_value "SELECT COUNT(*) FROM hikari_feedback_responses WHERE user_id=$player_id;" | tr -d '[:space:]')
 [[ "$rows" == "1" ]] || { echo "expected one feedback row for user $player_id, got $rows"; exit 1; }
-echo "PASS: feedback response persisted"
+echo "PASS: response persisted as a single row"
 
-phase=$(db_value "SELECT JSON_UNQUOTE(JSON_EXTRACT(payload, '$.phase')) FROM hikari_feedback_responses WHERE user_id=$player_id;" | tr -d '[:space:]')
-[[ "$phase" == "post" ]] || { echo "expected payload phase post, got $phase"; exit 1; }
-echo "PASS: payload remained structured"
+phase=$(db_value "SELECT JSON_UNQUOTE(JSON_EXTRACT(payload, '\$.phase')) FROM hikari_feedback_responses WHERE user_id=$player_id;" | tr -d '[:space:]')
+[[ "$phase" == "post" ]] || { echo "expected payload phase post, got '$phase'"; exit 1; }
+tlx_mental=$(db_value "SELECT JSON_EXTRACT(payload, '\$.tlx_mental_demand') FROM hikari_feedback_responses WHERE user_id=$player_id;" | tr -d '[:space:]')
+[[ "$tlx_mental" == "6" ]] || { echo "expected tlx_mental_demand=6 got '$tlx_mental'"; exit 1; }
+sus_freq=$(db_value "SELECT JSON_EXTRACT(payload, '\$.sus_would_use_frequently') FROM hikari_feedback_responses WHERE user_id=$player_id;" | tr -d '[:space:]')
+[[ "$sus_freq" == "5" ]] || { echo "expected sus_would_use_frequently=5 got '$sus_freq'"; exit 1; }
+nps=$(db_value "SELECT JSON_EXTRACT(payload, '\$.nps_recommend') FROM hikari_feedback_responses WHERE user_id=$player_id;" | tr -d '[:space:]')
+[[ "$nps" == "9" ]] || { echo "expected nps_recommend=9 got '$nps'"; exit 1; }
+echo "PASS: payload carries NASA-TLX, SUS, and NPS fields"
 
 echo "== export feedback as admin =="
 page=/tmp/hikari-feedback-admin-login.html
@@ -104,7 +155,9 @@ export_body=$(curl -sS -c "$admin_cookie_jar" -b "$admin_cookie_jar" \
 echo "$export_body" | python3 -c 'import json, sys; [json.loads(line) for line in sys.stdin if line.strip()]'
 echo "$export_body" | grep -q "\"user_id\": $player_id" \
   || { echo "feedback export does not include user_id $player_id"; exit 1; }
-echo "PASS: feedback export contains parseable records"
+echo "$export_body" | grep -q "tlx_mental_demand" \
+  || { echo "feedback export does not include NASA-TLX fields"; exit 1; }
+echo "PASS: feedback export contains parseable records with research fields"
 
 echo
 echo "Feedback flow verified."

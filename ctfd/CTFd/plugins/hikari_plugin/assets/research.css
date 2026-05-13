@@ -127,3 +127,133 @@
         justify-content: flex-start;
     }
 }
+
+/* Research questionnaire layout (NASA-TLX + SUS + NICE + ATT&CK).
+   Sectioned form with one card per instrument; each question is a labelled
+   input with breathing room so the cognitive load comes from the items, not
+   from the chrome. */
+.hikari-questionnaire {
+    width: min(1080px, 100% - 2rem);
+    margin: 2rem auto 4rem;
+    color: var(--hikari-text);
+}
+.hikari-questionnaire-header {
+    margin-bottom: 1.75rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--hikari-border);
+}
+.hikari-questionnaire-header h1 {
+    font-family: var(--hikari-font-display);
+    font-size: clamp(2rem, 3.6vw, 2.8rem);
+    margin: 0.25rem 0 0.75rem;
+    letter-spacing: -0.01em;
+}
+.hikari-questionnaire-header p {
+    max-width: 70ch;
+    color: var(--hikari-text-muted);
+    font-size: 0.97rem;
+    line-height: 1.65;
+}
+.hikari-questionnaire-form {
+    display: grid;
+    gap: 1.25rem;
+}
+.hikari-question-group {
+    background-color: var(--hikari-surface);
+    border: 1px solid var(--hikari-border);
+    border-radius: 12px;
+    padding: 1.5rem 1.5rem 1.75rem;
+}
+.hikari-question-group > header {
+    margin-bottom: 1.25rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+.hikari-question-group > header h2 {
+    font-family: var(--hikari-font-display);
+    font-size: 1.18rem;
+    margin: 0 0 0.35rem;
+}
+.hikari-question-group > header p {
+    color: var(--hikari-text-muted);
+    font-size: 0.88rem;
+    margin: 0;
+}
+.hikari-question-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1rem 1.25rem;
+}
+.hikari-question {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+}
+.hikari-question label {
+    font-size: 0.86rem;
+    color: var(--hikari-text);
+    font-weight: 500;
+    line-height: 1.4;
+}
+.hikari-input {
+    background-color: var(--hikari-surface-2);
+    color: var(--hikari-text);
+    border: 1px solid var(--hikari-border);
+    border-radius: 6px;
+    padding: 0.6rem 0.7rem;
+    font: inherit;
+    font-size: 0.95rem;
+    transition: border-color 140ms ease, box-shadow 140ms ease;
+}
+.hikari-input:focus {
+    outline: none;
+    border-color: var(--hikari-primary);
+    box-shadow: 0 0 0 3px var(--hikari-primary-soft);
+}
+.hikari-input--text {
+    resize: vertical;
+    min-height: 3.5rem;
+}
+.hikari-input--integer {
+    max-width: 7rem;
+}
+.hikari-question--selectmultiplefield {
+    grid-column: 1 / -1;
+}
+.hikari-checkboxes {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 0.5rem 1rem;
+}
+.hikari-checkboxes li {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    font-size: 0.92rem;
+    color: var(--hikari-text);
+}
+.hikari-checkboxes input[type="checkbox"] {
+    accent-color: var(--hikari-primary);
+    width: 16px;
+    height: 16px;
+}
+.hikari-question--textareafield {
+    grid-column: 1 / -1;
+}
+.hikari-question--textareafield .hikari-input {
+    min-height: 5rem;
+}
+.hikari-field-errors {
+    margin: 0.25rem 0 0;
+    padding-left: 1rem;
+    color: var(--hikari-danger);
+    font-size: 0.82rem;
+}
+.hikari-questionnaire-submit {
+    display: flex;
+    justify-content: flex-end;
+    padding-top: 0.5rem;
+}

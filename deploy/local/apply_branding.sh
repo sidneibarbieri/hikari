@@ -13,31 +13,33 @@ ADMIN_PASSWORD=${ADMIN_PASSWORD:-hikari-admin-pw}
 
 INDEX_CONTENT='<main class="hikari-landing">
   <section class="hikari-hero" aria-labelledby="hikari-home-title">
-    <p class="hikari-eyebrow">Threat-hunting lab</p>
+    <p class="hikari-eyebrow">Adversarial readiness platform</p>
     <h1 id="hikari-home-title" class="hikari-wordmark">Hikari</h1>
+    <p class="hikari-strapline">Train. Simulate. Validate. Outperform.</p>
     <p class="hikari-tagline">
-      Train analysts in CTFd, hunt in a SIEM-like workspace, and preserve
-      actions as research records.
+      A blue-team operations lab where analysts hunt over live event
+      streams, evidence is unlocked progressively as challenges fall, and
+      every action is captured as attributed research data.
     </p>
     <nav class="hikari-actions" aria-label="Primary actions">
-      <a class="hikari-action hikari-action-primary" href="/challenges">Start challenges</a>
+      <a class="hikari-action hikari-action-primary" href="/challenges">Enter the lab</a>
       <a class="hikari-action hikari-action-secondary" href="/hikari/siem">Open SIEM</a>
-      <a class="hikari-action hikari-action-secondary" href="/feedback">Answer feedback</a>
+      <a class="hikari-action hikari-action-secondary" href="/feedback">Research feedback</a>
     </nav>
   </section>
   <section class="hikari-support" aria-label="Platform scope">
     <div class="hikari-support-inner">
       <div class="hikari-support-item">
         <span>Compete</span>
-        <p>Teams solve flags and unlock log sets progressively.</p>
+        <p>Teams race to unlock attacker telemetry and submit indicators as flags.</p>
       </div>
       <div class="hikari-support-item">
         <span>Hunt</span>
-        <p>Analysts query event data through the controlled SIEM gateway.</p>
+        <p>Analysts pivot through Kibana under a gateway that attributes every query.</p>
       </div>
       <div class="hikari-support-item">
         <span>Study</span>
-        <p>Researchers inspect attributed activity, feedback, and exports.</p>
+        <p>Researchers replay attributed activity, validated questionnaires, and exports.</p>
       </div>
     </div>
   </section>
@@ -45,11 +47,14 @@ INDEX_CONTENT='<main class="hikari-landing">
 
 FEEDBACK_CONTENT='<main class="hikari-landing hikari-landing-compact">
   <section class="hikari-hero" aria-labelledby="hikari-feedback-title">
-    <p class="hikari-eyebrow">Research feedback</p>
+    <p class="hikari-eyebrow">Research instrument</p>
     <h1 id="hikari-feedback-title" class="hikari-wordmark">Feedback</h1>
+    <p class="hikari-strapline">Pre. Post. Reflect.</p>
     <p class="hikari-tagline">
       The questionnaire is hosted inside Hikari so responses stay attached
-      to the exercise, participant account, and team context.
+      to the participant, team, and exercise. Items follow validated
+      instruments (NASA-TLX, SUS) plus competency self-assessment aligned
+      to the NIST NICE framework.
     </p>
     <nav class="hikari-actions" aria-label="Feedback action">
       <a class="hikari-action hikari-action-primary" href="/hikari/feedback">Open questionnaire</a>
