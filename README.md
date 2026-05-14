@@ -57,7 +57,8 @@ progressive log activation after solve, the live competition board, and the
 research dashboard plus JSONL export.
 
 See `docs/ARTIFACT.md` for execution evidence, `docs/ARCHITECTURE.md` for
-the runtime design, and `docs/DATA.md` for the captured research data.
+the runtime design, `docs/DATA.md` for the captured research data, and
+`docs/COMPONENTS.md` for the tested component matrix.
 
 ## Compatibility
 
