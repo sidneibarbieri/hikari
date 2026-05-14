@@ -56,9 +56,16 @@ and team competitor flows, admin challenge creation and player submission,
 progressive log activation after solve, the live competition board, and the
 research dashboard plus JSONL export.
 
-See `docs/ARTIFACT.md` for execution evidence, `docs/ARCHITECTURE.md` for
-the runtime design, `docs/DATA.md` for the captured research data, and
-`docs/COMPONENTS.md` for the tested component matrix.
+## Documentation map
+
+| Document | Audience | Purpose |
+| --- | --- | --- |
+| `docs/INSTALL.md` | Operator | Prerequisites, first start, troubleshooting |
+| `docs/ARCHITECTURE.md` | Reviewer | Runtime topology, competition flow, isolation boundaries |
+| `docs/COMPONENTS.md` | Operator | Tested infrastructure versions and upgrade rule |
+| `docs/PLUGIN.md` | Reviewer or contributor | Hikari plugin packages, modules and routes |
+| `docs/DATA.md` | Researcher | Captured activity, Kibana facts and feedback schema |
+| `docs/ARTIFACT.md` | Reviewer | Execution evidence and operational scope |
 
 ## Compatibility
 
