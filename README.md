@@ -65,7 +65,9 @@ research dashboard plus JSONL export.
 | `docs/COMPONENTS.md` | Operator | Tested infrastructure versions and upgrade rule |
 | `docs/PLUGIN.md` | Reviewer or contributor | Hikari plugin packages, modules and routes |
 | `docs/DATA.md` | Researcher | Captured activity, Kibana facts and feedback schema |
-| `docs/ARTIFACT.md` | Reviewer | Execution evidence and operational scope |
+| `docs/ARTIFACT.md` | Reviewer | Execution evidence, badge mapping and operational scope |
+| `docs/AUTH.md` | Operator | Authentication options and MajorLeagueCyber integration |
+| `docs/PRIVACY.md` | Operator or DPO | LGPD declaration and participant rights |
 
 ## Compatibility
 

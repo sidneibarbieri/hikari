@@ -96,3 +96,37 @@ requires attribution during and after a competition.
 The local compose file is an executable artifact and development target. A
 production deployment defines its TLS, hostnames, secrets, backup policy and
 access-control settings for the target environment.
+
+## Empirical validation
+
+The artifact has been validated empirically across multiple cohorts. The
+companion dissertation (Camargos Belo, 2026, *Uma Plataforma para
+Treinamento de Equipes de Defesa Cibernética por meio de Competições de
+Threat Hunting*, ITA/MPCOMP) reports execution in three educational
+contexts (ITA, PUC Minas, Hackers do Bem) with the following signal:
+
+- 92% of respondents identified log analysis as the most-developed skill.
+- 45-85% reported intrusion detection competence gains.
+- 85-90% considered the simulated scenarios realistic or partly realistic.
+- 85-90% reported the platform contributes to real-world incident
+  preparation.
+
+These figures are pre-existing evidence from prior Hikari executions,
+independent of the current artifact submission. The local stack
+reproduces the same operational surface used in those competitions.
+
+## Artifact badge criteria
+
+The artifact is structured to support the standard SBC artifact badges.
+Mapping to evidence in this repository:
+
+| Badge | Evidence |
+| --- | --- |
+| Available | Public Git repository with permissive license, archived stack pinned by tag, no external service dependencies beyond Docker images. |
+| Functional | `deploy/local/run_acceptance.sh` runs 23 scripted checks end-to-end covering every documented user story (registration, login, team flow, challenge solve, progressive log unlock, SIEM, live board, research export, feedback). |
+| Reproducible | Single-command bring-up (`docker-compose up -d --build`) on any Docker host. `verify_backup_import.sh` proves a sealed historical dataset replays cleanly into a fresh Compose project. |
+| Sustainable | Code organised behind documented module boundaries (`docs/PLUGIN.md`, `docs/ARCHITECTURE.md`), hygiene script blocks venue-specific copy and marketing terminology, all infrastructure pinned to specific image versions, tests resilient to legacy data via a versioned backup format. |
+
+See `docs/INSTALL.md` for prerequisites, `docs/PLUGIN.md` for module
+boundaries, `docs/AUTH.md` for authentication options, and
+`docs/PRIVACY.md` for LGPD-compliant data-handling guarantees.
