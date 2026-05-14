@@ -42,6 +42,21 @@ import_saved_objects() {
   echo "$response" | jq -r '"saved objects imported: \(.successCount)"'
 }
 
+delete_legacy_metric_objects() {
+  local ids=(
+    low-events-metric
+    medium-events-metric
+    high-events-metric
+    critical-events-metric
+  )
+  local object_id
+  for object_id in "${ids[@]}"; do
+    kibana \
+      -X DELETE "http://localhost:5601/hikari/kibana/api/saved_objects/visualization/$object_id?force=true" \
+      -H "kbn-xsrf: true" >/dev/null || true
+  done
+}
+
 set_default_data_view() {
   response=$(kibana \
     -X POST "http://localhost:5601/hikari/kibana/api/data_views/default" \
@@ -65,6 +80,17 @@ set_default_dashboard_route() {
     || { echo "FAIL: default route update returned $response"; exit 1; }
 }
 
+apply_siem_settings() {
+  response=$(kibana \
+    -X POST "http://localhost:5601/hikari/kibana/api/kibana/settings" \
+    -H "kbn-xsrf: true" \
+    -H "Content-Type: application/json" \
+    -d '{"changes":{"theme:darkMode":true,"security.showInsecureClusterWarning":false}}')
+  dark_mode=$(echo "$response" | jq -r '.settings["theme:darkMode"].userValue')
+  [[ "$dark_mode" == "true" ]] \
+    || { echo "FAIL: SIEM settings update returned $response"; exit 1; }
+}
+
 verify_dashboard() {
   dashboard=$(kibana \
     "http://localhost:5601/hikari/kibana/api/saved_objects/dashboard/$SIEM_DASHBOARD_ID")
@@ -82,6 +108,8 @@ verify_dashboard() {
 
 wait_for_kibana
 import_saved_objects
+delete_legacy_metric_objects
 set_default_data_view
 set_default_dashboard_route
+apply_siem_settings
 verify_dashboard

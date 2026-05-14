@@ -307,7 +307,7 @@
 }
 
 .hikari-siem {
-    width: min(1180px, 100% - 2rem);
+    width: min(1320px, 100% - 2rem);
     margin: 2rem auto 4rem;
     color: var(--hikari-text);
 }
@@ -322,7 +322,7 @@
 }
 .siem-header h1 {
     font-family: var(--hikari-font-display);
-    font-size: clamp(2.4rem, 5vw, 4.5rem);
+    font-size: clamp(2.5rem, 5vw, 5rem);
     line-height: 0.95;
     margin: 0.25rem 0 0.8rem;
 }
@@ -343,14 +343,16 @@
     gap: 1rem;
 }
 .siem-metrics {
-    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
     margin-bottom: 1rem;
 }
 .siem-metrics article,
 .siem-panel {
-    background: var(--hikari-surface);
+    background:
+        radial-gradient(circle at top right, rgba(82, 196, 133, 0.1), transparent 35%),
+        var(--hikari-surface);
     border: 1px solid var(--hikari-border);
-    border-radius: 10px;
+    border-radius: 8px;
 }
 .siem-metrics article {
     padding: 1rem 1.15rem;
@@ -370,16 +372,42 @@
     line-height: 1.1;
     margin-top: 0.35rem;
 }
+.siem-metrics .siem-metric-key {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 1.45rem;
+}
 .siem-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
     margin-bottom: 1rem;
 }
+.siem-grid--primary {
+    grid-template-columns: minmax(0, 1.7fr) minmax(18rem, 0.8fr);
+}
+.siem-panel--span {
+    min-height: 18rem;
+}
 .siem-panel {
     padding: 1.15rem;
 }
+.siem-panel-heading {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
 .siem-panel h2 {
     font-size: 1.05rem;
-    margin: 0 0 1rem;
+    margin: 0;
+}
+.siem-panel-heading span {
+    color: var(--hikari-text-muted);
+    font-size: 0.78rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
 }
 .siem-row {
     display: flex;
@@ -397,8 +425,59 @@
 .siem-row strong {
     color: var(--hikari-primary-strong);
 }
+.siem-bar-row {
+    display: grid;
+    gap: 0.4rem;
+    margin-bottom: 0.85rem;
+}
+.siem-bar-label {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    color: var(--hikari-text);
+}
+.siem-bar-label span {
+    color: var(--hikari-text-muted);
+}
+.siem-bar-label strong {
+    color: var(--hikari-accent);
+}
+.siem-bar-track {
+    height: 0.55rem;
+    overflow: hidden;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08);
+}
+.siem-bar-track span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, var(--hikari-primary), var(--hikari-accent));
+}
+.siem-message-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+    gap: 0.75rem;
+}
+.siem-message {
+    display: grid;
+    gap: 0.5rem;
+    padding: 0.85rem;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    background: rgba(3, 7, 18, 0.42);
+}
+.siem-message span {
+    color: var(--hikari-text);
+    overflow-wrap: anywhere;
+}
+.siem-message strong {
+    color: var(--hikari-primary-strong);
+    font-size: 1.1rem;
+}
 .siem-panel--wide {
     overflow: hidden;
+    margin-bottom: 1rem;
 }
 .siem-panel--wide .table-responsive {
     overflow-x: auto;
@@ -417,6 +496,7 @@
 
 @media (max-width: 900px) {
     .siem-header,
+    .siem-grid--primary,
     .siem-grid {
         grid-template-columns: 1fr;
     }

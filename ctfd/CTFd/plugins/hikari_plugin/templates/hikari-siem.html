@@ -10,16 +10,16 @@
 <main class="hikari-siem">
   <header class="siem-header">
     <div>
-      <p class="hikari-eyebrow">Superfície de investigação</p>
-      <h1>Visão SIEM</h1>
+      <p class="hikari-eyebrow">Desafios reais, ameaças ocultas</p>
+      <h1>Operação SIEM</h1>
       <p class="siem-subtitle">
-        Resumo operacional de <code>{{ summary.index_name }}</code>. Use o dashboard para orientar a investigação
-        e o Discover para pivotar, filtrar e escrever consultas.
+        Superfície operacional de <code>{{ summary.index_name }}</code>. Use os sinais abaixo para priorizar
+        a investigação e abra o Discover quando precisar pivotar em KQL.
       </p>
     </div>
     <div class="siem-actions">
-      <a class="hikari-action hikari-action-primary" href="{{ dashboard_url }}">Abrir dashboard SIEM</a>
-      <a class="hikari-action hikari-action-secondary" href="{{ discover_url }}">Abrir Discover</a>
+      <a class="hikari-action hikari-action-primary" href="{{ discover_url }}">Abrir Discover</a>
+      <a class="hikari-action hikari-action-secondary" href="{{ dashboard_url }}">Dashboard Kibana</a>
       <a class="hikari-action hikari-action-secondary" href="/challenges">Ver desafios</a>
     </div>
   </header>
@@ -29,27 +29,84 @@
       <span>Total de eventos</span>
       <strong>{{ summary.total_events }}</strong>
     </article>
-    {% for row in summary.severity[:3] %}
     <article>
-      <span>Severidade {{ row.key }}</span>
-      <strong>{{ row.count }}</strong>
+      <span>Eventos de rede</span>
+      <strong>{{ summary.network_events }}</strong>
     </article>
-    {% endfor %}
+    <article>
+      <span>Eventos com severidade</span>
+      <strong>{{ summary.classified_events }}</strong>
+    </article>
+    {% if summary.source_ips %}
+    <article>
+      <span>Origem mais frequente</span>
+      <strong class="siem-metric-key">{{ summary.source_ips[0].key }}</strong>
+    </article>
+    {% endif %}
+  </section>
+
+  <section class="siem-grid siem-grid--primary">
+    <article class="siem-panel siem-panel--span">
+      <div class="siem-panel-heading">
+        <h2>Distribuição de severidade</h2>
+        <span>{{ summary.classified_events }} eventos classificados</span>
+      </div>
+      {% for row in summary.severity %}
+        {% set width = ((row.count / summary.classified_events * 100) if summary.classified_events else 0) | round(1) %}
+        <div class="siem-bar-row">
+          <div class="siem-bar-label"><span>{{ row.key }}</span><strong>{{ row.count }}</strong></div>
+          <div class="siem-bar-track"><span style="width: {{ width }}%"></span></div>
+        </div>
+      {% else %}
+        <p class="text-muted">Sem severidade agregada.</p>
+      {% endfor %}
+    </article>
+
+    <article class="siem-panel">
+      <div class="siem-panel-heading">
+        <h2>Serviços observados</h2>
+      </div>
+      {% for row in summary.services %}
+        <div class="siem-row"><span>{{ row.key }}</span><strong>{{ row.count }}</strong></div>
+      {% else %}
+        <p class="text-muted">Sem dados agregados.</p>
+      {% endfor %}
+    </article>
   </section>
 
   <section class="siem-grid">
     <article class="siem-panel">
-      <h2>Origens mais frequentes</h2>
-      {% for row in summary.source_ips %}
+      <h2>Eventos frequentes</h2>
+      {% for row in summary.event_names %}
         <div class="siem-row"><span>{{ row.key }}</span><strong>{{ row.count }}</strong></div>
       {% else %}
-        <p class="text-muted">Sem dados agregados.</p>
+        <p class="text-muted">Sem nomes de eventos agregados.</p>
+      {% endfor %}
+    </article>
+
+    <article class="siem-panel">
+      <h2>Mensagens Fortinet</h2>
+      {% for row in summary.messages %}
+        <div class="siem-row"><span>{{ row.key }}</span><strong>{{ row.count }}</strong></div>
+      {% else %}
+        <p class="text-muted">Sem mensagens Fortinet agregadas.</p>
       {% endfor %}
     </article>
 
     <article class="siem-panel">
       <h2>Destinos mais frequentes</h2>
       {% for row in summary.destination_ips %}
+        <div class="siem-row"><span>{{ row.key }}</span><strong>{{ row.count }}</strong></div>
+      {% else %}
+        <p class="text-muted">Sem dados agregados.</p>
+      {% endfor %}
+    </article>
+  </section>
+
+  <section class="siem-grid">
+    <article class="siem-panel">
+      <h2>Origens mais frequentes</h2>
+      {% for row in summary.source_ips %}
         <div class="siem-row"><span>{{ row.key }}</span><strong>{{ row.count }}</strong></div>
       {% else %}
         <p class="text-muted">Sem dados agregados.</p>
@@ -64,10 +121,36 @@
         <p class="text-muted">Sem dados agregados.</p>
       {% endfor %}
     </article>
+
+    <article class="siem-panel">
+      <h2>Países de destino</h2>
+      {% for row in summary.countries %}
+        <div class="siem-row"><span>{{ row.key }}</span><strong>{{ row.count }}</strong></div>
+      {% else %}
+        <p class="text-muted">Sem dados agregados.</p>
+      {% endfor %}
+    </article>
   </section>
 
   <section class="siem-panel siem-panel--wide">
-    <h2>Eventos recentes</h2>
+    <div class="siem-panel-heading">
+      <h2>Mensagens de alto sinal</h2>
+      <span>Valores agregados por campo operacional</span>
+    </div>
+    <div class="siem-message-grid">
+      {% for row in summary.messages + summary.event_names %}
+        <div class="siem-message"><span>{{ row.key }}</span><strong>{{ row.count }}</strong></div>
+      {% else %}
+        <p class="text-muted">Sem mensagens agregadas.</p>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="siem-panel siem-panel--wide">
+    <div class="siem-panel-heading">
+      <h2>Eventos recentes</h2>
+      <span>Ordenado por @timestamp</span>
+    </div>
     <div class="table-responsive">
       <table class="table table-sm">
         <thead>

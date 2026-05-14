@@ -50,12 +50,14 @@ echo "== open Kibana through Hikari gateway =="
 code=$(curl -sS -c "$cookie_jar" -b "$cookie_jar" \
   -o /tmp/hikari-siem-entry.html -w '%{http_code}' "$CTFD_URL/hikari/siem")
 [[ "$code" == "200" ]] || { echo "SIEM entrypoint returned $code"; cat /tmp/hikari-siem-entry.html; exit 1; }
-grep -q "Visão SIEM" /tmp/hikari-siem-entry.html \
+grep -q "Operação SIEM" /tmp/hikari-siem-entry.html \
   || { echo "SIEM entrypoint missing Hikari SIEM surface"; exit 1; }
-grep -q "Abrir dashboard SIEM" /tmp/hikari-siem-entry.html \
+grep -q "Dashboard Kibana" /tmp/hikari-siem-entry.html \
   || { echo "SIEM entrypoint missing dashboard link"; exit 1; }
 grep -q "Abrir Discover" /tmp/hikari-siem-entry.html \
   || { echo "SIEM entrypoint missing Discover link"; exit 1; }
+grep -q "Distribuição de severidade" /tmp/hikari-siem-entry.html \
+  || { echo "SIEM entrypoint missing severity distribution"; exit 1; }
 echo "PASS: SIEM entrypoint renders the Hikari SIEM surface"
 
 status_body=/tmp/hikari-siem-status.json
@@ -87,6 +89,18 @@ echo "PASS: kibana.query activity captured for user_id=$player_id"
 payload_match=$(db_value "SELECT COUNT(*) FROM hikari_activity WHERE actor_id=$player_id AND event_type='kibana.query' AND JSON_EXTRACT(payload, '$.request_body') LIKE '%match_all%';" | tr -d '[:space:]')
 [[ "$payload_match" -ge 1 ]] || { echo "kibana.query payload did not preserve the query body"; exit 1; }
 echo "PASS: query body preserved for scientific analysis"
+
+chrome_rows_before=$(db_value "SELECT COUNT(*) FROM hikari_activity WHERE actor_id=$player_id AND event_type='kibana.query' AND JSON_UNQUOTE(JSON_EXTRACT(payload, '$.path'))='api/content_management/rpc/search';" | tr -d '[:space:]')
+curl -sS -c "$cookie_jar" -b "$cookie_jar" \
+  -o /tmp/hikari-siem-content-search.json -w '%{http_code}' \
+  -H "Content-Type: application/json" \
+  -H "kbn-xsrf: hikari" \
+  -X POST "$CTFD_URL/hikari/kibana/api/content_management/rpc/search" \
+  -d '{"query":"","contentTypes":["dashboard"]}' >/tmp/hikari-siem-content-search.status
+chrome_rows_after=$(db_value "SELECT COUNT(*) FROM hikari_activity WHERE actor_id=$player_id AND event_type='kibana.query' AND JSON_UNQUOTE(JSON_EXTRACT(payload, '$.path'))='api/content_management/rpc/search';" | tr -d '[:space:]')
+[[ "$chrome_rows_after" == "$chrome_rows_before" ]] \
+  || { echo "Kibana content search was recorded as a hunting query"; exit 1; }
+echo "PASS: Kibana chrome content search is not recorded as a hunting query"
 
 echo
 echo "SIEM gateway flow verified."

@@ -16,7 +16,7 @@ from CTFd.utils.user import get_current_user, get_ip
 from CTFd.plugins.hikari_plugin.hikari_activity.dto import ActivityRecord
 from CTFd.plugins.hikari_plugin.hikari_activity import recorder
 
-from .classifier import classify
+from .classifier import KibanaQueryFacts, classify
 
 
 _QUERY_PATH_MARKERS = (
@@ -24,7 +24,10 @@ _QUERY_PATH_MARKERS = (
     "internal/search",
     "internal/bsearch",
     "api/search",
-    "api/saved_objects",
+)
+_IGNORED_PATH_MARKERS = (
+    "api/content_management/rpc/search",
+    "api/core/capabilities",
 )
 _APP_PATH_MARKERS = (
     "",
@@ -36,26 +39,28 @@ _APP_PATH_MARKERS = (
 _BODY_PREVIEW_LIMIT = 16000
 
 
-def event_type_for(path: str, method: str, body: bytes) -> Optional[str]:
+def event_type_for(path: str, method: str, facts: KibanaQueryFacts) -> Optional[str]:
     """Return the activity event_type the path/method/body corresponds to."""
     normalized = path.strip("/")
+    if any(marker in normalized for marker in _IGNORED_PATH_MARKERS):
+        return None
+    if method == "GET" and normalized in _APP_PATH_MARKERS:
+        return "kibana.open"
     if method in {"POST", "PUT", "PATCH"}:
         if any(marker in normalized for marker in _QUERY_PATH_MARKERS):
             return "kibana.query"
-        if b"query" in body or b"filter" in body:
+        if has_investigation_signal(facts):
             return "kibana.query"
-    if method == "GET" and normalized in _APP_PATH_MARKERS:
-        return "kibana.open"
     return None
 
 
 def record_kibana_activity(path: str, method: str, body: bytes, status_code: int) -> None:
-    event_type = event_type_for(path, method, body)
+    facts = classify(path, method, body)
+    event_type = event_type_for(path, method, facts)
     if event_type is None:
         return
 
     user = get_current_user()
-    facts = classify(path, method, body)
     payload = {
         "method": method,
         "path": path,
@@ -88,3 +93,22 @@ def _body_preview(body: bytes) -> Optional[str]:
     if len(body) > _BODY_PREVIEW_LIMIT:
         return text + "\n[truncated]"
     return text
+
+
+def has_investigation_signal(facts: KibanaQueryFacts) -> bool:
+    return any(
+        (
+            facts.indices,
+            facts.has_query,
+            facts.has_filters,
+            facts.has_aggs,
+            facts.has_sort,
+            facts.filter_count,
+            facts.must_count,
+            facts.should_count,
+            facts.must_not_count,
+            facts.size is not None,
+            facts.time_range_field,
+            facts.free_text_excerpt,
+        )
+    )

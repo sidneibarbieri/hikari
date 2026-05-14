@@ -36,6 +36,14 @@ panels=$(echo "$dashboard" | jq -r '.attributes.panelsJSON | fromjson | length')
   || { echo "FAIL: dashboard has too few panels ($panels)"; exit 1; }
 echo "PASS: HIKARI SIEM dashboard has $panels panels"
 
+metric_panels=$(kibana \
+  -H "kbn-xsrf: true" \
+  "http://localhost:5601/hikari/kibana/api/saved_objects/_find?type=visualization&search_fields=title&per_page=100" \
+  | jq -r '[.saved_objects[] | select((.attributes.visState | fromjson).type == "metric")] | length')
+[[ "$metric_panels" == "0" ]] \
+  || { echo "FAIL: legacy metric visualizations still present ($metric_panels)"; exit 1; }
+echo "PASS: SIEM dashboard avoids unstable legacy metric panels"
+
 data_view=$(kibana \
   -H "kbn-xsrf: true" \
   "http://localhost:5601/hikari/kibana/api/data_views/data_view/competition1")
