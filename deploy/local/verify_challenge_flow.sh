@@ -110,6 +110,18 @@ player_csrf=$(extract_csrf_nonce_js "$page")
 rm -f "$page"
 [[ -n "$player_csrf" ]] || { echo "no player CSRF nonce"; exit 1; }
 
+for wrong_flag in "wrong-${stamp}-1" "wrong-${stamp}-2"; do
+  attempt=$(curl -sS -c "$player_jar" -b "$player_jar" \
+    -H "Content-Type: application/json" \
+    -H "Csrf-Token: $player_csrf" \
+    -X POST "$CTFD_URL/api/v1/challenges/attempt" \
+    -d "{\"challenge_id\":$challenge_id,\"submission\":\"$wrong_flag\"}")
+  status=$(echo "$attempt" | jq -r '.data.status')
+  [[ "$status" == "incorrect" ]] \
+    || { echo "FAIL: wrong submit status=$status body=$attempt"; exit 1; }
+done
+echo "PASS: two incorrect submissions rejected"
+
 attempt=$(curl -sS -c "$player_jar" -b "$player_jar" \
   -H "Content-Type: application/json" \
   -H "Csrf-Token: $player_csrf" \
@@ -130,9 +142,24 @@ echo "PASS: 1 solve row recorded for player_id=$player_id challenge_id=$challeng
 echo "== assert challenge.attempt captured in activity log =="
 sleep 2
 attempts=$(db_query "SELECT COUNT(*) FROM hikari_activity WHERE event_type='challenge.attempt' AND actor_id=$player_id AND target_id=$challenge_id;" | tr -d '[:space:]')
-[[ "$attempts" -ge 1 ]] \
+[[ "$attempts" -ge 3 ]] \
   || { echo "FAIL: no challenge.attempt activity recorded ($attempts)"; exit 1; }
 echo "PASS: $attempts challenge.attempt event(s) captured for player on challenge $challenge_id"
+
+incorrect_attempts=$(db_query "SELECT COUNT(*) FROM hikari_activity WHERE event_type='challenge.attempt' AND actor_id=$player_id AND target_id=$challenge_id AND JSON_UNQUOTE(JSON_EXTRACT(payload, '$.attempt.result'))='incorrect';" | tr -d '[:space:]')
+[[ "$incorrect_attempts" -ge 2 ]] \
+  || { echo "FAIL: expected 2 incorrect attempt payloads, found $incorrect_attempts"; exit 1; }
+echo "PASS: incorrect flag attempts are classified for brute-force analysis"
+
+correct_attempts=$(db_query "SELECT COUNT(*) FROM hikari_activity WHERE event_type='challenge.attempt' AND actor_id=$player_id AND target_id=$challenge_id AND JSON_UNQUOTE(JSON_EXTRACT(payload, '$.attempt.result'))='correct';" | tr -d '[:space:]')
+[[ "$correct_attempts" -ge 1 ]] \
+  || { echo "FAIL: expected 1 correct attempt payload, found $correct_attempts"; exit 1; }
+echo "PASS: correct flag attempt is classified"
+
+raw_submission_leaks=$(db_query "SELECT COUNT(*) FROM hikari_activity WHERE event_type='challenge.attempt' AND actor_id=$player_id AND target_id=$challenge_id AND JSON_EXTRACT(payload, '$.attempt.submission') IS NOT NULL;" | tr -d '[:space:]')
+[[ "$raw_submission_leaks" == "0" ]] \
+  || { echo "FAIL: raw flag submissions leaked into activity payload"; exit 1; }
+echo "PASS: raw flag submissions are not stored"
 
 echo
 echo "Challenge submission flow verified."

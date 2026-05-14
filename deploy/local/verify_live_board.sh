@@ -19,7 +19,27 @@ grep -q "data-live-board" "$page" \
   || { echo "FAIL: live board missing JS mount point"; exit 1; }
 grep -q "/plugins/hikari_plugin/assets/live.js" "$page" \
   || { echo "FAIL: live board missing polling script"; exit 1; }
+grep -q "data-live-timeline-legend" "$page" \
+  || { echo "FAIL: live board missing timeline legend mount point"; exit 1; }
 echo "PASS: live board projection page rendered"
+
+script=$(curl -sS "$CTFD_URL/plugins/hikari_plugin/assets/live.js?v=20260513c")
+grep -q "function legendRow" <<<"$script" \
+  || { echo "FAIL: live board script missing timeline legend renderer"; exit 1; }
+grep -q "function renderYAxis" <<<"$script" \
+  || { echo "FAIL: live board script missing score axis renderer"; exit 1; }
+if grep -q "teamName" <<<"$script"; then
+  echo "FAIL: live board script contains stale teamName reference"
+  exit 1
+fi
+echo "PASS: live board script includes legend renderer and axis labels"
+
+style=$(curl -sS "$CTFD_URL/plugins/hikari_plugin/assets/live.css?v=20260513c")
+grep -q "live-grid--lower" <<<"$style" \
+  || { echo "FAIL: live board style missing lower grid rules"; exit 1; }
+grep -q "height: clamp(22rem, 38vw, 30rem)" <<<"$style" \
+  || { echo "FAIL: live timeline chart is not sized as the primary lower panel"; exit 1; }
+echo "PASS: live board style gives the timeline enough space"
 
 code=$(curl -sS -o "$data" -w '%{http_code}' "$CTFD_URL/hikari/live/data")
 [[ "$code" == "200" ]] || { echo "FAIL: /hikari/live/data returned $code"; exit 1; }

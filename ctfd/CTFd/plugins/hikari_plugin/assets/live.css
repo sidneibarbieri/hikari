@@ -7,24 +7,24 @@
 .live-header {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
-    gap: 1rem;
+    gap: 1.5rem;
     align-items: end;
-    min-height: 12rem;
-    padding: 1.5rem 0;
+    min-height: 8rem;
+    padding: 1.2rem 0 1.35rem;
     border-bottom: 1px solid var(--hikari-border);
 }
 
 .live-header h1 {
-    max-width: 13ch;
-    margin: 0.15rem 0 0.85rem;
+    max-width: none;
+    margin: 0.15rem 0 0.75rem;
     font-family: var(--hikari-font-display);
-    font-size: clamp(3rem, 7.5vw, 7rem);
-    line-height: 0.9;
-    letter-spacing: -0.02em;
+    font-size: clamp(2.6rem, 6vw, 5.4rem);
+    line-height: 0.95;
+    letter-spacing: 0;
 }
 
 .live-subtitle {
-    max-width: 62ch;
+    max-width: 78ch;
     margin: 0;
     color: var(--hikari-text-muted);
     font-size: 1rem;
@@ -96,7 +96,7 @@
 }
 
 .live-grid--lower {
-    grid-template-columns: minmax(0, 1.05fr) minmax(22rem, 0.95fr);
+    grid-template-columns: 1fr;
 }
 
 .live-panel {
@@ -181,10 +181,17 @@
     text-align: right;
 }
 
+.live-chart-shell {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(18rem, 0.28fr);
+    gap: 1.15rem;
+    align-items: stretch;
+}
+
 .live-chart {
     display: block;
     width: 100%;
-    height: 18rem;
+    height: clamp(22rem, 38vw, 30rem);
     border-radius: 8px;
     background:
         linear-gradient(rgba(154, 167, 183, 0.06) 1px, transparent 1px),
@@ -204,10 +211,77 @@
     fill: var(--live-line, var(--hikari-accent));
 }
 
+.live-chart text {
+    fill: var(--hikari-text);
+    font-family: var(--hikari-font-body);
+    font-size: 0.86rem;
+    font-weight: 700;
+    paint-order: stroke;
+    stroke: rgba(3, 7, 13, 0.86);
+    stroke-width: 4px;
+}
+
+.live-chart text.live-axis-label {
+    fill: var(--hikari-text-muted);
+    font-size: 0.72rem;
+    font-weight: 800;
+    stroke: none;
+}
+
+.live-chart-legend {
+    display: grid;
+    align-content: stretch;
+    gap: 0.55rem;
+    min-width: 0;
+}
+
+.live-legend-row {
+    display: grid;
+    grid-template-columns: 0.8rem minmax(0, 1fr) auto;
+    gap: 0.55rem;
+    align-items: center;
+    padding: 0.8rem 0.85rem;
+    border: 1px solid rgba(154, 167, 183, 0.15);
+    border-radius: 8px;
+    background: rgba(8, 13, 21, 0.68);
+}
+
+.live-legend-swatch {
+    width: 0.72rem;
+    height: 0.72rem;
+    border-radius: 999px;
+    background: var(--live-line, var(--hikari-primary-strong));
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--live-line, var(--hikari-primary-strong)) 16%, transparent);
+}
+
+.live-legend-main {
+    min-width: 0;
+}
+
+.live-legend-main strong,
+.live-legend-main span {
+    display: block;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.live-legend-main span,
+.live-legend-score {
+    color: var(--hikari-text-muted);
+    font-size: 0.78rem;
+}
+
+.live-legend-score {
+    text-align: right;
+    white-space: nowrap;
+}
+
 .live-ticker {
     display: grid;
     gap: 0.7rem;
-    max-height: 18rem;
+    max-height: 24rem;
     overflow: auto;
 }
 
@@ -255,6 +329,10 @@
 
     .live-clock {
         min-width: 0;
+    }
+
+    .live-chart-shell {
+        grid-template-columns: 1fr;
     }
 
     .live-panel header {

@@ -19,6 +19,8 @@ steps=(
   "verify_plugin.sh|admin can reach Hikari plugin"
   "verify_pipeline.sh|Kafka -> Elasticsearch data plane"
   "configure_siem.sh|default SIEM data view"
+  "import_siem_dashboards.sh|import Kibana SIEM dashboard and set default route"
+  "verify_siem_dashboard.sh|Kibana SIEM dashboard saved objects and authenticated route"
   "verify_activity.sh|activity logging captured in DB and ES"
   "verify_siem_flow.sh|competitor SIEM access and query attribution"
   "verify_kibana_classifier.sh|Kibana proxy extracts forensic facts (kind, indices, filters, time range)"

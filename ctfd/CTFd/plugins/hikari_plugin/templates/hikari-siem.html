@@ -13,12 +13,13 @@
       <p class="hikari-eyebrow">Superfície de investigação</p>
       <h1>Visão SIEM</h1>
       <p class="siem-subtitle">
-        Resumo operacional de <code>{{ summary.index_name }}</code>. Use o Kibana Discover para
-        pivotar, filtrar e escrever consultas durante o threat hunting.
+        Resumo operacional de <code>{{ summary.index_name }}</code>. Use o dashboard para orientar a investigação
+        e o Discover para pivotar, filtrar e escrever consultas.
       </p>
     </div>
     <div class="siem-actions">
-      <a class="hikari-action hikari-action-primary" href="{{ discover_url }}">Abrir Kibana Discover</a>
+      <a class="hikari-action hikari-action-primary" href="{{ dashboard_url }}">Abrir dashboard SIEM</a>
+      <a class="hikari-action hikari-action-secondary" href="{{ discover_url }}">Abrir Discover</a>
       <a class="hikari-action hikari-action-secondary" href="/challenges">Ver desafios</a>
     </div>
   </header>

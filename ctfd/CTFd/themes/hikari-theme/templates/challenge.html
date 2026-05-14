@@ -1,10 +1,27 @@
 <div :class="getStyles()" role="document" x-data="Challenge" x-init="id = {{ challenge.id }}; max_attempts = {{ max_attempts }}; attempts = {{ attempts }}; showSolves();">
-  <div class="modal-content tab-content">
+  <div class="modal-content">
   <div class="jchallenge">
       <div class="jchall-box1">
-        <div>
-          <p class="jchall-title">{{ challenge.name }}</p>
-          <p class="jchall-points">Points: {{ challenge.value }}</p>
+        <header class="jchallenge-header">
+          <div>
+            <p class="jchallenge-kicker">Investigação atual</p>
+            <p class="jchall-title">{{ challenge.name }}</p>
+          </div>
+          <div class="jchallenge-meta">
+            <span>{{ challenge.value }} pontos</span>
+          </div>
+        </header>
+
+        <nav class="jchallenge-actions" aria-label="Ações de investigação">
+          <a class="jchallenge-button jchallenge-button-primary" href="/hikari/siem" target="_blank" rel="noopener">
+            Abrir SIEM
+          </a>
+          <a class="jchallenge-button" href="/hikari/live" target="_blank" rel="noopener">
+            Placar ao vivo
+          </a>
+        </nav>
+
+        <section class="jchallenge-investigation">
           <div class="jchallenge-tags text-left">
             {% if tags %}
               {% block tags %}
@@ -16,18 +33,18 @@
               <span></span>
             {% endif %}
           </div>
-        </div>
+        </section>
         
         <div>
           <div class="jchall-description">
-            <div class="jchall-text">{{ challenge.description }}
+            <div class="jchall-text">{{ challenge.html | safe }}
 
 
               <br>
               <br>
               {% if challenge.connection_info %}
                 <div>
-                  <h4>Connection Information</h4>
+                  <h4>Informações de conexão</h4>
                   <span class="challenge-connection-info">
                     {% block connection_info %}
                       {% set conn = challenge.connection_info %}
@@ -76,7 +93,9 @@
       </div>
 
       <div class="jchall-box2">
-        <div>
+        <section class="jchallenge-submit-panel" aria-label="Enviar flag">
+          <h3>Enviar resposta</h3>
+          <p>Use o SIEM para investigar os eventos e envie a flag quando tiver evidência suficiente.</p>
           <div class="jchall-input-form">
             {% block input %}
               <input
@@ -87,7 +106,7 @@
                   id="challenge-input" class="jchallenge-input"
                   type="text" name="submission"
                   @keyup.enter="submitChallenge()"
-                  placeholder="{% trans %}Flag{% endtrans %}" x-model="submission"
+                  placeholder="Flag" x-model="submission"
               >
             {% endblock %}
             {% block submit %}
@@ -96,7 +115,7 @@
                   class="jchallenge-submit" type="submit"
                   @click.debounce.500ms="submitChallenge()"
               >
-                {% trans %}Submit{% endtrans %}
+                Enviar
               </button>
             {% endblock %}
           </div>
@@ -151,7 +170,7 @@
                 </template>
               </div>
             </div>
-        </div>
+        </section>
 
 
       
@@ -159,12 +178,15 @@
         
         
         <div class="jsub-box-2">
-          <div class="jchallenge-solves" id="solves">
-            <p>Who solved this challenge?</p>
+          <details class="jchallenge-solves" id="solves">
+            <summary>
+              <span>Solves anteriores</span>
+              <span x-text="solves.length"></span>
+            </summary>
             <div class="jtable-header">
               <ul>
-                <li>Name</li>
-                <li>Date</li>
+                <li>Nome</li>
+                <li>Data</li>
               </ul>
             </div>
             <template x-for="solve in solves">
@@ -173,7 +195,7 @@
                 <p x-text="solve.date"></p>
               </div>
             </template>
-          </div>
+          </details>
 
 
           {% if hints %}
@@ -183,15 +205,15 @@
                 <div class="jchallenge-hint" x-data="Hint" x-init="id = {{ hint.id }}">
                   {% if hint.content %}
                   <details>
-                    <summary>{% trans %}View Hint{% endtrans %}{% if hint.title %}: {{ hint.title }}{% endif %}</summary>
+                    <summary>Ver dica{% if hint.title %}: {{ hint.title }}{% endif %}</summary>
                     <div>{{ hint.html | safe }}</div>
                   </details>
                   {% else %}
                   <details @toggle="showHint(event)">
                     {% if hint.title %}
-                    <summary>{{ hint.title }} (Cost: {{ hint.cost }} point{{ hint.cost|pluralize }})</summary>
+                    <summary>{{ hint.title }} (custo: {{ hint.cost }} ponto{{ hint.cost|pluralize }})</summary>
                     {% else %}
-                    <summary>Unlock Hint for {{ hint.cost }} point{{ hint.cost|pluralize }}</summary>
+                    <summary>Desbloquear dica por {{ hint.cost }} ponto{{ hint.cost|pluralize }}</summary>
                     {% endif %}
                     <div x-html="html"></div>
                   </details>
@@ -209,5 +231,3 @@
   </div>
 </div>
 </div>
-
-

@@ -13,7 +13,10 @@
     users: root.querySelector("[data-live-users]"),
     solves: root.querySelector("[data-live-solves]"),
     timeline: root.querySelector("[data-live-timeline]"),
+    timelineLegend: root.querySelector("[data-live-timeline-legend]"),
   };
+
+  const timelineColors = ["#34d399", "#d4a35a", "#5ddeff", "#a7f3d0", "#fbbf24"];
 
   function setText(element, value) {
     if (element) {
@@ -29,7 +32,12 @@
     renderStandings(selectors.teams, board.team_standings);
     renderStandings(selectors.users, board.individual_standings);
     renderSolves(selectors.solves, board.recent_solves);
-    renderTimeline(selectors.timeline, board.timeline);
+    renderTimeline(
+      selectors.timeline,
+      selectors.timelineLegend,
+      board.timeline,
+      board.team_standings.slice(0, 5)
+    );
   }
 
   function renderStandings(container, standings) {
@@ -107,19 +115,21 @@
     return row;
   }
 
-  function renderTimeline(svg, points) {
+  function renderTimeline(svg, legend, points, standings) {
     if (!svg) {
       return;
     }
     svg.replaceChildren();
+    if (legend) {
+      legend.replaceChildren();
+    }
     if (points.length < 2) {
       return;
     }
 
     const width = 900;
     const height = 280;
-    const padding = 24;
-    const colors = ["#34d399", "#d4a35a", "#5ddeff", "#a7f3d0", "#fbbf24"];
+    const padding = { top: 24, right: 28, bottom: 24, left: 58 };
     svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
 
     const maxScore = Math.max(...points.map((point) => point.score), 1);
@@ -128,28 +138,83 @@
     const maxTime = Math.max(...times);
     const grouped = groupByTeam(points);
 
-    Array.from(grouped.entries()).slice(0, 5).forEach(([teamName, teamPoints], index) => {
-      const color = colors[index % colors.length];
+    renderYAxis(svg, maxScore, height, padding);
+
+    standings.forEach((standing, index) => {
+      const teamPoints = grouped.get(standing.name);
+      if (!teamPoints || !teamPoints.length) {
+        return;
+      }
+      const color = timelineColors[index % timelineColors.length];
       const pathData = teamPoints.map((point, pointIndex) => {
         const x = xForDate(point.occurred_at, minTime, maxTime, width, padding);
-        const y = height - padding - (point.score / maxScore) * (height - padding * 2);
+        const y = yForScore(point.score, maxScore, height, padding);
         return `${pointIndex === 0 ? "M" : "L"} ${x.toFixed(1)} ${y.toFixed(1)}`;
       }).join(" ");
 
       const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
       path.setAttribute("d", pathData);
       path.style.setProperty("--live-line", color);
-      path.dataset.team = teamName;
+      path.dataset.team = standing.name;
+      const title = document.createElementNS("http://www.w3.org/2000/svg", "title");
+      title.textContent = `${standing.name}: ${standing.score} pts, ${standing.solves} solves`;
+      path.append(title);
       svg.append(path);
 
       const last = teamPoints[teamPoints.length - 1];
+      const lastX = xForDate(last.occurred_at, minTime, maxTime, width, padding);
+      const lastY = yForScore(last.score, maxScore, height, padding);
       const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-      circle.setAttribute("cx", xForDate(last.occurred_at, minTime, maxTime, width, padding).toFixed(1));
-      circle.setAttribute("cy", (height - padding - (last.score / maxScore) * (height - padding * 2)).toFixed(1));
+      circle.setAttribute("cx", lastX.toFixed(1));
+      circle.setAttribute("cy", lastY.toFixed(1));
       circle.setAttribute("r", "5");
       circle.style.setProperty("--live-line", color);
       svg.append(circle);
+
+      if (legend) {
+        legend.append(legendRow(standing, color));
+      }
     });
+  }
+
+  function renderYAxis(svg, maxScore, height, padding) {
+    const tickCount = 5;
+    for (let index = 0; index < tickCount; index += 1) {
+      const ratio = index / (tickCount - 1);
+      const score = Math.round(maxScore * (1 - ratio));
+      const y = padding.top + ratio * (height - padding.top - padding.bottom);
+      const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      label.classList.add("live-axis-label");
+      label.setAttribute("x", (padding.left - 12).toFixed(1));
+      label.setAttribute("y", (y + 4).toFixed(1));
+      label.setAttribute("text-anchor", "end");
+      label.textContent = score.toLocaleString("pt-BR");
+      svg.append(label);
+    }
+  }
+
+  function legendRow(standing, color) {
+    const row = document.createElement("div");
+    row.className = "live-legend-row";
+    row.style.setProperty("--live-line", color);
+
+    const swatch = document.createElement("span");
+    swatch.className = "live-legend-swatch";
+
+    const main = document.createElement("span");
+    main.className = "live-legend-main";
+    const name = document.createElement("strong");
+    name.textContent = `#${standing.position} ${standing.name}`;
+    const solves = document.createElement("span");
+    solves.textContent = `${standing.solves} solves`;
+    main.append(name, solves);
+
+    const score = document.createElement("span");
+    score.className = "live-legend-score";
+    score.textContent = `${standing.score} pts`;
+
+    row.append(swatch, main, score);
+    return row;
   }
 
   function groupByTeam(points) {
@@ -165,7 +230,11 @@
   function xForDate(value, minTime, maxTime, width, padding) {
     const timestamp = new Date(value).getTime();
     const span = Math.max(maxTime - minTime, 1);
-    return padding + ((timestamp - minTime) / span) * (width - padding * 2);
+    return padding.left + ((timestamp - minTime) / span) * (width - padding.left - padding.right);
+  }
+
+  function yForScore(score, maxScore, height, padding) {
+    return height - padding.bottom - (score / maxScore) * (height - padding.top - padding.bottom);
   }
 
   function textSpan(value) {

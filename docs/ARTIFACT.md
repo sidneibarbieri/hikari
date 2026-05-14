@@ -12,7 +12,8 @@ The artifact provides a local training and research stack:
 - MariaDB and Redis for CTFd state.
 - Kafka, Logstash, Elasticsearch, and Kibana for log ingestion and hunting.
 - A Hikari SIEM surface that summarizes the active Elasticsearch index and
-  opens Kibana Discover through the authenticated gateway.
+  opens the Hikari Kibana dashboard and Discover through the authenticated
+  gateway.
 - A live competition board for projector use, backed by CTFd solves and
   refreshed through a JSON feed.
 - Activity logging for observed CTFd and Kibana actions.
@@ -38,9 +39,10 @@ bash run_acceptance.sh
 
 The acceptance script is the main executable claim. It verifies service
 health, CTFd setup, branding, plugin loading, Kafka-to-Elasticsearch ingestion,
-activity logging, SIEM query attribution, local feedback, player and team
-flows, admin challenge creation, progressive log activation, the live
-competition board, research filters, and JSONL export.
+SIEM data view and dashboard import, activity logging, SIEM query attribution,
+local feedback, player and team flows, admin challenge creation, progressive
+log activation, the live competition board, research filters, and JSONL
+export.
 
 ## Legacy data
 

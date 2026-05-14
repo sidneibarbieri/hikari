@@ -56,15 +56,23 @@ code=$(curl -sS -c "$cookie_jar" -b "$cookie_jar" -o "$page" \
 nonce=$(extract_nonce "$page")
 [[ -n "$nonce" ]] || { echo "no nonce on /hikari/feedback"; exit 1; }
 
-grep -q "NASA Task Load Index" "$page" \
-  || { echo "feedback page missing NASA-TLX section"; exit 1; }
-grep -q "System Usability Scale" "$page" \
-  || { echo "feedback page missing SUS section"; exit 1; }
-grep -q "NIST NICE" "$page" \
-  || { echo "feedback page missing NICE self-assessment section"; exit 1; }
-grep -q "MITRE ATT" "$page" \
-  || { echo "feedback page missing MITRE tactics section"; exit 1; }
-echo "PASS: questionnaire surfaces all instrument sections"
+grep -q "Carga de trabalho percebida" "$page" \
+  || { echo "feedback page missing workload section"; exit 1; }
+grep -q "Usabilidade percebida" "$page" \
+  || { echo "feedback page missing usability section"; exit 1; }
+grep -q "Autoavaliação de competência" "$page" \
+  || { echo "feedback page missing self-assessment section"; exit 1; }
+grep -q "Táticas de ataque praticadas" "$page" \
+  || { echo "feedback page missing tactics section"; exit 1; }
+! grep -q "Momento" "$page" \
+  || { echo "feedback page still asks for response moment"; exit 1; }
+! grep -qi "linha de base" "$page" \
+  || { echo "feedback page still refers to baseline timing"; exit 1; }
+! grep -q "NASA" "$page" \
+  || { echo "feedback page exposes instrument jargon to respondents"; exit 1; }
+! grep -q "NIST NICE" "$page" \
+  || { echo "feedback page exposes framework jargon to respondents"; exit 1; }
+echo "PASS: questionnaire surfaces post-event research sections"
 
 code=$(curl -sS -c "$cookie_jar" -b "$cookie_jar" \
   -o /dev/null -w '%{http_code}' \
@@ -134,7 +142,7 @@ sus_freq=$(db_value "SELECT JSON_EXTRACT(payload, '\$.sus_would_use_frequently')
 [[ "$sus_freq" == "5" ]] || { echo "expected sus_would_use_frequently=5 got '$sus_freq'"; exit 1; }
 nps=$(db_value "SELECT JSON_EXTRACT(payload, '\$.nps_recommend') FROM hikari_feedback_responses WHERE user_id=$player_id;" | tr -d '[:space:]')
 [[ "$nps" == "9" ]] || { echo "expected nps_recommend=9 got '$nps'"; exit 1; }
-echo "PASS: payload carries NASA-TLX, SUS, and NPS fields"
+echo "PASS: payload carries workload, usability, and recommendation fields"
 
 echo "== export feedback as admin =="
 page=/tmp/hikari-feedback-admin-login.html
@@ -154,7 +162,7 @@ echo "$export_body" | python3 -c 'import json, sys; [json.loads(line) for line i
 echo "$export_body" | grep -q "\"user_id\": $player_id" \
   || { echo "feedback export missing user_id $player_id"; exit 1; }
 echo "$export_body" | grep -q "tlx_mental_demand" \
-  || { echo "feedback export missing NASA-TLX fields"; exit 1; }
+  || { echo "feedback export missing workload fields"; exit 1; }
 echo "PASS: feedback export contains parseable records with research fields"
 
 echo

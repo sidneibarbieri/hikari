@@ -3,7 +3,7 @@
 {% block stylesheets %}
 {{ super() }}
 <link rel="stylesheet" href="/plugins/hikari_plugin/assets/theme.css">
-<link rel="stylesheet" href="/plugins/hikari_plugin/assets/live.css">
+<link rel="stylesheet" href="/plugins/hikari_plugin/assets/live.css?v=20260513c">
 {% endblock %}
 
 {% block content %}
@@ -11,9 +11,9 @@
   <header class="live-header">
     <div>
       <p class="hikari-eyebrow">Competição em tempo real</p>
-      <h1>Desafios reais, ameaças ocultas</h1>
+      <h1>Placar ao vivo</h1>
       <p class="live-subtitle">
-        Painel para acompanhar a corrida das equipes, a contribuição individual e os solves recentes.
+        Acompanhe a pontuação das equipes, a contribuição individual e os solves recentes durante a competição.
       </p>
     </div>
     <div class="live-clock">
@@ -49,10 +49,13 @@
   <section class="live-grid live-grid--lower">
     <article class="live-panel live-panel--timeline">
       <header>
-        <h2>Evolução</h2>
-        <span>progressão acumulada das equipes líderes</span>
+        <h2>Evolução por equipe</h2>
+        <span>pontuação acumulada das líderes</span>
       </header>
-      <svg class="live-chart" data-live-timeline role="img" aria-label="Evolução da pontuação"></svg>
+      <div class="live-chart-shell">
+        <svg class="live-chart" data-live-timeline role="img" aria-label="Evolução da pontuação por equipe"></svg>
+        <div class="live-chart-legend" data-live-timeline-legend aria-label="Legenda da evolução"></div>
+      </div>
     </article>
 
     <article class="live-panel live-panel--ticker">
@@ -68,5 +71,5 @@
 
 {% block scripts %}
 {{ super() }}
-<script src="/plugins/hikari_plugin/assets/live.js"></script>
+<script src="/plugins/hikari_plugin/assets/live.js?v=20260513c"></script>
 {% endblock %}

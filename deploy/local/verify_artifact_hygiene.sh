@@ -15,7 +15,7 @@ tracked_files=$(git ls-files | while IFS= read -r path; do
   [[ -e "$path" ]] && printf '%s\n' "$path"
 done)
 
-generated_patterns='(^|/)(\.DS_Store|\.env)$|^deploy/local/artifacts/|data_backup\.zip|(^|/)__pycache__/|\.pyc$'
+generated_patterns='(^|/)(\.DS_Store|\.env)$|^deploy/local/artifacts/|^(lab|detectionlab)/|data_backup\.zip|(^|/)__pycache__/|\.pyc$'
 generated_hits=$(printf '%s\n' "$tracked_files" | grep -E "$generated_patterns" || true)
 [[ -z "$generated_hits" ]] || fail "generated or local-only files are tracked:
 $generated_hits"

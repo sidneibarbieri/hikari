@@ -36,7 +36,7 @@ check_page "/register" "Crie uma conta"
 check_page "/scoreboard" "Pontuação"
 check_page "/users" "Usuários"
 check_page "/teams" "Equipes"
-check_page "/hikari/live" "Desafios reais"
+check_page "/hikari/live" "Placar ao vivo"
 
 echo
 echo "Public pages verified."

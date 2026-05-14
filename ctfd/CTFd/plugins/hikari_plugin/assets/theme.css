@@ -37,7 +37,7 @@ h1, h2, h3, h4, h5, h6 {
     color: var(--hikari-text);
     font-family: var(--hikari-font-display);
     font-weight: 600;
-    letter-spacing: -0.01em;
+    letter-spacing: 0;
 }
 
 a, .btn-link {
@@ -146,6 +146,8 @@ hr {
 
 .container {
     max-width: min(1180px, calc(100vw - 2rem));
+    margin-right: auto;
+    margin-left: auto;
 }
 
 .card,
@@ -350,11 +352,73 @@ textarea.form-control {
     color: #06101f;
 }
 
-.jchallenge-button {
-    min-height: 8.5rem;
-    padding: 1.1rem;
+.hikari-challenges-header {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: clamp(1rem, 3vw, 2rem);
+    align-items: end;
+    margin: 1.25rem 0 1.5rem;
+    padding: clamp(1.4rem, 3vw, 2.2rem);
     background:
-        linear-gradient(180deg, rgba(18, 27, 39, 0.96), rgba(12, 18, 27, 0.98));
+        radial-gradient(520px 260px at 18% 10%, rgba(16, 185, 129, 0.14), transparent 70%),
+        linear-gradient(135deg, rgba(18, 27, 39, 0.94), rgba(8, 12, 19, 0.98));
+    border: 1px solid rgba(154, 167, 183, 0.18);
+    border-radius: var(--hikari-radius);
+}
+.hikari-challenges-header h1 {
+    margin: 0 0 0.55rem;
+    font-size: clamp(2.2rem, 6vw, 4.8rem);
+    line-height: 0.98;
+}
+.hikari-challenges-header p {
+    max-width: 46rem;
+    margin: 0;
+    color: var(--hikari-text-muted);
+    font-size: 1rem;
+    line-height: 1.55;
+}
+.hikari-challenges-actions {
+    display: flex;
+    gap: 0.65rem;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+}
+.hikari-category-section {
+    margin: 0 0 1.4rem;
+}
+.category-header {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 1rem;
+    margin: 0 0 0.75rem;
+    padding-bottom: 0.55rem;
+    border-bottom: 1px solid rgba(154, 167, 183, 0.16);
+}
+.category-header span,
+.category-header strong {
+    color: var(--hikari-text-muted);
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0;
+}
+.category-header h2 {
+    margin: 0.1rem 0 0;
+    font-size: 1.35rem;
+    line-height: 1.15;
+}
+.hikari-challenge-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+    gap: 0.85rem;
+}
+.jchallenge-button {
+    min-height: 9.25rem;
+    padding: 1rem;
+    background:
+        linear-gradient(180deg, rgba(18, 27, 39, 0.96), rgba(8, 12, 19, 0.98));
     border: 1px solid var(--hikari-border);
     border-radius: var(--hikari-radius);
     color: var(--hikari-text);
@@ -366,21 +430,310 @@ textarea.form-control {
     border-color: rgba(16, 185, 129, 0.62);
     background-color: var(--hikari-primary-soft);
     transform: translateY(-1px);
+    outline: none;
 }
-.jchallenge-button p {
-    margin: 0 0 0.9rem;
+.hikari-challenge-card {
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    gap: 0.75rem;
+    width: 100%;
+}
+.hikari-challenge-card strong {
+    display: block;
     color: var(--hikari-text);
     font-size: 1rem;
     font-weight: 700;
     line-height: 1.25;
+    overflow-wrap: anywhere;
 }
-.jchallenge-button span {
-    color: var(--hikari-accent);
+.hikari-challenge-status {
+    justify-self: start;
+    padding: 0.22rem 0.5rem;
+    color: var(--hikari-primary-strong);
+    background-color: rgba(16, 185, 129, 0.10);
+    border: 1px solid rgba(16, 185, 129, 0.24);
+    border-radius: 999px;
+    font-size: 0.72rem;
     font-weight: 700;
+}
+.hikari-challenge-points {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.3rem;
+    color: var(--hikari-accent);
+    font-family: var(--hikari-font-display);
+    font-weight: 700;
+}
+.hikari-challenge-points small {
+    color: var(--hikari-text-muted);
+    font-family: var(--hikari-font);
+    font-size: 0.75rem;
 }
 .jchallenge-solved {
     border-color: rgba(16, 185, 129, 0.8);
     box-shadow: inset 0 0 0 1px rgba(16, 185, 129, 0.24);
+}
+
+#challenge-window.modal {
+    position: fixed !important;
+    inset: 0;
+    z-index: 1055;
+    overflow-x: hidden;
+    overflow-y: auto;
+    background:
+        radial-gradient(circle at 20% 20%, rgba(16, 185, 129, 0.08), transparent 28rem),
+        rgba(3, 7, 13, 0.86);
+}
+#challenge-window .modal-dialog {
+    position: relative;
+    z-index: 2;
+    max-width: min(74rem, calc(100vw - 2rem));
+    margin: clamp(2rem, 5vh, 4rem) auto;
+}
+#challenge-window .modal-content,
+#challenge-window .tab-content {
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible;
+    background-color: var(--hikari-surface) !important;
+    border: 1px solid rgba(154, 167, 183, 0.22);
+    border-radius: var(--hikari-radius);
+}
+.jchallenge {
+    position: static !important;
+    top: auto !important;
+    left: auto !important;
+    width: auto !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    transform: none !important;
+    display: grid;
+    grid-template-columns: minmax(0, 1.45fr) minmax(18rem, 0.68fr);
+    gap: clamp(1rem, 2vw, 1.5rem);
+    padding: clamp(1.15rem, 2.3vw, 1.7rem);
+    background-color: var(--hikari-surface);
+    border-radius: var(--hikari-radius);
+}
+.jchall-box1,
+.jchall-box2,
+.jsub-box-2,
+.jchallenge-solves,
+.jchallenge-hints {
+    min-width: 0;
+    height: auto !important;
+}
+.jchall-box1,
+.jchall-box2 {
+    margin-right: 0 !important;
+    display: grid;
+    gap: 1rem;
+    align-content: start;
+}
+.jchallenge-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    align-items: start;
+}
+.jchallenge-kicker {
+    margin: 0 0 0.35rem;
+    color: var(--hikari-primary-strong);
+    font-size: 0.76rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+.jchall-title {
+    margin: 0 0 0.4rem;
+    color: var(--hikari-text);
+    font-family: var(--hikari-font-display);
+    font-size: clamp(1.45rem, 3vw, 2.2rem);
+    font-weight: 700;
+    line-height: 1.05;
+    overflow-wrap: anywhere;
+}
+.jchallenge-meta {
+    flex: 0 0 auto;
+    padding: 0.45rem 0.62rem;
+    color: var(--hikari-accent);
+    background: rgba(212, 163, 90, 0.09);
+    border: 1px solid rgba(212, 163, 90, 0.22);
+    border-radius: 999px;
+    font-size: 0.82rem;
+    font-weight: 800;
+    white-space: nowrap;
+}
+.jchall-points {
+    margin: 0;
+    color: var(--hikari-accent);
+    font-weight: 700;
+}
+.jchallenge-actions {
+    display: flex;
+    gap: 0.65rem;
+    flex-wrap: wrap;
+}
+.jchallenge-actions .jchallenge-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 2.65rem;
+    padding: 0 0.95rem;
+    color: var(--hikari-text);
+    background: transparent;
+    border: 1px solid rgba(154, 167, 183, 0.24);
+    border-radius: 7px;
+    font-weight: 800;
+    text-align: center;
+    text-decoration: none;
+}
+.jchallenge-actions .jchallenge-button-primary {
+    color: #06101f;
+    background: var(--hikari-primary);
+    border-color: var(--hikari-primary);
+}
+.jchallenge-tags {
+    display: flex;
+    gap: 0.45rem;
+    flex-wrap: wrap;
+    margin-top: 0.75rem;
+}
+.jchallenge-tag {
+    display: inline-flex;
+    padding: 0.24rem 0.5rem;
+    color: var(--hikari-text-muted);
+    border: 1px solid rgba(154, 167, 183, 0.22);
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+.jchall-description {
+    color: var(--hikari-text);
+    line-height: 1.6;
+}
+.jchall-text,
+.jchall-text p,
+.jchall-text li {
+    color: var(--hikari-text);
+    line-height: 1.6;
+    overflow-wrap: anywhere;
+}
+.jchall-text img,
+.jchall-text iframe,
+.jchall-text video {
+    max-width: 100%;
+}
+.jchallenge-files {
+    display: grid;
+    gap: 0.5rem;
+    text-align: left !important;
+}
+.jchallenge-file a {
+    max-width: 100%;
+    color: var(--hikari-primary);
+}
+.jchallenge-submit-panel {
+    padding: 1rem;
+    border: 1px solid rgba(154, 167, 183, 0.16);
+    border-radius: var(--hikari-radius);
+    background:
+        radial-gradient(320px 160px at 100% 0%, rgba(16, 185, 129, 0.08), transparent 70%),
+        rgba(8, 13, 21, 0.58);
+}
+.jchallenge-submit-panel h3 {
+    margin: 0 0 0.35rem;
+    color: var(--hikari-text);
+    font-size: 1rem;
+}
+.jchallenge-submit-panel p {
+    margin: 0 0 0.85rem;
+    color: var(--hikari-text-muted);
+    font-size: 0.86rem;
+    line-height: 1.45;
+}
+.jchall-input-form {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(5.8rem, auto);
+    gap: 0.6rem;
+}
+.jchallenge-input {
+    box-sizing: border-box;
+    min-width: 0;
+    height: 46px;
+    min-height: 46px;
+    padding: 0 0.85rem;
+    background-color: var(--hikari-surface-2);
+    border: 1px solid var(--hikari-border);
+    border-radius: var(--hikari-radius);
+    color: var(--hikari-text);
+}
+.jchallenge-input:focus {
+    border-color: var(--hikari-primary);
+    box-shadow: 0 0 0 0.15rem var(--hikari-primary-soft);
+    outline: none;
+}
+.jchallenge-submit {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 46px;
+    min-height: 46px;
+    padding: 0 1.05rem;
+    color: #06101f;
+    background-color: var(--hikari-primary);
+    border: 1px solid var(--hikari-primary);
+    border-radius: 7px;
+    font-weight: 800;
+    line-height: 1;
+}
+.jsub-box-2 {
+    display: grid;
+    gap: 1rem;
+}
+.jchallenge-solves,
+.jchallenge-hints {
+    padding: 0.85rem;
+    background-color: rgba(18, 27, 39, 0.58);
+    border: 1px solid rgba(154, 167, 183, 0.16);
+    border-radius: var(--hikari-radius);
+}
+.jchallenge-solves {
+    color: var(--hikari-text-muted);
+}
+.jchallenge-solves summary {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    color: var(--hikari-text-muted);
+    cursor: pointer;
+    font-weight: 800;
+}
+.jchallenge-solves[open] summary {
+    margin-bottom: 0.75rem;
+}
+.jchallenge-solves p {
+    margin-bottom: 0.55rem;
+}
+.jtable-header ul,
+.jsolve-entry {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(8rem, auto);
+    gap: 0.8rem;
+    align-items: center;
+}
+.jtable-header ul {
+    margin: 0 0 0.5rem;
+    padding: 0;
+    color: var(--hikari-text-muted);
+    font-size: 0.78rem;
+    font-weight: 700;
+    list-style: none;
+}
+.jsolve-entry p {
+    min-width: 0;
+    margin: 0;
+    overflow-wrap: anywhere;
+    color: var(--hikari-text-muted);
 }
 
 .team-join-panel {
@@ -407,6 +760,32 @@ textarea.form-control {
 @media (max-width: 640px) {
     .container {
         max-width: calc(100vw - 1rem);
+    }
+    .hikari-challenges-header {
+        grid-template-columns: 1fr;
+        align-items: start;
+    }
+    .hikari-challenges-actions {
+        justify-content: stretch;
+    }
+    .hikari-challenges-actions .hikari-action {
+        width: 100%;
+    }
+    .hikari-challenge-grid {
+        grid-template-columns: 1fr;
+    }
+    .jchallenge {
+        grid-template-columns: 1fr;
+        padding: 0.9rem;
+    }
+    .jchallenge-header {
+        display: grid;
+    }
+    .jchallenge-meta {
+        justify-self: start;
+    }
+    .jchall-input-form {
+        grid-template-columns: 1fr;
     }
     .jsearch-form {
         grid-template-columns: 1fr;
@@ -446,11 +825,16 @@ textarea.form-control {
 /* Landing page rendered by apply_branding.sh into the index Page. */
 .hikari-landing {
     position: relative;
-    min-height: calc(100svh - 6.5rem);
+    min-height: calc(100svh - 5rem);
     overflow: hidden;
-    margin: -1.5rem calc(50% - 50vw) 0 calc(50% - 50vw);
+    margin-top: 0;
+    margin-right: calc((100% - (100vw - 16px)) / 2);
+    margin-left: calc((100% - (100vw - 16px)) / 2);
+    width: calc(100vw - 16px);
+    max-width: none;
     background-color: var(--hikari-bg);
     border-bottom: 1px solid var(--hikari-border);
+    border-radius: var(--hikari-radius);
 }
 .hikari-landing::before {
     content: "";
@@ -465,9 +849,9 @@ textarea.form-control {
     content: "";
     position: absolute;
     z-index: 1;
-    right: clamp(2rem, 8vw, 7rem);
+    right: clamp(2rem, 12vw, 15rem);
     top: 50%;
-    width: clamp(22rem, 31vw, 34rem);
+    width: clamp(24rem, 29vw, 36rem);
     aspect-ratio: 3 / 4;
     border: 1px solid rgba(16, 185, 129, 0.58);
     border-radius: 1.45rem;
@@ -485,12 +869,12 @@ textarea.form-control {
 .hikari-hero {
     position: relative;
     z-index: 2;
-    width: min(665px, calc(100vw - 2rem));
-    min-height: calc(100svh - 14rem);
+    width: min(40rem, 50%);
+    min-height: calc(100svh - 12rem);
     display: flex;
     flex-direction: column;
     justify-content: center;
-    padding: clamp(4rem, 8vw, 6.5rem) clamp(1.25rem, 7vw, 6.5rem) 2.75rem;
+    padding: clamp(3rem, 6vw, 5.5rem) clamp(1.25rem, 4.5vw, 4rem) 2.4rem;
     text-align: left;
 }
 .hikari-hero-mark {
@@ -508,14 +892,14 @@ textarea.form-control {
     font-size: 0.78rem;
     font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.18em;
+    letter-spacing: 0;
     margin-bottom: 1.1rem;
 }
 .hikari-wordmark {
     font-family: var(--hikari-font-display);
     font-size: clamp(4.8rem, 11vw, 8.8rem);
     font-weight: 700;
-    letter-spacing: -0.02em;
+    letter-spacing: 0;
     margin: 0 0 1rem 0;
     color: #f8fbff;
     line-height: 0.86;
@@ -526,8 +910,8 @@ textarea.form-control {
     font-family: var(--hikari-font-display);
     font-size: clamp(0.92rem, 1.05vw, 1.04rem);
     font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.32em;
+    text-transform: none;
+    letter-spacing: 0;
     margin: 0 0 1.5rem 0;
 }
 .hikari-tagline {
@@ -582,11 +966,11 @@ textarea.form-control {
 .hikari-support {
     position: relative;
     z-index: 2;
-    padding: 0 clamp(1.25rem, 7vw, 6.5rem) clamp(2rem, 5vw, 3.25rem);
+    padding: 0 clamp(1.25rem, 4.5vw, 4rem) clamp(2rem, 4vw, 3rem);
 }
 .hikari-support-inner {
     display: grid;
-    max-width: 665px;
+    max-width: min(40rem, 50%);
     grid-template-columns: repeat(3, minmax(0, 1fr));
     border-top: 1px solid rgba(154, 167, 183, 0.26);
 }
@@ -615,6 +999,7 @@ textarea.form-control {
 @media (max-width: 760px) {
     .hikari-landing {
         min-height: auto;
+        width: 100%;
     }
     .hikari-landing::before {
         background:
@@ -633,6 +1018,7 @@ textarea.form-control {
         font-size: clamp(3.8rem, 20vw, 5.2rem);
     }
     .hikari-hero {
+        width: 100%;
         min-height: 34rem;
         padding: 3.25rem 1.25rem 2rem;
     }
@@ -646,6 +1032,7 @@ textarea.form-control {
         padding: 0 1.25rem 2rem;
     }
     .hikari-support-inner {
+        max-width: none;
         grid-template-columns: 1fr;
     }
     .hikari-support-item {

@@ -6,7 +6,8 @@ choose to publish only, persist only, or both, without touching this module.
 """
 
 from datetime import datetime, timezone
-from typing import Optional
+import hashlib
+from typing import Any, Dict, Optional
 
 from flask import Request, Response
 
@@ -48,6 +49,45 @@ def _challenge_id_from_request(request: Request) -> Optional[int]:
     return None
 
 
+def _request_json(request: Request) -> Dict[str, Any]:
+    if not request.is_json:
+        return {}
+    body = request.get_json(silent=True)
+    if isinstance(body, dict):
+        return body
+    return {}
+
+
+def _response_json(response: Response) -> Dict[str, Any]:
+    body = response.get_json(silent=True)
+    if isinstance(body, dict):
+        return body
+    return {}
+
+
+def _submission_facts(request: Request) -> Dict[str, Any]:
+    body = _request_json(request)
+    submission = body.get("submission", request.form.get("submission"))
+    if submission is None:
+        return {}
+    value = str(submission)
+    digest = hashlib.sha256(value.encode("utf-8")).hexdigest()
+    return {
+        "submission_length": len(value),
+        "submission_sha256": digest,
+    }
+
+
+def _challenge_attempt_payload(request: Request, response: Response) -> Dict[str, Any]:
+    response_body = _response_json(response)
+    data = response_body.get("data")
+    result = data.get("status") if isinstance(data, dict) else None
+    facts = _submission_facts(request)
+    if result is not None:
+        facts["result"] = result
+    return {"attempt": facts} if facts else {}
+
+
 def build_record(
     event: ObservedEvent,
     request: Request,
@@ -68,7 +108,9 @@ def build_record(
         target_kind = "challenge"
         target_id = _challenge_id_from_request(request)
 
-    payload = {"status_code": response.status_code}
+    payload: Dict[str, Any] = {"status_code": response.status_code}
+    if event.event_type == "challenge.attempt":
+        payload.update(_challenge_attempt_payload(request, response))
 
     return ActivityRecord(
         event_type=event.event_type,

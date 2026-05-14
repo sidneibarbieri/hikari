@@ -13,17 +13,15 @@
     <h1>Questionário Hikari</h1>
     <p>
       As respostas ficam armazenadas no Hikari e vinculadas à sua conta, equipe
-      e execução atual. O formulário combina instrumentos consolidados, como
-      NASA Task Load Index e System Usability Scale, com autoavaliação baseada
-      no framework NIST NICE e marcação de táticas MITRE ATT&amp;CK. Respostas
-      antes do exercício estabelecem a linha de base; respostas posteriores
-      registram carga de trabalho, usabilidade, aprendizado percebido e
-      observações qualitativas.
+      e competição. Preencha após o exercício. O formulário registra perfil,
+      experiência prévia, carga de trabalho, usabilidade, aprendizado percebido,
+      táticas investigadas e observações qualitativas.
     </p>
   </header>
 
   <form method="post" class="hikari-questionnaire-form" novalidate>
     {{ form.nonce() }}
+    {{ form.phase() }}
 
     {% for section_id, title, description, fields in sections %}
       <section class="hikari-question-group" id="hq-{{ section_id }}">

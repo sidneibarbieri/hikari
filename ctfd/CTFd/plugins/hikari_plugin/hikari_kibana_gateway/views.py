@@ -38,6 +38,10 @@ def siem_entrypoint():
     return render_template(
         "hikari-siem.html",
         summary=build_siem_summary(),
+        dashboard_url=(
+            url_for("hikariplugin.kibana_gateway", proxy_path="app/dashboards")
+            + "#/view/hikari-siem"
+        ),
         discover_url=url_for("hikariplugin.kibana_gateway", proxy_path="app/discover"),
     )
 

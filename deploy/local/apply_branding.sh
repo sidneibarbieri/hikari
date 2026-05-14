@@ -57,8 +57,8 @@ FEEDBACK_CONTENT='<main class="hikari-landing hikari-landing-compact">
     <p class="hikari-tagline">
       O questionário fica hospedado dentro do Hikari para que as respostas
       permaneçam vinculadas ao participante, à equipe e ao exercício. Os
-      itens seguem instrumentos validados (NASA-TLX, SUS) e autoavaliação
-      de competências alinhada ao framework NIST NICE.
+      itens registram carga de trabalho, usabilidade, competências,
+      táticas investigadas e observações qualitativas.
     </p>
     <nav class="hikari-actions" aria-label="Acessar o questionário">
       <a class="hikari-action hikari-action-primary" href="/hikari/feedback">Abrir o questionário</a>

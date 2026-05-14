@@ -27,8 +27,11 @@ _FORMAL_EDUCATION = {
     "none",
     "on_the_job",
     "vendor_certification",
-    "undergraduate_in_cyber",
-    "postgraduate_in_cyber",
+    "undergraduate_computing",
+    "undergraduate_cyber",
+    "postgraduate_computing",
+    "postgraduate_cyber",
+    "other",
 }
 
 _MITRE_TACTICS = {
@@ -60,7 +63,7 @@ class FeedbackPayload(BaseModel):
     # Identification
     phase: str
 
-    # Background and prior experience (typically captured pre-event)
+    # Background and prior experience
     years_cyber_experience: Optional[str] = None
     primary_role: Optional[str] = None
     prior_ctf_count: Optional[str] = None
@@ -83,14 +86,14 @@ class FeedbackPayload(BaseModel):
     # MITRE ATT&CK tactics practised (multiselect)
     mitre_tactics_practised: List[str] = Field(default_factory=list)
 
-    # NASA Task Load Index (post-event; 1-7)
+    # Task load (post-event; 1-7)
     tlx_mental_demand: Optional[Score7] = None
     tlx_temporal_demand: Optional[Score7] = None
     tlx_performance: Optional[Score7] = None
     tlx_effort: Optional[Score7] = None
     tlx_frustration: Optional[Score7] = None
 
-    # System Usability Scale (post-event; 1-5)
+    # Usability (post-event; 1-5)
     sus_would_use_frequently: Optional[Score5] = None
     sus_unnecessarily_complex: Optional[Score5] = None
     sus_easy_to_use: Optional[Score5] = None

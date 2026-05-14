@@ -1,14 +1,22 @@
 {% extends "base.html" %}
 
 {% block content %}
-  <div class="jbig-header">
-    <div class="container">
-      <h1>
-        Desafios
-      </h1>
-    </div>
-  </div>
   <div class="container">
+    <section class="hikari-challenges-header">
+      <div>
+        <p class="hikari-eyebrow">Operação de threat hunting</p>
+        <h1>Desafios</h1>
+        <p>
+          Resolva investigações, envie flags e desbloqueie novos eventos no SIEM.
+          Cada avanço altera a superfície de análise da competição.
+        </p>
+      </div>
+      <div class="hikari-challenges-actions">
+        <a class="hikari-action hikari-action-primary" href="{{ url_for('hikariplugin.siem_entrypoint') }}">Abrir SIEM</a>
+        <a class="hikari-action hikari-action-secondary" href="{{ url_for('hikariplugin.hikari_live') }}">Placar ao vivo</a>
+      </div>
+    </section>
+
     <div class="row">
       <div class="col-md-12">
         {% include "components/errors.html" %}
@@ -35,34 +43,35 @@
 
       <div x-show="loaded">
         <template x-for="(category, idx) in getCategories()" :key="idx">
-          <div class="pt-5">
-            <div class="category-header mb-3">
-              <h3 x-text="category"></h3>
-            </div>
-
-            <div class="category-challenges d-flex flex-column">
-              <div class="challenges-row row">
-                <template x-for="(c, idx) in getChallenges(category)" :key="c.id">
-                  <div class="col-sm-6 col-md-4 col-lg-3 my-3">
-                    <button
-                        class="jchallenge-button w-100 h-100"
-                        :class="[
-                          c.solved_by_me ? 'jchallenge-solved' : '',
-                          ...c.tags.map((tag) => `tag-${tag.value.replace(/ /g, '-')}`),
-                        ];"
-                        :value="c.id" @click="loadChallenge(c.id)"
-                    >
-
-                      <div class="challenge-inner my-3">
-                        <p x-text="c.name"></p>
-                        <span x-text="c.value"></span>
-                      </div>
-                    </button>
-                  </div>
-                </template>
+          <section class="hikari-category-section">
+            <div class="category-header">
+              <div>
+                <span>Categoria</span>
+                <h2 x-text="category"></h2>
               </div>
+              <strong x-text="`${getChallenges(category).length} desafios`"></strong>
             </div>
-          </div>
+
+            <div class="hikari-challenge-grid">
+              <template x-for="(c, idx) in getChallenges(category)" :key="c.id">
+                <button
+                    class="jchallenge-button hikari-challenge-card"
+                    :class="[
+                      c.solved_by_me ? 'jchallenge-solved' : '',
+                      ...c.tags.map((tag) => `tag-${tag.value.replace(/ /g, '-')}`),
+                    ];"
+                    :value="c.id" @click="loadChallenge(c.id)"
+                >
+                  <span class="hikari-challenge-status" x-text="c.solved_by_me ? 'Resolvido' : 'Aberto'"></span>
+                  <strong x-text="c.name"></strong>
+                  <span class="hikari-challenge-points">
+                    <span x-text="c.value"></span>
+                    <small>pontos</small>
+                  </span>
+                </button>
+              </template>
+            </div>
+          </section>
         </template>
       </div>
     </div>

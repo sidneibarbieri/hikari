@@ -9,17 +9,11 @@ instrument it implements, not in the storage layer. Optional fields keep
 from typing import Iterable, List, Tuple
 
 from flask_wtf import FlaskForm
-from wtforms import IntegerField, SelectField, SelectMultipleField, SubmitField, TextAreaField, widgets
+from wtforms import HiddenField, IntegerField, SelectField, SelectMultipleField, SubmitField, TextAreaField, widgets
 from wtforms.validators import DataRequired, NumberRange, Optional as OptionalValidator
 
 from CTFd.forms import CTFdCSRF
 
-
-PHASES = [
-    ("pre", "Antes do exercício"),
-    ("post", "Depois do exercício"),
-    ("followup", "Acompanhamento posterior"),
-]
 
 YEARS_BANDS = [
     ("", "—"),
@@ -54,11 +48,14 @@ PRIOR_CTF_BANDS = [
 
 FORMAL_EDUCATION = [
     ("", "—"),
-    ("none", "Nenhuma"),
-    ("on_the_job", "Aprendizado no trabalho"),
+    ("none", "Sem formação formal na área"),
+    ("on_the_job", "Aprendizado prático no trabalho"),
     ("vendor_certification", "Certificações profissionais"),
-    ("undergraduate_in_cyber", "Graduação em segurança cibernética"),
-    ("postgraduate_in_cyber", "Pós-graduação em segurança cibernética"),
+    ("undergraduate_computing", "Graduação em computação ou área correlata"),
+    ("undergraduate_cyber", "Graduação específica em segurança cibernética"),
+    ("postgraduate_computing", "Pós-graduação em computação ou área correlata"),
+    ("postgraduate_cyber", "Pós-graduação específica em segurança cibernética"),
+    ("other", "Outra formação relevante"),
 ]
 
 MITRE_TACTICS = [
@@ -106,7 +103,7 @@ class FeedbackForm(FlaskForm):
         csrf_class = CTFdCSRF
         csrf_field_name = "nonce"
 
-    phase = SelectField("Momento", choices=PHASES, validators=[DataRequired()])
+    phase = HiddenField(default="post", validators=[DataRequired()])
 
     years_cyber_experience = _optional_select("Tempo de experiência em segurança cibernética", YEARS_BANDS)
     primary_role = _optional_select("Função principal", PRIMARY_ROLES)
@@ -122,7 +119,7 @@ class FeedbackForm(FlaskForm):
 
     tool_kibana = _score5("Kibana / Elastic")
     tool_kql = _score5("Escrita de consultas KQL")
-    tool_attack_framework = _score5("Navegação no framework MITRE ATT&CK")
+    tool_attack_framework = _score5("Navegação em táticas e técnicas de ataque")
     tool_other_siem = _score5("Outro SIEM (Splunk, Sentinel, ...)")
 
     mitre_tactics_practised = _MultiCheckbox(
@@ -131,11 +128,11 @@ class FeedbackForm(FlaskForm):
         validators=[OptionalValidator()],
     )
 
-    tlx_mental_demand = _score7("Demanda mental (NASA-TLX)")
-    tlx_temporal_demand = _score7("Demanda temporal (NASA-TLX)")
-    tlx_performance = _score7("Desempenho percebido (NASA-TLX, 1 = sucesso, 7 = falha)")
-    tlx_effort = _score7("Esforço (NASA-TLX)")
-    tlx_frustration = _score7("Frustração (NASA-TLX)")
+    tlx_mental_demand = _score7("Demanda mental exigida pelo exercício")
+    tlx_temporal_demand = _score7("Pressão de tempo durante o exercício")
+    tlx_performance = _score7("Desempenho percebido (1 = consegui executar bem; 7 = tive muita dificuldade)")
+    tlx_effort = _score7("Esforço necessário para concluir as tarefas")
+    tlx_frustration = _score7("Frustração durante a execução")
 
     sus_would_use_frequently = _score5("Eu usaria este sistema com frequência (SUS-1)")
     sus_unnecessarily_complex = _score5("Achei o sistema desnecessariamente complexo (SUS-2)")
@@ -187,15 +184,9 @@ class FeedbackForm(FlaskForm):
 # matching form fields in order.
 FIELD_GROUPS: Tuple[Tuple[str, str, str, Tuple[str, ...]], ...] = (
     (
-        "moment",
-        "Momento da resposta",
-        "Indica a etapa do ciclo experimental. Respostas anteriores ao exercício formam a linha de base; respostas posteriores sustentam a análise principal.",
-        ("phase",),
-    ),
-    (
         "background",
         "Perfil e exposição prévia",
-        "Informação de contexto, preferencialmente capturada antes do exercício.",
+        "Informe sua experiência prévia para permitir análise por perfil. O questionário deve ser preenchido após a competição.",
         (
             "years_cyber_experience",
             "primary_role",
@@ -206,8 +197,8 @@ FIELD_GROUPS: Tuple[Tuple[str, str, str, Tuple[str, ...]], ...] = (
     ),
     (
         "nice_self",
-        "Autoavaliação de competência (NIST NICE)",
-        "Avalie sua competência em cada papel de trabalho em escala de 1 a 5.",
+        "Autoavaliação de competência",
+        "Avalie sua aptidão atual em papéis profissionais de defesa cibernética. Escala: 1 = nenhuma aptidão; 5 = consigo executar com autonomia.",
         (
             "self_cyber_defense_analyst",
             "self_incident_responder",
@@ -229,14 +220,14 @@ FIELD_GROUPS: Tuple[Tuple[str, str, str, Tuple[str, ...]], ...] = (
     ),
     (
         "tactics",
-        "Táticas MITRE ATT&CK praticadas",
-        "Marque as etapas da cadeia de ataque exercitadas nesta execução.",
+        "Táticas de ataque praticadas",
+        "Marque as etapas da cadeia de ataque que você reconheceu ou investigou durante a competição.",
         ("mitre_tactics_practised",),
     ),
     (
         "tlx",
-        "NASA Task Load Index",
-        "Preencha após o exercício. 1 = muito baixo; 7 = muito alto.",
+        "Carga de trabalho percebida",
+        "Responda sobre o esforço exigido pela competição. Escala: 1 = muito baixo; 7 = muito alto.",
         (
             "tlx_mental_demand",
             "tlx_temporal_demand",
@@ -247,8 +238,8 @@ FIELD_GROUPS: Tuple[Tuple[str, str, str, Tuple[str, ...]], ...] = (
     ),
     (
         "sus",
-        "System Usability Scale (Brooke, 1986)",
-        "Preencha após o exercício. 1 = discordo totalmente; 5 = concordo totalmente.",
+        "Usabilidade percebida",
+        "Responda sobre a experiência de uso da plataforma. Escala: 1 = discordo totalmente; 5 = concordo totalmente.",
         (
             "sus_would_use_frequently",
             "sus_unnecessarily_complex",

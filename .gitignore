@@ -31,12 +31,9 @@ output/playwright/
 # Secrets and credentials
 .env
 *.local.env
-deploy/k8s/elk-zerotier-install/kube_creds/
 
 # Data
 data_backup.zip
-lab/apt29/
-lab/venv/
 
 # Build
 dist/

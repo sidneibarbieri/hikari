@@ -31,11 +31,7 @@ training review and research analysis.
 ## Repository layout
 
     ctfd/         CTFd fork with the Hikari plugin, challenge type, and theme
-    deploy/       Deployment configurations
-      local/      docker-compose stack and acceptance scripts
-      k8s/        Kubernetes manifests, Helm values, deploy scripts
-    lab/          Adversary emulation scaffolding for generating logs
-    detectionlab/ Log collection and detection lab definitions
+    deploy/local/ docker-compose stack and acceptance scripts
     docs/         Documentation
 
 ## Quick start

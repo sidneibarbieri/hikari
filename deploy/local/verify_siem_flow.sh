@@ -52,8 +52,10 @@ code=$(curl -sS -c "$cookie_jar" -b "$cookie_jar" \
 [[ "$code" == "200" ]] || { echo "SIEM entrypoint returned $code"; cat /tmp/hikari-siem-entry.html; exit 1; }
 grep -q "Visão SIEM" /tmp/hikari-siem-entry.html \
   || { echo "SIEM entrypoint missing Hikari SIEM surface"; exit 1; }
-grep -q "Abrir Kibana Discover" /tmp/hikari-siem-entry.html \
-  || { echo "SIEM entrypoint missing Kibana Discover"; exit 1; }
+grep -q "Abrir dashboard SIEM" /tmp/hikari-siem-entry.html \
+  || { echo "SIEM entrypoint missing dashboard link"; exit 1; }
+grep -q "Abrir Discover" /tmp/hikari-siem-entry.html \
+  || { echo "SIEM entrypoint missing Discover link"; exit 1; }
 echo "PASS: SIEM entrypoint renders the Hikari SIEM surface"
 
 status_body=/tmp/hikari-siem-status.json

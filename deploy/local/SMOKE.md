@@ -23,8 +23,8 @@ The narrative below is the human-readable version of the same checks.
 ## 1. Stack starts
 
     cd deploy/local
-    docker compose up -d --build
-    docker compose ps
+    docker-compose up -d --build
+    docker-compose ps
 
 Expected: every service reports `running` or `healthy`. `elasticsearch`,
 `kafka`, and `db` carry healthchecks and must be healthy. CTFd waits on
@@ -68,7 +68,7 @@ Kibana's console proxy, and finds the corresponding `kibana.query` record in
 
 ## 7. Kafka and Logstash are wired
 
-    docker compose exec kafka \
+    docker-compose exec kafka \
       /opt/kafka/bin/kafka-topics.sh \
       --bootstrap-server localhost:9092 --list
 
@@ -82,20 +82,20 @@ small JSON array file (e.g. `[{"event":"test","ts":"2024-01-01T00:00:00Z"}]`)
 as its log, set its state to `visible`, then click "Start competition"
 on the plugin's main page.
 
-    docker compose exec kafka \
+    docker-compose exec kafka \
       /opt/kafka/bin/kafka-console-consumer.sh \
       --bootstrap-server localhost:9092 \
       --topic competition1 --from-beginning --max-messages 1 --timeout-ms 5000
 
 Expected: one JSON record echoed back.
 
-    docker compose exec elasticsearch \
+    docker-compose exec elasticsearch \
       curl -sS 'http://localhost:9200/competition1/_search?size=1'
 
 Expected: at least one document indexed.
 
 ## Tear down between runs
 
-    docker compose down -v
+    docker-compose down -v
 
 This resets MariaDB, Elasticsearch, Kafka, Redis, uploads and CTFd logs.
