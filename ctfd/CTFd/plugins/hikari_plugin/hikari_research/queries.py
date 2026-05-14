@@ -1,17 +1,50 @@
-"""Aggregations over the hikari_activity table.
+"""Aggregations over Hikari research tables.
 
 Each function is a pure read against the database and returns Pydantic DTOs.
 The view layer composes them; this module is independent from HTTP.
 """
 
+import json
 from typing import List, Optional
 
 from sqlalchemy import func
 
 from CTFd.models import Teams, db
 from CTFd.plugins.hikari_plugin.hikari_activity.models import HikariActivity
+from CTFd.plugins.hikari_plugin.hikari_feedback.models import FeedbackResponse
 
-from .dto import EventCount, RecentEvent, ResearchFilters, TeamActivity
+from .dto import (
+    EventCount,
+    FeedbackCount,
+    FeedbackMetric,
+    FeedbackSummary,
+    RecentEvent,
+    ResearchFilters,
+    TeamActivity,
+)
+
+
+FEEDBACK_METRICS = (
+    ("Carga mental", "tlx_mental_demand"),
+    ("Pressão de tempo", "tlx_temporal_demand"),
+    ("Facilidade de uso", "sus_easy_to_use"),
+    ("Integração percebida", "sus_functions_well_integrated"),
+    ("Aprendizado em logs", "learning_log_analysis"),
+    ("Realismo dos logs", "realism_telemetry"),
+    ("Recomendação", "nps_recommend"),
+)
+
+ROLE_LABELS = {
+    "student": "Estudante",
+    "soc_analyst_t1": "Analista SOC, nível 1",
+    "soc_analyst_t2": "Analista SOC, nível 2 ou superior",
+    "incident_responder": "Respondedor de incidentes",
+    "threat_hunter": "Threat hunter",
+    "forensics_analyst": "Analista forense",
+    "educator": "Educador ou instrutor",
+    "researcher": "Pesquisador",
+    "other": "Outro",
+}
 
 
 def _filtered_activity_query(filters: Optional[ResearchFilters] = None):
@@ -79,6 +112,34 @@ def event_counts_by_team(
     ]
 
 
+def feedback_summary() -> FeedbackSummary:
+    """Aggregate questionnaire fields used in the admin dashboard."""
+    role_counts = {}
+    metric_values = {field_name: [] for _, field_name in FEEDBACK_METRICS}
+    total_responses = 0
+
+    for record in FeedbackResponse.query.order_by(FeedbackResponse.id.asc()).yield_per(500):
+        total_responses += 1
+        payload = json.loads(record.payload)
+        role = payload.get("primary_role") or "sem função informada"
+        role_counts[role] = role_counts.get(role, 0) + 1
+        for _, field_name in FEEDBACK_METRICS:
+            value = payload.get(field_name)
+            if isinstance(value, (int, float)):
+                metric_values[field_name].append(float(value))
+
+    roles = [
+        FeedbackCount(label=ROLE_LABELS.get(role, role), count=count)
+        for role, count in sorted(role_counts.items(), key=lambda item: (-item[1], item[0]))
+    ]
+    metrics = [
+        FeedbackMetric(label=label, average=_average(metric_values[field_name]), count=len(metric_values[field_name]))
+        for label, field_name in FEEDBACK_METRICS
+        if metric_values[field_name]
+    ]
+    return FeedbackSummary(total_responses=total_responses, roles=roles, metrics=metrics)
+
+
 def recent_events(
     filters: Optional[ResearchFilters] = None,
     limit: int = 50,
@@ -130,3 +191,7 @@ def iter_all_events(filters: Optional[ResearchFilters] = None):
             request_ip=row.request_ip,
             payload=row.payload,
         )
+
+
+def _average(values: List[float]) -> float:
+    return round(sum(values) / len(values), 2)

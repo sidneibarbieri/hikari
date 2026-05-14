@@ -48,13 +48,13 @@ PRIOR_CTF_BANDS = [
 
 FORMAL_EDUCATION = [
     ("", "—"),
-    ("none", "Sem formação formal na área"),
-    ("on_the_job", "Aprendizado prático no trabalho"),
-    ("vendor_certification", "Certificações profissionais"),
-    ("undergraduate_computing", "Graduação em computação ou área correlata"),
-    ("undergraduate_cyber", "Graduação específica em segurança cibernética"),
-    ("postgraduate_computing", "Pós-graduação em computação ou área correlata"),
-    ("postgraduate_cyber", "Pós-graduação específica em segurança cibernética"),
+    ("none", "Sem formação formal em computação ou segurança"),
+    ("on_the_job", "Aprendizado prático predominante"),
+    ("vendor_certification", "Certificação profissional em tecnologia ou segurança"),
+    ("undergraduate_computing", "Graduação em computação ou área próxima"),
+    ("undergraduate_cyber", "Graduação com foco em segurança cibernética"),
+    ("postgraduate_computing", "Pós-graduação em computação ou área próxima"),
+    ("postgraduate_cyber", "Pós-graduação com foco em segurança cibernética"),
     ("other", "Outra formação relevante"),
 ]
 
@@ -109,41 +109,41 @@ class FeedbackForm(FlaskForm):
     primary_role = _optional_select("Função principal", PRIMARY_ROLES)
     prior_ctf_count = _optional_select("Participações anteriores em CTF", PRIOR_CTF_BANDS)
     years_soc_experience = _optional_select("Tempo em SOC ou função equivalente", YEARS_BANDS)
-    formal_education = _optional_select("Formação em segurança cibernética", FORMAL_EDUCATION)
+    formal_education = _optional_select("Maior formação concluída ou em andamento", FORMAL_EDUCATION)
 
-    self_cyber_defense_analyst = _score5("Analista de defesa cibernética (NICE PR-CDA-001)")
-    self_incident_responder = _score5("Respondedor de incidentes cibernéticos (NICE PR-CIR-001)")
-    self_threat_warning_analyst = _score5("Analista de ameaças e alertas (NICE AN-TWA-001)")
-    self_forensics_analyst = _score5("Analista forense de defesa cibernética (NICE IN-FOR-001)")
-    self_vuln_assessment_analyst = _score5("Analista de avaliação de vulnerabilidades (NICE PR-VAM-001)")
+    self_cyber_defense_analyst = _score5("Investigar alertas, logs e evidências de defesa cibernética")
+    self_incident_responder = _score5("Conduzir resposta técnica a incidentes")
+    self_threat_warning_analyst = _score5("Interpretar indícios de ameaça e priorizar alertas")
+    self_forensics_analyst = _score5("Analisar evidências forenses de sistemas e redes")
+    self_vuln_assessment_analyst = _score5("Avaliar vulnerabilidades e impacto operacional")
 
     tool_kibana = _score5("Kibana / Elastic")
     tool_kql = _score5("Escrita de consultas KQL")
-    tool_attack_framework = _score5("Navegação em táticas e técnicas de ataque")
-    tool_other_siem = _score5("Outro SIEM (Splunk, Sentinel, ...)")
+    tool_attack_framework = _score5("Reconhecimento de etapas de uma cadeia de ataque")
+    tool_other_siem = _score5("Uso de outro SIEM, como Splunk ou Sentinel")
 
     mitre_tactics_practised = _MultiCheckbox(
-        "Táticas exercitadas durante esta execução",
+        "Etapas da cadeia de ataque investigadas durante a competição",
         choices=MITRE_TACTICS,
         validators=[OptionalValidator()],
     )
 
-    tlx_mental_demand = _score7("Demanda mental exigida pelo exercício")
-    tlx_temporal_demand = _score7("Pressão de tempo durante o exercício")
-    tlx_performance = _score7("Desempenho percebido (1 = consegui executar bem; 7 = tive muita dificuldade)")
-    tlx_effort = _score7("Esforço necessário para concluir as tarefas")
-    tlx_frustration = _score7("Frustração durante a execução")
+    tlx_mental_demand = _score7("Esforço mental exigido para investigar os desafios")
+    tlx_temporal_demand = _score7("Pressão de tempo sentida durante a competição")
+    tlx_performance = _score7("Dificuldade para atingir o resultado esperado")
+    tlx_effort = _score7("Esforço geral necessário para concluir as tarefas")
+    tlx_frustration = _score7("Frustração sentida durante a execução")
 
-    sus_would_use_frequently = _score5("Eu usaria este sistema com frequência (SUS-1)")
-    sus_unnecessarily_complex = _score5("Achei o sistema desnecessariamente complexo (SUS-2)")
-    sus_easy_to_use = _score5("Achei o sistema fácil de usar (SUS-3)")
-    sus_needed_support = _score5("Eu precisaria de suporte técnico para usar o sistema (SUS-4)")
-    sus_functions_well_integrated = _score5("As funções do sistema são bem integradas (SUS-5)")
-    sus_too_much_inconsistency = _score5("Percebi inconsistências demais no sistema (SUS-6)")
-    sus_quick_to_learn = _score5("A maioria das pessoas aprenderia a usar rapidamente (SUS-7)")
-    sus_cumbersome = _score5("Achei o sistema trabalhoso de usar (SUS-8)")
-    sus_felt_confident = _score5("Senti confiança ao usar o sistema (SUS-9)")
-    sus_needed_to_learn_a_lot = _score5("Precisei aprender muito antes de usar o sistema (SUS-10)")
+    sus_would_use_frequently = _score5("Eu usaria o Hikari em outros treinamentos")
+    sus_unnecessarily_complex = _score5("Achei o Hikari mais complexo do que precisava ser")
+    sus_easy_to_use = _score5("Achei o Hikari fácil de usar")
+    sus_needed_support = _score5("Eu precisaria de suporte técnico para usar o Hikari")
+    sus_functions_well_integrated = _score5("As partes do Hikari funcionam de forma integrada")
+    sus_too_much_inconsistency = _score5("Percebi inconsistências na experiência de uso")
+    sus_quick_to_learn = _score5("A maioria das pessoas aprenderia a usar o Hikari rapidamente")
+    sus_cumbersome = _score5("Achei o Hikari trabalhoso de usar")
+    sus_felt_confident = _score5("Senti confiança ao usar o Hikari")
+    sus_needed_to_learn_a_lot = _score5("Precisei aprender muitas coisas antes de conseguir usar o Hikari")
 
     learning_log_analysis = _score5("Melhoria percebida: análise de logs")
     learning_pattern_correlation = _score5("Melhoria percebida: correlação entre fontes")
@@ -153,11 +153,11 @@ class FeedbackForm(FlaskForm):
     learning_documentation = _score5("Melhoria percebida: documentação da investigação")
 
     realism_attack_chain = _score5("Realismo da cadeia de ataque")
-    realism_telemetry = _score5("Realismo da telemetria")
+    realism_telemetry = _score5("Realismo dos logs e eventos disponíveis no SIEM")
     realism_pace = _score5("Realismo do ritmo e da pressão")
     methodology_coherence = _score5("Coerência metodológica do exercício")
 
-    nps_recommend = _score10("Qual a probabilidade de recomendar o Hikari? (0-10)")
+    nps_recommend = _score10("Qual é a probabilidade de recomendar o Hikari em treinamentos de defesa cibernética? (0-10)")
 
     most_valuable_technique = TextAreaField(
         "Técnica ou metodologia mais útil que você utilizou",
@@ -176,7 +176,7 @@ class FeedbackForm(FlaskForm):
         validators=[OptionalValidator()],
     )
 
-    submit = SubmitField("Enviar feedback")
+    submit = SubmitField("Enviar respostas")
 
 
 # Visual grouping for the template. Each tuple is (section_id, title,
@@ -186,7 +186,7 @@ FIELD_GROUPS: Tuple[Tuple[str, str, str, Tuple[str, ...]], ...] = (
     (
         "background",
         "Perfil e exposição prévia",
-        "Informe sua experiência prévia para permitir análise por perfil. O questionário deve ser preenchido após a competição.",
+        "Informe sua experiência para permitir análise por perfil. Responda este questionário após a competição.",
         (
             "years_cyber_experience",
             "primary_role",
@@ -198,7 +198,7 @@ FIELD_GROUPS: Tuple[Tuple[str, str, str, Tuple[str, ...]], ...] = (
     (
         "nice_self",
         "Autoavaliação de competência",
-        "Avalie sua aptidão atual em papéis profissionais de defesa cibernética. Escala: 1 = nenhuma aptidão; 5 = consigo executar com autonomia.",
+        "Avalie sua aptidão para executar tarefas de defesa cibernética. Escala: 1 = não consigo executar; 5 = consigo executar com autonomia.",
         (
             "self_cyber_defense_analyst",
             "self_incident_responder",
@@ -210,7 +210,7 @@ FIELD_GROUPS: Tuple[Tuple[str, str, str, Tuple[str, ...]], ...] = (
     (
         "tool_fluency",
         "Fluência em ferramentas",
-        "1 = nunca usei; 5 = consigo ensinar outras pessoas.",
+        "Informe sua familiaridade com ferramentas e conceitos usados na investigação. Escala: 1 = nunca usei; 5 = consigo orientar outras pessoas.",
         (
             "tool_kibana",
             "tool_kql",
@@ -221,13 +221,13 @@ FIELD_GROUPS: Tuple[Tuple[str, str, str, Tuple[str, ...]], ...] = (
     (
         "tactics",
         "Táticas de ataque praticadas",
-        "Marque as etapas da cadeia de ataque que você reconheceu ou investigou durante a competição.",
+        "Marque as etapas que você reconheceu ou investigou durante a competição.",
         ("mitre_tactics_practised",),
     ),
     (
         "tlx",
         "Carga de trabalho percebida",
-        "Responda sobre o esforço exigido pela competição. Escala: 1 = muito baixo; 7 = muito alto.",
+        "Responda sobre o esforço exigido pela competição. Escala: 1 = muito baixo; 7 = muito alto. No item de dificuldade, 1 significa baixa dificuldade e 7 significa alta dificuldade.",
         (
             "tlx_mental_demand",
             "tlx_temporal_demand",
@@ -239,7 +239,7 @@ FIELD_GROUPS: Tuple[Tuple[str, str, str, Tuple[str, ...]], ...] = (
     (
         "sus",
         "Usabilidade percebida",
-        "Responda sobre a experiência de uso da plataforma. Escala: 1 = discordo totalmente; 5 = concordo totalmente.",
+        "Responda sobre a experiência de uso do Hikari. Escala: 1 = discordo totalmente; 5 = concordo totalmente.",
         (
             "sus_would_use_frequently",
             "sus_unnecessarily_complex",
@@ -256,7 +256,7 @@ FIELD_GROUPS: Tuple[Tuple[str, str, str, Tuple[str, ...]], ...] = (
     (
         "learning",
         "Melhoria percebida de habilidades",
-        "Preencha após o exercício. 1 = sem mudança; 5 = melhoria substancial.",
+        "Compare sua percepção antes e depois da competição. Escala: 1 = sem melhora percebida; 5 = melhora alta.",
         (
             "learning_log_analysis",
             "learning_pattern_correlation",
@@ -269,7 +269,7 @@ FIELD_GROUPS: Tuple[Tuple[str, str, str, Tuple[str, ...]], ...] = (
     (
         "realism",
         "Realismo e metodologia",
-        "Preencha após o exercício. 1 = pouco realista ou incoerente; 5 = compatível com operações reais.",
+        "Avalie a fidelidade do exercício. Escala: 1 = pouco realista ou pouco coerente; 5 = compatível com operações reais.",
         (
             "realism_attack_chain",
             "realism_telemetry",
@@ -280,13 +280,13 @@ FIELD_GROUPS: Tuple[Tuple[str, str, str, Tuple[str, ...]], ...] = (
     (
         "advocacy",
         "Recomendação",
-        "Preencha após o exercício.",
+        "Use 0 para nenhuma chance de recomendação e 10 para recomendação muito provável.",
         ("nps_recommend",),
     ),
     (
         "reflections",
         "Reflexões qualitativas",
-        "Texto livre. Opcional, mas útil para análise.",
+        "Campos opcionais para registrar detalhes que as escalas não capturam.",
         (
             "most_valuable_technique",
             "biggest_learning_blocker",

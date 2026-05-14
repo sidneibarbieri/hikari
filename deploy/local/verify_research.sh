@@ -44,6 +44,10 @@ grep -q "Eventos por tipo" "$dashboard" \
   || { echo "FAIL: dashboard missing events-by-type section"; exit 1; }
 grep -q "Eventos recentes" "$dashboard" \
   || { echo "FAIL: dashboard missing recent events section"; exit 1; }
+grep -q "Respostas do questionário" "$dashboard" \
+  || { echo "FAIL: dashboard missing feedback summary"; exit 1; }
+grep -q "Médias do questionário" "$dashboard" \
+  || { echo "FAIL: dashboard missing feedback metrics section"; exit 1; }
 if grep -q "A new CTFd version is available" "$dashboard"; then
   echo "FAIL: admin dashboard still renders the upstream version banner"
   exit 1

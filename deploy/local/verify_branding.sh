@@ -20,7 +20,7 @@ grep -q "Desafios reais, ameaças ocultas" "$page" \
   || { echo "FAIL: home page missing impact line"; exit 1; }
 grep -q 'class="hikari-wordmark">Hikari</h1>' "$page" \
   || { echo "FAIL: home page missing Hikari wordmark"; exit 1; }
-grep -q "Threat hunting gamificado para blue teams." "$page" \
+grep -q "Caça a ameaças gamificada para equipes de defesa." "$page" \
   || { echo "FAIL: home page missing operational strapline"; exit 1; }
 grep -q "Placar ao vivo" "$page" \
   || { echo "FAIL: home page missing live scoreboard action"; exit 1; }

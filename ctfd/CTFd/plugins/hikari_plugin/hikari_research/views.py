@@ -37,6 +37,7 @@ def dashboard():
         total_events=queries.total_events(filters),
         events_by_type=queries.event_counts_by_type(filters),
         teams_by_event_count=queries.event_counts_by_team(filters),
+        feedback=queries.feedback_summary(),
         available_event_types=queries.available_event_types(),
         recent=queries.recent_events(filters),
     )

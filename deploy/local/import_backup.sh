@@ -82,7 +82,7 @@ docker run -d --name "$SIDECAR" \
   -v "$work_dir/.data/mysql":/var/lib/mysql \
   --user 999:999 \
   --entrypoint mariadbd \
-  mariadb:10.11 \
+  mariadb:11.8 \
   --datadir=/var/lib/mysql \
   --skip-grant-tables --skip-networking=0 \
   --bind-address=0.0.0.0 \

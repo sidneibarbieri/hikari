@@ -9,7 +9,7 @@ from typing import List, Optional
 from pydantic import BaseModel, Field, conint, validator
 
 
-_PHASES = {"pre", "post", "followup"}
+_PHASES = {"post"}
 
 _PRIMARY_ROLES = {
     "student",
@@ -70,7 +70,7 @@ class FeedbackPayload(BaseModel):
     years_soc_experience: Optional[str] = None
     formal_education: Optional[str] = None
 
-    # NICE-aligned self-assessment (1-5)
+    # Role-based self-assessment (1-5)
     self_cyber_defense_analyst: Optional[Score5] = None
     self_incident_responder: Optional[Score5] = None
     self_threat_warning_analyst: Optional[Score5] = None
@@ -83,17 +83,17 @@ class FeedbackPayload(BaseModel):
     tool_attack_framework: Optional[Score5] = None
     tool_other_siem: Optional[Score5] = None
 
-    # MITRE ATT&CK tactics practised (multiselect)
+    # Attack-chain tactics practised (multiselect)
     mitre_tactics_practised: List[str] = Field(default_factory=list)
 
-    # Task load (post-event; 1-7)
+    # Task load (1-7)
     tlx_mental_demand: Optional[Score7] = None
     tlx_temporal_demand: Optional[Score7] = None
     tlx_performance: Optional[Score7] = None
     tlx_effort: Optional[Score7] = None
     tlx_frustration: Optional[Score7] = None
 
-    # Usability (post-event; 1-5)
+    # Usability (1-5)
     sus_would_use_frequently: Optional[Score5] = None
     sus_unnecessarily_complex: Optional[Score5] = None
     sus_easy_to_use: Optional[Score5] = None
@@ -105,7 +105,7 @@ class FeedbackPayload(BaseModel):
     sus_felt_confident: Optional[Score5] = None
     sus_needed_to_learn_a_lot: Optional[Score5] = None
 
-    # Learning outcomes (post-event; perceived improvement 1-5)
+    # Learning outcomes (perceived improvement 1-5)
     learning_log_analysis: Optional[Score5] = None
     learning_pattern_correlation: Optional[Score5] = None
     learning_hypothesis_generation: Optional[Score5] = None
@@ -113,16 +113,16 @@ class FeedbackPayload(BaseModel):
     learning_time_to_detect: Optional[Score5] = None
     learning_documentation: Optional[Score5] = None
 
-    # Scenario realism and methodological coherence (post; 1-5)
+    # Scenario realism and methodological coherence (1-5)
     realism_attack_chain: Optional[Score5] = None
     realism_telemetry: Optional[Score5] = None
     realism_pace: Optional[Score5] = None
     methodology_coherence: Optional[Score5] = None
 
-    # Net Promoter Score (post; 0-10)
+    # Recommendation score (0-10)
     nps_recommend: Optional[Score10] = None
 
-    # Qualitative reflections (post; free text)
+    # Qualitative reflections (free text)
     most_valuable_technique: Optional[str] = None
     biggest_learning_blocker: Optional[str] = None
     suggested_scenarios: Optional[str] = None

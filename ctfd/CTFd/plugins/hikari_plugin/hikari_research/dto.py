@@ -22,6 +22,23 @@ class TeamActivity(BaseModel):
     event_count: int
 
 
+class FeedbackCount(BaseModel):
+    label: str
+    count: int
+
+
+class FeedbackMetric(BaseModel):
+    label: str
+    average: float
+    count: int
+
+
+class FeedbackSummary(BaseModel):
+    total_responses: int
+    roles: List[FeedbackCount]
+    metrics: List[FeedbackMetric]
+
+
 class RecentEvent(BaseModel):
     id: int
     event_type: str
@@ -46,5 +63,6 @@ class ResearchSummary(BaseModel):
     total_events: int
     events_by_type: List[EventCount]
     teams_by_event_count: List[TeamActivity]
+    feedback: FeedbackSummary
     available_event_types: List[str]
     recent: List[RecentEvent]
