@@ -138,6 +138,15 @@ services:
       UISETTINGS_GLOBALOVERRIDES_HIDEFEEDBACK: "true"
       SECURITY_SHOWINSECURECLUSTERWARNING: "false"
       XPACK_SECURITY_ENABLED: "false"
+      # Required so Kibana 8.19's Streams/alerts plugin can initialise its
+      # alerts client. Without these keys, every dashboard panel renders
+      # "Internal Server Error" because the Streams plugin tries to start an
+      # alerts client per visualisation and fails. The keys are static for
+      # the offline lab (the saved-objects store has no real secrets), so
+      # they're committed alongside the rest of the local deployment.
+      XPACK_ENCRYPTEDSAVEDOBJECTS_ENCRYPTIONKEY: "hikari_kibana_saved_objects_static_key_v1"
+      XPACK_REPORTING_ENCRYPTIONKEY: "hikari_kibana_reporting_static_key_v1____"
+      XPACK_SECURITY_ENCRYPTIONKEY: "hikari_kibana_security_static_key_v1_____"
     depends_on:
       elasticsearch:
         condition: service_healthy
