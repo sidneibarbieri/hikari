@@ -128,11 +128,11 @@ class FeedbackForm(FlaskForm):
         validators=[OptionalValidator()],
     )
 
-    tlx_mental_demand = _score7("Esforço mental exigido para investigar os desafios")
-    tlx_temporal_demand = _score7("Pressão de tempo sentida durante a competição")
-    tlx_performance = _score7("Dificuldade para atingir o resultado esperado")
-    tlx_effort = _score7("Esforço geral necessário para concluir as tarefas")
-    tlx_frustration = _score7("Frustração sentida durante a execução")
+    tlx_mental_demand = _score7("Esforço mental exigido pelos desafios (1 = baixo, 7 = alto)")
+    tlx_temporal_demand = _score7("Pressão de tempo durante a competição (1 = baixa, 7 = alta)")
+    tlx_performance = _score7("Dificuldade para chegar à solução (1 = baixa, 7 = alta)")
+    tlx_effort = _score7("Esforço geral para concluir os desafios (1 = baixo, 7 = alto)")
+    tlx_frustration = _score7("Frustração sentida durante a execução (1 = baixa, 7 = alta)")
 
     sus_would_use_frequently = _score5("Eu usaria o Hikari em outros treinamentos")
     sus_unnecessarily_complex = _score5("Achei o Hikari mais complexo do que precisava ser")

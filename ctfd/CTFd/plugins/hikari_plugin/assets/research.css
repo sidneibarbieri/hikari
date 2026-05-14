@@ -504,3 +504,72 @@
         justify-content: flex-start;
     }
 }
+
+/* Hunting shortcuts: KQL quick-links sitting between the headline metrics
+   and the aggregated charts. Each card is a sober button — the value is
+   the query, not the chrome. */
+.siem-shortcuts {
+    background-color: var(--hikari-surface);
+    border: 1px solid var(--hikari-border);
+    border-radius: 10px;
+    padding: 1.2rem 1.4rem 1.4rem;
+    margin-bottom: 1.25rem;
+}
+.siem-shortcuts > header {
+    margin-bottom: 0.85rem;
+}
+.siem-shortcuts > header h2 {
+    font-family: var(--hikari-font-display);
+    font-size: 1.05rem;
+    margin: 0 0 0.2rem;
+    color: var(--hikari-text);
+}
+.siem-shortcuts > header p {
+    color: var(--hikari-text-muted);
+    margin: 0;
+    font-size: 0.86rem;
+}
+.siem-shortcut-grid {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 0.65rem;
+}
+.siem-shortcut {
+    display: block;
+    padding: 0.75rem 0.95rem;
+    border: 1px solid var(--hikari-border);
+    border-radius: 8px;
+    background-color: var(--hikari-surface-2);
+    color: var(--hikari-text);
+    text-decoration: none;
+    transition: border-color 140ms ease, background-color 140ms ease;
+}
+.siem-shortcut strong {
+    display: block;
+    font-family: var(--hikari-font-display);
+    font-size: 0.95rem;
+    color: var(--hikari-text);
+    margin-bottom: 0.2rem;
+}
+.siem-shortcut span {
+    display: block;
+    color: var(--hikari-text-muted);
+    font-size: 0.82rem;
+    line-height: 1.4;
+}
+.siem-shortcut code {
+    background-color: var(--hikari-surface);
+    color: var(--hikari-accent);
+    padding: 0.05rem 0.32rem;
+    border-radius: 3px;
+    font-size: 0.82rem;
+}
+.siem-shortcut:hover {
+    border-color: var(--hikari-primary);
+    background-color: rgba(16, 185, 129, 0.06);
+    color: var(--hikari-text);
+    text-decoration: none;
+}

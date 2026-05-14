@@ -45,6 +45,51 @@
     {% endif %}
   </section>
 
+  <section class="siem-shortcuts" aria-label="Atalhos de caça">
+    <header>
+      <h2>Atalhos de caça</h2>
+      <p>Consultas KQL prontas. Clique para abrir o Discover já filtrado.</p>
+    </header>
+    <ul class="siem-shortcut-grid">
+      <li>
+        <a href="{{ discover_url }}?_g=(time:(from:now-15m,to:now))" class="siem-shortcut">
+          <strong>Últimos 15 minutos</strong>
+          <span>Janela curta para reagir a alertas recentes.</span>
+        </a>
+      </li>
+      <li>
+        <a href="{{ discover_url }}?_a=(query:(language:kuery,query:'response:&gt;%3D400'))" class="siem-shortcut">
+          <strong>Respostas HTTP &ge; 400</strong>
+          <span>Erros e falhas de autenticação. Útil para localizar tentativas.</span>
+        </a>
+      </li>
+      <li>
+        <a href="{{ discover_url }}?_a=(query:(language:kuery,query:'request:*flag*%20OR%20response:*flag*'))" class="siem-shortcut">
+          <strong>Padrão <code>flag</code> no payload</strong>
+          <span>Procura a substring no request e na response. Aponta candidatos a indicador.</span>
+        </a>
+      </li>
+      <li>
+        <a href="{{ discover_url }}?_a=(query:(language:kuery,query:'user_agent:*curl*%20OR%20user_agent:*python*%20OR%20user_agent:*wget*'))" class="siem-shortcut">
+          <strong>User-Agent automatizado</strong>
+          <span>Curl, Python, wget — indicador comum de varredura ou exfiltração.</span>
+        </a>
+      </li>
+      <li>
+        <a href="{{ discover_url }}?_a=(query:(language:kuery,query:'destination.port:(22%20OR%203389%20OR%204444%20OR%208080%20OR%208443)'))" class="siem-shortcut">
+          <strong>Portas de interesse</strong>
+          <span>SSH, RDP, payloads, web alternativa. Útil para movimento lateral.</span>
+        </a>
+      </li>
+      <li>
+        <a href="{{ discover_url }}?_a=(query:(language:kuery,query:'event.severity:(high%20OR%20critical)'))" class="siem-shortcut">
+          <strong>Severidade alta ou crítica</strong>
+          <span>Foca nas linhas que o pipeline marcou como prioritárias.</span>
+        </a>
+      </li>
+    </ul>
+  </section>
+
   <section class="siem-grid siem-grid--primary">
     <article class="siem-panel siem-panel--span">
       <div class="siem-panel-heading">

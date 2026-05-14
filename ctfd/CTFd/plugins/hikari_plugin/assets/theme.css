@@ -235,6 +235,62 @@ textarea.form-control {
 .form-control::placeholder {
     color: var(--hikari-text-muted);
 }
+.form-select,
+select.form-control {
+    /* Force a clean fallback stack on selects: Google Fonts can lazy-load
+       Inter/Space Grotesk and during that window the user agent picks the
+       system default, which on some macOS/Bootstrap combos renders option
+       labels as squiggly glyphs on dark backgrounds. The native stack here
+       always has Latin glyphs available. */
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    color: var(--hikari-text);
+    font-size: 0.95rem;
+}
+.form-select option,
+select option {
+    background-color: var(--hikari-surface);
+    color: var(--hikari-text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+/* Bootstrap renders form-select with a built-in chevron SVG that uses a
+   dark colour; on the Hikari surface that arrow becomes invisible. Swap
+   for a light chevron so the dropdown still reads as a dropdown. */
+.form-select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='%23edf3f8' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3E%3C/svg%3E");
+}
+
+/* Settings page polish: pin the jumbotron, reduce vertical noise and
+   group the form fields with consistent spacing. Targets only the
+   profile and tokens views. */
+main > .jumbotron + .container {
+    max-width: 960px;
+    padding-top: 1.5rem;
+    padding-bottom: 3rem;
+}
+.tab-content .form-label,
+.tab-content b > .form-label,
+.tab-content b {
+    color: var(--hikari-text);
+    font-family: var(--hikari-font-display);
+    font-weight: 600;
+    font-size: 0.92rem;
+    display: block;
+    margin-bottom: 0.25rem;
+}
+.tab-content hr {
+    border-top: 1px solid var(--hikari-border);
+    opacity: 1;
+    margin: 1.5rem 0;
+}
+.tab-content .nav-pills .nav-link {
+    border-radius: var(--hikari-radius);
+    color: var(--hikari-text-muted);
+    font-weight: 500;
+}
+.tab-content .nav-pills .nav-link.active {
+    background-color: var(--hikari-primary);
+    color: #03110d;
+}
 .input-group-text {
     background-color: var(--hikari-surface-2);
     border-color: var(--hikari-border);
