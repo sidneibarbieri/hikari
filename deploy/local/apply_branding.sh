@@ -18,7 +18,7 @@ INDEX_CONTENT='<main class="hikari-landing">
     <h1 id="hikari-home-title" class="hikari-wordmark">Hikari</h1>
     <p class="hikari-strapline">Caça a ameaças gamificada para equipes de defesa.</p>
     <p class="hikari-tagline">
-      Laboratório de operações de blue team. Os analistas caçam ameaças
+      Laboratório de operações defensivas. Os analistas caçam ameaças
       em fluxos de eventos ao vivo. Evidências são liberadas
       progressivamente conforme os desafios caem, e cada ação é registrada
       como dado de pesquisa atribuído.

@@ -9,7 +9,7 @@ CTFD_URL=${CTFD_URL:-http://localhost:8000}
 ADMIN_EMAIL=${ADMIN_EMAIL:-admin@hikari.local}
 ADMIN_PASSWORD=${ADMIN_PASSWORD:-hikari-admin-pw}
 
-THEME_HEADER='<link rel="stylesheet" href="/plugins/hikari_plugin/assets/theme.css?cache=20260512a">'
+THEME_HEADER='<link rel="stylesheet" href="/plugins/hikari_plugin/assets/theme.css?cache=20260514b">'
 
 cookie_jar=$(mktemp)
 trap 'rm -f "$cookie_jar"' EXIT
