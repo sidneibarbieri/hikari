@@ -1,30 +1,108 @@
-"""Generate the complete Hikari SIEM dashboard NDJSON for Kibana 8.19.
+"""Rebuild the Hikari SIEM dashboard in Kibana 8.19 via REST API.
 
-This script produces hikari-siem.ndjson from scratch, replacing every
-legacy visualization type (metric, line, area) with supported equivalents:
-  - TSVB in metric mode for KPI severity tiles
-  - timelion for the events-over-time time series
-  - pie, histogram, heatmap, table, search — all supported in Kibana 8.19
+This script creates saved objects directly via POST (not _import), which
+avoids Kibana's NDJSON import normalization of panelRefName/reference names.
 
-Run from the repo root:
+Visualization types used (all confirmed working in Kibana 8.19.15):
+  histogram  — bar charts and date-histogram time series
+  pie        — severity distribution, countries
+  heatmap    — port × source IP matrix
+  table      — severity counts, top URLs, top messages, src→dst→port
+  search     — recent network events (Discover saved search)
+
+Types intentionally avoided (do not render correctly in 8.19.15):
+  metric  — legacy Visualize renderer removed
+  line    — legacy renderer removed
+  area    — legacy renderer removed
+  tsvb    — broken reference resolution in import pipeline
+  timelion — broken reference resolution in import pipeline
+
+Usage (from repo root):
     python deploy/local/kibana/rebuild_siem_dashboard.py
 """
 
 import json
+import os
 import sys
+import time
 from pathlib import Path
 
+import urllib.request
+import urllib.error
 
-NDJSON = Path("deploy/local/kibana/hikari-siem.ndjson")
+# ---------------------------------------------------------------------------
+# Config
+# ---------------------------------------------------------------------------
+
+# Allow callers to override the base URL via environment variable so the same
+# script works both locally (localhost:5601) and when executed inside a Docker
+# container where Kibana is reached by service name (kibana:5601).
+KIBANA_BASE = os.environ.get(
+    "KIBANA_BASE", "http://localhost:5601/hikari/kibana"
+)
 INDEX_ID = "competition1"
 VERSION = "8.19.0"
+NDJSON_PATH = Path("deploy/local/kibana/hikari-siem.ndjson")
+
+
+def _post(path: str, body: dict) -> dict:
+    """POST a saved object to the Kibana API inside the container."""
+    url = f"{KIBANA_BASE}{path}"
+    data = json.dumps(body).encode("utf-8")
+    req = urllib.request.Request(url, data=data, method="POST")
+    req.add_header("Content-Type", "application/json")
+    req.add_header("kbn-xsrf", "true")
+    try:
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            return json.loads(resp.read())
+    except urllib.error.HTTPError as exc:
+        body_text = exc.read().decode("utf-8", errors="replace")
+        return {"error": str(exc), "body": body_text}
+
+
+def _create_saved_object(
+    obj_type: str,
+    obj_id: str,
+    attributes: dict,
+    references: list | None = None,
+    overwrite: bool = True,
+) -> dict:
+    """Create or update a Kibana saved object via POST."""
+    qs = "?overwrite=true" if overwrite else ""
+    path = f"/api/saved_objects/{obj_type}/{obj_id}{qs}"
+    body: dict = {"attributes": attributes}
+    if references is not None:
+        body["references"] = references
+    return _post(path, body)
 
 
 # ---------------------------------------------------------------------------
-# Helpers
+# Index pattern
 # ---------------------------------------------------------------------------
 
-def _searchsource(query: str = "*") -> str:
+
+def create_index_pattern() -> None:
+    result = _create_saved_object(
+        "index-pattern",
+        INDEX_ID,
+        {
+            "title": INDEX_ID,
+            "timeFieldName": "@timestamp",
+        },
+        references=[],
+    )
+    ok = "id" in result
+    print(f"  index-pattern competition1: {'✓' if ok else '✗ ' + str(result)}")
+
+
+# ---------------------------------------------------------------------------
+# Visualization helpers
+# ---------------------------------------------------------------------------
+
+_IDX_REF = {"type": "index-pattern", "name": "kibanaSavedObjectMeta.searchSourceJSON.index", "id": INDEX_ID}
+
+
+def _searchsource(query: str = "") -> str:
     return json.dumps({
         "query": {"language": "kuery", "query": query},
         "filter": [],
@@ -32,639 +110,229 @@ def _searchsource(query: str = "*") -> str:
     })
 
 
-def _index_ref(name: str) -> dict:
-    return {"type": "index-pattern", "name": name, "id": INDEX_ID}
-
-
-def _vis_record(
-    vid: str,
-    title: str,
-    vis_type: str,
-    vis_params: dict,
-    aggs: list,
-    query: str = "",
-    description: str = "",
-) -> dict:
-    visstate = {"title": title, "type": vis_type, "params": vis_params, "aggs": aggs}
-    searchsource = json.dumps({
-        "query": {"language": "kuery", "query": query},
-        "filter": [],
-        "indexRefName": "kibanaSavedObjectMeta.searchSourceJSON.index",
-    })
+def _vis_attrs(title: str, vis_type: str, params: dict, aggs: list, query: str = "") -> dict:
+    visstate = {"title": title, "type": vis_type, "params": params, "aggs": aggs}
     return {
-        "id": vid,
-        "type": "visualization",
-        "attributes": {
-            "title": title,
-            "description": description,
-            "visState": json.dumps(visstate),
-            "uiStateJSON": "{}",
-            "version": 1,
-            "kibanaSavedObjectMeta": {"searchSourceJSON": searchsource},
-        },
-        "references": [_index_ref("kibanaSavedObjectMeta.searchSourceJSON.index")],
-    }
-
-
-# ---------------------------------------------------------------------------
-# Index-pattern
-# ---------------------------------------------------------------------------
-
-def build_index_pattern() -> dict:
-    return {
-        "id": INDEX_ID,
-        "type": "index-pattern",
-        "attributes": {
-            "title": INDEX_ID,
-            "timeFieldName": "@timestamp",
-        },
-        "references": [],
-    }
-
-
-# ---------------------------------------------------------------------------
-# Row 1: TSVB metric tiles (KPI severity counts)
-# ---------------------------------------------------------------------------
-
-SEVERITY_TILES = [
-    ("tsvb-metric-critical", "Eventos Críticos", "critical", "#dc2626"),
-    ("tsvb-metric-high",     "Eventos Altos",    "high",     "#f97316"),
-    ("tsvb-metric-medium",   "Eventos Médios",   "medium",   "#eab308"),
-    ("tsvb-metric-low",      "Eventos Baixos",   "low",      "#22c55e"),
-]
-
-# Legacy metric saved-objects kept as paper trail (not embedded in dashboard)
-LEGACY_METRIC_TILES = [
-    ("low-events-metric",      "Eventos Low",      "low",      "#22c55e"),
-    ("medium-events-metric",   "Eventos Medium",   "medium",   "#eab308"),
-    ("high-events-metric",     "Eventos High",     "high",     "#f97316"),
-    ("critical-events-metric", "Eventos Critical", "critical", "#dc2626"),
-]
-
-
-def _tsvb_metric(vid: str, title: str, severity: str, color: str) -> dict:
-    """Build a TSVB visualization in metric mode — works in Kibana 8.19."""
-    params = {
-        "type": "metric",
-        "time_range_mode": "entire_time_range",
-        "series": [{
-            "id": "series1",
-            "label": title,
-            "color": color,
-            "metrics": [{"id": "m1", "type": "count"}],
-            "filter": {
-                "query": f'"Threat Severity (custom)":"{severity}"',
-                "language": "kuery",
-            },
-            "split_mode": "everything",
-            "line_width": 1,
-            "point_size": 1,
-            "fill": 0.5,
-            "stacked": "none",
-            "separate_axis": 0,
-            "axis_position": "right",
-            "formatter": "number",
-            "value_template": "{{value}}",
-            "override_index_pattern": 0,
-            "series_drop_last_bucket": 0,
-        }],
-        "drop_last_bucket": 0,
-        "filter": {"query": "", "language": "kuery"},
-        "annotations": [],
-        "axis_formatter": "number",
-        "axis_scale": "normal",
-        "axis_position": "left",
-        "axis_min": "",
-        "axis_max": "",
-        "show_legend": 0,
-        "show_grid": 1,
-        "tooltip_mode": "show_all",
-        "time_field": "@timestamp",
-        "index_pattern_ref_name": "tsvb_index",
-        "use_kibana_indexes": True,
-    }
-    rec = {
-        "id": vid,
-        "type": "visualization",
-        "attributes": {
-            "title": title,
-            "description": f"Total de eventos com severidade {severity}.",
-            "visState": json.dumps({"title": title, "type": "tsvb", "params": params, "aggs": []}),
-            "uiStateJSON": "{}",
-            "version": 1,
-            "kibanaSavedObjectMeta": {"searchSourceJSON": json.dumps({"query": {"language": "kuery", "query": ""}, "filter": []})},
-        },
-        "references": [{"type": "index-pattern", "name": "tsvb_index", "id": INDEX_ID}],
-    }
-    return rec
-
-
-def _legacy_metric_record(vid: str, title: str, severity: str, color: str) -> dict:
-    """Legacy metric saved-object preserved as a paper trail."""
-    visstate = {
         "title": title,
-        "type": "metric",
-        "params": {
-            "handleNoResults": True,
-            "metric": {
-                "percentageMode": False,
-                "useRanges": False,
-                "labels": {"show": True},
-                "invertColors": False,
-                "style": {
-                    "bgFill": color,
-                    "bgColor": False,
-                    "labelColor": False,
-                    "subText": severity,
-                    "fontSize": 52,
-                },
+        "visState": json.dumps(visstate),
+        "uiStateJSON": "{}",
+        "version": 1,
+        "kibanaSavedObjectMeta": {"searchSourceJSON": _searchsource(query)},
+    }
+
+
+def _create_viz(vid: str, title: str, vis_type: str, params: dict, aggs: list, query: str = "") -> None:
+    result = _create_saved_object(
+        "visualization", vid,
+        _vis_attrs(title, vis_type, params, aggs, query),
+        references=[_IDX_REF],
+    )
+    ok = "id" in result
+    print(f"  viz/{vid[:35]}: {'✓' if ok else '✗ ' + str(result)[:100]}")
+
+
+# ---------------------------------------------------------------------------
+# Row 1: Severity count table (replaces broken TSVB/metric tiles)
+# ---------------------------------------------------------------------------
+
+
+def create_severity_count_table() -> None:
+    params = {
+        "perPage": 10,
+        "showPartialRows": False,
+        "showMetricsAtAllLevels": False,
+        "sort": {"columnIndex": 1, "direction": "desc"},
+        "showTotal": True,
+        "totalFunc": "sum",
+        "percentageCol": "",
+    }
+    aggs = [
+        {"id": "1", "enabled": True, "type": "count", "schema": "metric", "params": {}},
+        {
+            "id": "2", "enabled": True, "type": "terms", "schema": "bucket",
+            "params": {
+                "field": "Threat Severity (custom).keyword",
+                "size": 10,
+                "order": "desc",
+                "orderBy": "1",
+                "otherBucket": False,
             },
         },
-        "aggs": [{"id": "1", "enabled": True, "type": "count", "schema": "metric", "params": {}}],
-    }
-    searchsource = json.dumps({
-        "query": {"language": "kuery", "query": f'"Threat Severity (custom)":"{severity}"'},
-        "filter": [],
-        "indexRefName": "kibanaSavedObjectMeta.searchSourceJSON.index",
-    })
-    return {
-        "id": vid,
-        "type": "visualization",
-        "attributes": {
-            "title": title,
-            "description": f"Total de eventos com severidade {severity}.",
-            "visState": json.dumps(visstate),
-            "uiStateJSON": "{}",
-            "version": 1,
-            "kibanaSavedObjectMeta": {"searchSourceJSON": searchsource},
-        },
-        "references": [_index_ref("kibanaSavedObjectMeta.searchSourceJSON.index")],
-    }
+    ]
+    _create_viz("siem-severity-table", "Contagem por Severidade", "table", params, aggs)
 
 
 # ---------------------------------------------------------------------------
-# Row 2: timelion events over time
+# Row 1b: Events over time — date histogram (replaces broken timelion/line)
 # ---------------------------------------------------------------------------
 
-def build_events_over_time() -> dict:
+
+def create_events_over_time() -> None:
     params = {
-        "expression": (
-            ".es(index=competition1,timefield=@timestamp,q='*')"
-            ".label('Eventos por hora')"
-            ".color(#10b981)"
-            ".lines(fill=1,width=2)"
-        ),
-        "interval": "auto",
-    }
-    return _vis_record(
-        "events-over-time-timelion",
-        "Eventos por Hora",
-        "timelion",
-        params,
-        [],
-        description="Série temporal de eventos de rede por hora.",
-    )
-
-
-# ---------------------------------------------------------------------------
-# Row 3: Pie + 2 bar charts
-# ---------------------------------------------------------------------------
-
-def build_severity_pie() -> dict:
-    params = {
-        "type": "pie",
+        "type": "histogram",
+        "grid": {"categoryLines": False},
+        "categoryAxes": [{
+            "id": "CategoryAxis-1", "type": "category", "position": "bottom", "show": True,
+            "style": {}, "scale": {"type": "linear"}, "labels": {"show": True, "truncate": 100},
+            "title": {},
+        }],
+        "valueAxes": [{
+            "id": "ValueAxis-1", "name": "LeftAxis-1", "type": "value", "position": "left",
+            "show": True, "style": {}, "scale": {"type": "linear", "mode": "normal"},
+            "labels": {"show": True, "rotate": 0, "filter": False, "truncate": 100},
+            "title": {"text": "Contagem de eventos"},
+        }],
+        "seriesParams": [{
+            "show": True, "type": "histogram", "mode": "stacked",
+            "data": {"label": "Contagem", "id": "1"},
+            "valueAxis": "ValueAxis-1",
+            "drawLinesBetweenPoints": True,
+            "showCircles": True,
+        }],
         "addTooltip": True,
         "addLegend": True,
         "legendPosition": "right",
-        "isDonut": False,
-        "labels": {"show": True, "values": True, "last_level": True, "truncate": 100},
-    }
-    aggs = [
-        {"id": "1", "enabled": True, "type": "count", "schema": "metric", "params": {}},
-        {
-            "id": "2", "enabled": True, "type": "terms", "schema": "segment",
-            "params": {
-                "field": "Threat Severity (custom)", "size": 10,
-                "order": "desc", "orderBy": "1", "otherBucket": False,
-            },
-        },
-    ]
-    return _vis_record(
-        "threat-severity-distribution-pie",
-        "Distribuição de Severidade",
-        "pie", params, aggs,
-        description="Proporção de eventos por nível de severidade.",
-    )
-
-
-def build_top_source_ips() -> dict:
-    params = {
-        "type": "histogram",
-        "grid": {"categoryLines": False},
-        "categoryAxes": [{"id": "x", "type": "category", "position": "left",
-                          "show": True, "style": {},
-                          "scale": {"type": "linear"}, "labels": {"show": True, "truncate": 100},
-                          "title": {}}],
-        "valueAxes": [{"id": "y", "name": "LeftAxis-1", "type": "value", "position": "bottom",
-                       "show": True, "style": {},
-                       "scale": {"type": "linear", "mode": "normal"},
-                       "labels": {"show": True, "rotate": 0, "filter": False, "truncate": 100},
-                       "title": {"text": "Contagem"}}],
-        "seriesParams": [{"show": True, "type": "histogram", "mode": "stacked",
-                          "data": {"label": "Contagem", "id": "1"},
-                          "valueAxis": "y", "drawLinesBetweenPoints": True,
-                          "showCircles": True}],
-        "addTooltip": True,
-        "addLegend": False,
-        "legendPosition": "right",
         "times": [],
         "addTimeMarker": False,
     }
     aggs = [
         {"id": "1", "enabled": True, "type": "count", "schema": "metric", "params": {}},
         {
-            "id": "2", "enabled": True, "type": "terms", "schema": "bucket",
+            "id": "2", "enabled": True, "type": "date_histogram", "schema": "segment",
             "params": {
-                "field": "Source IP", "size": 10,
-                "order": "desc", "orderBy": "1", "otherBucket": False,
+                "field": "@timestamp",
+                "useNormalizedEsInterval": True,
+                "interval": "auto",
+                "time_zone": "UTC",
+                "drop_partials": False,
+                "customInterval": "2h",
+                "min_doc_count": 1,
+                "extended_bounds": {},
             },
         },
     ]
-    return _vis_record(
-        "top-source-ips-bar",
-        "Top IPs de Origem",
-        "histogram", params, aggs,
-        description="IPs de origem com maior número de eventos.",
-    )
-
-
-def build_top_dest_ips() -> dict:
-    params = {
-        "type": "histogram",
-        "grid": {"categoryLines": False},
-        "categoryAxes": [{"id": "x", "type": "category", "position": "left",
-                          "show": True, "style": {},
-                          "scale": {"type": "linear"}, "labels": {"show": True, "truncate": 100},
-                          "title": {}}],
-        "valueAxes": [{"id": "y", "name": "LeftAxis-1", "type": "value", "position": "bottom",
-                       "show": True, "style": {},
-                       "scale": {"type": "linear", "mode": "normal"},
-                       "labels": {"show": True, "rotate": 0, "filter": False, "truncate": 100},
-                       "title": {"text": "Contagem"}}],
-        "seriesParams": [{"show": True, "type": "histogram", "mode": "stacked",
-                          "data": {"label": "Contagem", "id": "1"},
-                          "valueAxis": "y", "drawLinesBetweenPoints": True,
-                          "showCircles": True}],
-        "addTooltip": True,
-        "addLegend": False,
-        "legendPosition": "right",
-        "times": [],
-        "addTimeMarker": False,
-    }
-    aggs = [
-        {"id": "1", "enabled": True, "type": "count", "schema": "metric", "params": {}},
-        {
-            "id": "2", "enabled": True, "type": "terms", "schema": "bucket",
-            "params": {
-                "field": "Destination IP", "size": 10,
-                "order": "desc", "orderBy": "1", "otherBucket": False,
-            },
-        },
-    ]
-    return _vis_record(
-        "top-destination-ips-bar",
-        "Top IPs de Destino",
-        "histogram", params, aggs,
-        description="IPs de destino com maior número de eventos.",
-    )
+    _create_viz("siem-events-over-time", "Eventos ao longo do tempo", "histogram", params, aggs)
 
 
 # ---------------------------------------------------------------------------
-# Row 4: Destination ports bar + heatmap
+# Row 1c: Severity over time (stacked) — also date histogram
 # ---------------------------------------------------------------------------
 
-def build_top_dest_ports_bar() -> dict:
+
+def create_severity_over_time() -> None:
     params = {
         "type": "histogram",
         "grid": {"categoryLines": False},
-        "categoryAxes": [{"id": "x", "type": "category", "position": "left",
-                          "show": True, "style": {},
-                          "scale": {"type": "linear"}, "labels": {"show": True, "truncate": 100},
-                          "title": {}}],
-        "valueAxes": [{"id": "y", "name": "LeftAxis-1", "type": "value", "position": "bottom",
-                       "show": True, "style": {},
-                       "scale": {"type": "linear", "mode": "normal"},
-                       "labels": {"show": True, "rotate": 0, "filter": False, "truncate": 100},
-                       "title": {"text": "Contagem"}}],
-        "seriesParams": [{"show": True, "type": "histogram", "mode": "stacked",
-                          "data": {"label": "Contagem", "id": "1"},
-                          "valueAxis": "y", "drawLinesBetweenPoints": True,
-                          "showCircles": True}],
-        "addTooltip": True,
-        "addLegend": False,
-        "legendPosition": "right",
-        "times": [],
-        "addTimeMarker": False,
-    }
-    aggs = [
-        {"id": "1", "enabled": True, "type": "count", "schema": "metric", "params": {}},
-        {
-            "id": "2", "enabled": True, "type": "terms", "schema": "bucket",
-            "params": {
-                "field": "Destination Port", "size": 15,
-                "order": "desc", "orderBy": "1", "otherBucket": False,
-            },
-        },
-    ]
-    return _vis_record(
-        "top-destination-ports-bar",
-        "Top Portas de Destino",
-        "histogram", params, aggs,
-        description="Portas de destino mais ativas.",
-    )
-
-
-def build_heatmap() -> dict:
-    params = {
-        "type": "heatmap",
+        "categoryAxes": [{
+            "id": "CategoryAxis-1", "type": "category", "position": "bottom", "show": True,
+            "style": {}, "scale": {"type": "linear"}, "labels": {"show": True, "truncate": 100},
+            "title": {},
+        }],
+        "valueAxes": [{
+            "id": "ValueAxis-1", "name": "LeftAxis-1", "type": "value", "position": "left",
+            "show": True, "style": {}, "scale": {"type": "linear", "mode": "normal"},
+            "labels": {"show": True, "rotate": 0, "filter": False, "truncate": 100},
+            "title": {"text": "Eventos"},
+        }],
+        "seriesParams": [{
+            "show": True, "type": "histogram", "mode": "stacked",
+            "data": {"label": "Contagem", "id": "1"},
+            "valueAxis": "ValueAxis-1",
+            "drawLinesBetweenPoints": True,
+            "showCircles": True,
+        }],
         "addTooltip": True,
         "addLegend": True,
-        "enableHover": False,
         "legendPosition": "right",
         "times": [],
-        "colorsNumber": 4,
-        "colorSchema": "Blues",
-        "setColorRange": False,
-        "colorsRange": [],
-        "invertColors": False,
-        "percentageMode": False,
-        "valueAxes": [{"show": False, "id": "ValueAxis-1", "type": "value",
-                       "scale": {"type": "linear", "defaultYExtents": False},
-                       "labels": {"show": False, "rotate": 0, "overwriteColor": False, "color": "black"}}],
+        "addTimeMarker": False,
     }
     aggs = [
         {"id": "1", "enabled": True, "type": "count", "schema": "metric", "params": {}},
         {
-            "id": "2", "enabled": True, "type": "terms", "schema": "segment",
+            "id": "2", "enabled": True, "type": "date_histogram", "schema": "segment",
             "params": {
-                "field": "Destination Port", "size": 12,
-                "order": "desc", "orderBy": "1", "otherBucket": False,
+                "field": "@timestamp",
+                "interval": "auto",
+                "time_zone": "UTC",
+                "drop_partials": False,
+                "customInterval": "2h",
+                "min_doc_count": 1,
+                "extended_bounds": {},
             },
         },
         {
             "id": "3", "enabled": True, "type": "terms", "schema": "group",
             "params": {
-                "field": "Source IP", "size": 10,
-                "order": "desc", "orderBy": "1", "otherBucket": False,
+                "field": "Threat Severity (custom).keyword",
+                "size": 5,
+                "order": "desc",
+                "orderBy": "1",
             },
         },
     ]
-    return _vis_record(
-        "heatmap-port-x-source",
-        "Heatmap Porta × Origem",
-        "heatmap", params, aggs,
-        description="Densidade de eventos por porta de destino e IP de origem.",
-    )
+    _create_viz("siem-severity-over-time", "Severidade ao longo do tempo", "histogram", params, aggs)
 
 
 # ---------------------------------------------------------------------------
-# Row 5: Countries donut + Fortinet messages table
+# Severity distribution pie
 # ---------------------------------------------------------------------------
 
-def build_countries_donut() -> dict:
+
+def create_severity_pie() -> None:
     params = {
         "type": "pie",
         "addTooltip": True,
         "addLegend": True,
         "legendPosition": "right",
         "isDonut": True,
-        "labels": {"show": True, "values": True, "last_level": True, "truncate": 100},
+        "labels": {
+            "show": False, "values": True, "last_level": True,
+            "truncate": 100, "position": "default",
+        },
     }
     aggs = [
         {"id": "1", "enabled": True, "type": "count", "schema": "metric", "params": {}},
         {
             "id": "2", "enabled": True, "type": "terms", "schema": "segment",
             "params": {
-                "field": "destination.geo.country_name", "size": 10,
-                "order": "desc", "orderBy": "1", "otherBucket": True,
+                "field": "Threat Severity (custom).keyword",
+                "size": 10,
+                "order": "desc",
+                "orderBy": "1",
+                "otherBucket": False,
             },
         },
     ]
-    return _vis_record(
-        "top-destination-countries-donut",
-        "Top Países de Destino",
-        "pie", params, aggs,
-        description="Distribuição geográfica dos destinos de rede.",
-    )
-
-
-def build_fortinet_messages_table() -> dict:
-    params = {
-        "perPage": 10,
-        "showPartialRows": False,
-        "showMetricsAtAllLevels": False,
-        "sort": {"columnIndex": None, "direction": None},
-        "showTotal": False,
-        "totalFunc": "sum",
-        "percentageCol": "",
-    }
-    aggs = [
-        {"id": "1", "enabled": True, "type": "count", "schema": "metric", "params": {}},
-        {
-            "id": "2", "enabled": True, "type": "terms", "schema": "bucket",
-            "params": {
-                "field": "Fortinet Message (custom)", "size": 15,
-                "order": "desc", "orderBy": "1", "otherBucket": False,
-            },
-        },
-    ]
-    return _vis_record(
-        "top-fortinet-messages-table",
-        "Top Mensagens Fortinet",
-        "table", params, aggs,
-        description="Mensagens de log Fortinet mais frequentes.",
-    )
+    _create_viz("siem-severity-pie", "Distribuição de Severidade", "pie", params, aggs)
 
 
 # ---------------------------------------------------------------------------
-# Row 6: Top URLs + Top Src→Dst→Port table
+# Top source IPs bar
 # ---------------------------------------------------------------------------
 
-def build_top_urls_table() -> dict:
-    params = {
-        "perPage": 10,
-        "showPartialRows": False,
-        "showMetricsAtAllLevels": False,
-        "sort": {"columnIndex": None, "direction": None},
-        "showTotal": False,
-        "totalFunc": "sum",
-        "percentageCol": "",
-    }
-    aggs = [
-        {"id": "1", "enabled": True, "type": "count", "schema": "metric", "params": {}},
-        {
-            "id": "2", "enabled": True, "type": "terms", "schema": "bucket",
-            "params": {
-                "field": "url.original", "size": 15,
-                "order": "desc", "orderBy": "1", "otherBucket": False,
-            },
-        },
-    ]
-    return _vis_record(
-        "top-urls-table",
-        "Top URLs Acessadas",
-        "table", params, aggs,
-        description="URLs mais acessadas nos eventos de rede.",
-    )
 
-
-def build_src_dst_port_table() -> dict:
-    params = {
-        "perPage": 10,
-        "showPartialRows": False,
-        "showMetricsAtAllLevels": False,
-        "sort": {"columnIndex": None, "direction": None},
-        "showTotal": False,
-        "totalFunc": "sum",
-        "percentageCol": "",
-    }
-    aggs = [
-        {"id": "1", "enabled": True, "type": "count", "schema": "metric", "params": {}},
-        {
-            "id": "2", "enabled": True, "type": "terms", "schema": "bucket",
-            "params": {
-                "field": "Source IP", "size": 8,
-                "order": "desc", "orderBy": "1", "otherBucket": False,
-            },
-        },
-        {
-            "id": "3", "enabled": True, "type": "terms", "schema": "bucket",
-            "params": {
-                "field": "Destination IP", "size": 5,
-                "order": "desc", "orderBy": "1", "otherBucket": False,
-            },
-        },
-        {
-            "id": "4", "enabled": True, "type": "terms", "schema": "bucket",
-            "params": {
-                "field": "Destination Port", "size": 5,
-                "order": "desc", "orderBy": "1", "otherBucket": False,
-            },
-        },
-    ]
-    return _vis_record(
-        "top-src-dst-port-table",
-        "Top Origem → Destino → Porta",
-        "table", params, aggs,
-        description="Combinações mais frequentes de origem, destino e porta.",
-    )
-
-
-# ---------------------------------------------------------------------------
-# Additional visualizations (kept from original set for dashboard richness)
-# ---------------------------------------------------------------------------
-
-def build_severity_count_table() -> dict:
-    params = {
-        "perPage": 10,
-        "showPartialRows": False,
-        "showMetricsAtAllLevels": False,
-        "sort": {"columnIndex": None, "direction": None},
-        "showTotal": False,
-        "totalFunc": "sum",
-        "percentageCol": "",
-    }
-    aggs = [
-        {"id": "1", "enabled": True, "type": "count", "schema": "metric", "params": {}},
-        {
-            "id": "2", "enabled": True, "type": "terms", "schema": "bucket",
-            "params": {
-                "field": "Threat Severity (custom)", "size": 10,
-                "order": "desc", "orderBy": "1", "otherBucket": False,
-            },
-        },
-    ]
-    return _vis_record(
-        "severity-count-table",
-        "Contagem por Severidade",
-        "table", params, aggs,
-        description="Tabela de contagem de eventos por nível de severidade.",
-    )
-
-
-def build_top_services_table() -> dict:
-    params = {
-        "perPage": 10,
-        "showPartialRows": False,
-        "showMetricsAtAllLevels": False,
-        "sort": {"columnIndex": None, "direction": None},
-        "showTotal": False,
-        "totalFunc": "sum",
-        "percentageCol": "",
-    }
-    aggs = [
-        {"id": "1", "enabled": True, "type": "count", "schema": "metric", "params": {}},
-        {
-            "id": "2", "enabled": True, "type": "terms", "schema": "bucket",
-            "params": {
-                "field": "network.transport", "size": 10,
-                "order": "desc", "orderBy": "1", "otherBucket": False,
-            },
-        },
-    ]
-    return _vis_record(
-        "top-services-table",
-        "Top Protocolos de Transporte",
-        "table", params, aggs,
-        description="Protocolos de rede mais frequentes.",
-    )
-
-
-def build_top_dest_ports_table() -> dict:
-    params = {
-        "perPage": 10,
-        "showPartialRows": False,
-        "showMetricsAtAllLevels": False,
-        "sort": {"columnIndex": None, "direction": None},
-        "showTotal": False,
-        "totalFunc": "sum",
-        "percentageCol": "",
-    }
-    aggs = [
-        {"id": "1", "enabled": True, "type": "count", "schema": "metric", "params": {}},
-        {
-            "id": "2", "enabled": True, "type": "terms", "schema": "bucket",
-            "params": {
-                "field": "Destination Port", "size": 20,
-                "order": "desc", "orderBy": "1", "otherBucket": False,
-            },
-        },
-    ]
-    return _vis_record(
-        "top-destination-ports-table",
-        "Top Portas de Destino (tabela)",
-        "table", params, aggs,
-        description="Tabela detalhada das portas de destino mais ativas.",
-    )
-
-
-def build_top_sources_unique_dests() -> dict:
+def create_top_src_ips() -> None:
     params = {
         "type": "histogram",
         "grid": {"categoryLines": False},
-        "categoryAxes": [{"id": "x", "type": "category", "position": "left",
-                          "show": True, "style": {},
-                          "scale": {"type": "linear"}, "labels": {"show": True, "truncate": 100},
-                          "title": {}}],
-        "valueAxes": [{"id": "y", "name": "LeftAxis-1", "type": "value", "position": "bottom",
-                       "show": True, "style": {},
-                       "scale": {"type": "linear", "mode": "normal"},
-                       "labels": {"show": True, "rotate": 0, "filter": False, "truncate": 100},
-                       "title": {"text": "Destinos únicos"}}],
-        "seriesParams": [{"show": True, "type": "histogram", "mode": "stacked",
-                          "data": {"label": "Destinos únicos", "id": "1"},
-                          "valueAxis": "y", "drawLinesBetweenPoints": True,
-                          "showCircles": True}],
+        "categoryAxes": [{
+            "id": "CategoryAxis-1", "type": "category", "position": "left", "show": True,
+            "style": {}, "scale": {"type": "linear"}, "labels": {"show": True, "rotate": 0, "truncate": 200},
+            "title": {},
+        }],
+        "valueAxes": [{
+            "id": "ValueAxis-1", "name": "BottomAxis-1", "type": "value", "position": "bottom",
+            "show": True, "style": {}, "scale": {"type": "linear", "mode": "normal"},
+            "labels": {"show": True, "rotate": 0, "filter": True, "truncate": 100},
+            "title": {"text": "Contagem"},
+        }],
+        "seriesParams": [{
+            "show": True, "type": "histogram", "mode": "normal",
+            "data": {"label": "Contagem", "id": "1"},
+            "valueAxis": "ValueAxis-1",
+            "drawLinesBetweenPoints": True, "showCircles": True,
+        }],
         "addTooltip": True,
         "addLegend": False,
         "legendPosition": "right",
@@ -672,31 +340,195 @@ def build_top_sources_unique_dests() -> dict:
         "addTimeMarker": False,
     }
     aggs = [
-        {
-            "id": "1", "enabled": True, "type": "cardinality", "schema": "metric",
-            "params": {"field": "Destination IP"},
-        },
+        {"id": "1", "enabled": True, "type": "count", "schema": "metric", "params": {}},
         {
             "id": "2", "enabled": True, "type": "terms", "schema": "bucket",
-            "params": {
-                "field": "Source IP", "size": 10,
-                "order": "desc", "orderBy": "1", "otherBucket": False,
-            },
+            "params": {"field": "Source IP.keyword", "size": 10, "order": "desc", "orderBy": "1", "otherBucket": False},
         },
     ]
-    return _vis_record(
-        "top-sources-unique-dests",
-        "Origens com mais Destinos Únicos",
-        "histogram", params, aggs,
-        description="IPs de origem que alcançam maior número de destinos distintos.",
-    )
+    _create_viz("siem-top-src-ips", "Top IPs de Origem", "histogram", params, aggs)
+
+
+def create_top_dst_ips() -> None:
+    params = {
+        "type": "histogram",
+        "grid": {"categoryLines": False},
+        "categoryAxes": [{
+            "id": "CategoryAxis-1", "type": "category", "position": "left", "show": True,
+            "style": {}, "scale": {"type": "linear"}, "labels": {"show": True, "rotate": 0, "truncate": 200},
+            "title": {},
+        }],
+        "valueAxes": [{
+            "id": "ValueAxis-1", "name": "BottomAxis-1", "type": "value", "position": "bottom",
+            "show": True, "style": {}, "scale": {"type": "linear", "mode": "normal"},
+            "labels": {"show": True, "rotate": 0, "filter": True, "truncate": 100},
+            "title": {"text": "Contagem"},
+        }],
+        "seriesParams": [{
+            "show": True, "type": "histogram", "mode": "normal",
+            "data": {"label": "Contagem", "id": "1"},
+            "valueAxis": "ValueAxis-1",
+        }],
+        "addTooltip": True, "addLegend": False,
+        "legendPosition": "right", "times": [], "addTimeMarker": False,
+    }
+    aggs = [
+        {"id": "1", "enabled": True, "type": "count", "schema": "metric", "params": {}},
+        {
+            "id": "2", "enabled": True, "type": "terms", "schema": "bucket",
+            "params": {"field": "Destination IP.keyword", "size": 10, "order": "desc", "orderBy": "1", "otherBucket": False},
+        },
+    ]
+    _create_viz("siem-top-dst-ips", "Top IPs de Destino", "histogram", params, aggs)
+
+
+def create_top_dst_ports() -> None:
+    params = {
+        "type": "histogram",
+        "grid": {"categoryLines": False},
+        "categoryAxes": [{
+            "id": "CategoryAxis-1", "type": "category", "position": "left", "show": True,
+            "style": {}, "scale": {"type": "linear"}, "labels": {"show": True, "rotate": 0, "truncate": 200},
+            "title": {},
+        }],
+        "valueAxes": [{
+            "id": "ValueAxis-1", "name": "BottomAxis-1", "type": "value", "position": "bottom",
+            "show": True, "style": {}, "scale": {"type": "linear", "mode": "normal"},
+            "labels": {"show": True, "rotate": 0, "filter": True, "truncate": 100},
+            "title": {"text": "Contagem"},
+        }],
+        "seriesParams": [{"show": True, "type": "histogram", "mode": "normal", "data": {"label": "Contagem", "id": "1"}, "valueAxis": "ValueAxis-1"}],
+        "addTooltip": True, "addLegend": False,
+        "legendPosition": "right", "times": [], "addTimeMarker": False,
+    }
+    aggs = [
+        {"id": "1", "enabled": True, "type": "count", "schema": "metric", "params": {}},
+        {
+            "id": "2", "enabled": True, "type": "terms", "schema": "bucket",
+            "params": {"field": "Destination Port.keyword", "size": 15, "order": "desc", "orderBy": "1", "otherBucket": False},
+        },
+    ]
+    _create_viz("siem-top-dst-ports", "Top Portas de Destino", "histogram", params, aggs)
 
 
 # ---------------------------------------------------------------------------
-# Discover (search) saved object
+# Heatmap
 # ---------------------------------------------------------------------------
 
-def build_recent_connections() -> dict:
+
+def create_heatmap() -> None:
+    params = {
+        "addTooltip": True,
+        "addLegend": True,
+        "enableHover": False,
+        "legendPosition": "right",
+        "times": [],
+        "colorsNumber": 4,
+        "colorSchema": "Reds",
+        "setColorRange": False,
+        "colorsRange": [],
+        "invertColors": False,
+        "percentageMode": False,
+        "valueAxes": [{
+            "show": False,
+            "id": "ValueAxis-1",
+            "type": "value",
+            "scale": {"type": "linear", "defaultYExtents": False},
+            "labels": {"show": False, "rotate": 0, "color": "black"},
+        }],
+    }
+    aggs = [
+        {"id": "1", "enabled": True, "type": "count", "schema": "metric", "params": {}},
+        {
+            "id": "2", "enabled": True, "type": "terms", "schema": "segment",
+            "params": {"field": "Source IP.keyword", "size": 10, "order": "desc", "orderBy": "1"},
+        },
+        {
+            "id": "3", "enabled": True, "type": "terms", "schema": "group",
+            "params": {"field": "Destination Port.keyword", "size": 10, "order": "desc", "orderBy": "1"},
+        },
+    ]
+    _create_viz("siem-heatmap", "Heatmap Porta × Origem", "heatmap", params, aggs)
+
+
+# ---------------------------------------------------------------------------
+# Countries donut
+# ---------------------------------------------------------------------------
+
+
+def create_countries_donut() -> None:
+    params = {
+        "type": "pie",
+        "addTooltip": True,
+        "addLegend": True,
+        "legendPosition": "right",
+        "isDonut": True,
+        "labels": {"show": False, "values": True, "last_level": True, "truncate": 100, "position": "default"},
+    }
+    aggs = [
+        {"id": "1", "enabled": True, "type": "count", "schema": "metric", "params": {}},
+        {
+            "id": "2", "enabled": True, "type": "terms", "schema": "segment",
+            "params": {"field": "Destination Country (custom).keyword", "size": 10, "order": "desc", "orderBy": "1", "otherBucket": False},
+        },
+    ]
+    _create_viz("siem-countries-donut", "Top Países de Destino", "pie", params, aggs)
+
+
+# ---------------------------------------------------------------------------
+# Tables
+# ---------------------------------------------------------------------------
+
+
+def _table_params() -> dict:
+    return {
+        "perPage": 10,
+        "showPartialRows": False,
+        "showMetricsAtAllLevels": False,
+        "sort": {"columnIndex": None, "direction": None},
+        "showTotal": False,
+        "totalFunc": "sum",
+        "percentageCol": "",
+    }
+
+
+def create_fortinet_messages() -> None:
+    aggs = [
+        {"id": "1", "enabled": True, "type": "count", "schema": "metric", "params": {}},
+        {"id": "2", "enabled": True, "type": "terms", "schema": "bucket",
+         "params": {"field": "Event Name.keyword", "size": 15, "order": "desc", "orderBy": "1", "otherBucket": False}},
+    ]
+    _create_viz("siem-fortinet-messages", "Top Eventos por Tipo", "table", _table_params(), aggs)
+
+
+def create_top_urls() -> None:
+    aggs = [
+        {"id": "1", "enabled": True, "type": "count", "schema": "metric", "params": {}},
+        {"id": "2", "enabled": True, "type": "terms", "schema": "bucket",
+         "params": {"field": "Service Name (custom).keyword", "size": 15, "order": "desc", "orderBy": "1", "otherBucket": False}},
+    ]
+    _create_viz("siem-top-urls", "Top Serviços de Rede", "table", _table_params(), aggs)
+
+
+def create_src_dst_port_table() -> None:
+    aggs = [
+        {"id": "1", "enabled": True, "type": "count", "schema": "metric", "params": {}},
+        {"id": "2", "enabled": True, "type": "terms", "schema": "bucket",
+         "params": {"field": "Source IP.keyword", "size": 5, "order": "desc", "orderBy": "1", "otherBucket": False}},
+        {"id": "3", "enabled": True, "type": "terms", "schema": "bucket",
+         "params": {"field": "Destination IP.keyword", "size": 5, "order": "desc", "orderBy": "1", "otherBucket": False}},
+        {"id": "4", "enabled": True, "type": "terms", "schema": "bucket",
+         "params": {"field": "Destination Port.keyword", "size": 5, "order": "desc", "orderBy": "1", "otherBucket": False}},
+    ]
+    _create_viz("siem-src-dst-port", "Top Origem → Destino → Porta", "table", _table_params(), aggs)
+
+
+# ---------------------------------------------------------------------------
+# Discover saved search
+# ---------------------------------------------------------------------------
+
+
+def create_recent_connections() -> None:
     columns = [
         "@timestamp", "Source IP", "Destination IP", "Destination Port",
         "network.transport", "Threat Severity (custom)", "Fortinet Message (custom)",
@@ -705,221 +537,170 @@ def build_recent_connections() -> dict:
         "query": {"language": "kuery", "query": ""},
         "filter": [],
         "indexRefName": "kibanaSavedObjectMeta.searchSourceJSON.index",
-        "highlight": {"pre_tags": ["@kibana-highlighted-field@"],
-                      "post_tags": ["@/kibana-highlighted-field@"],
-                      "fields": {"*": {}}, "fragment_size": 2147483647},
+        "highlight": {
+            "pre_tags": ["@kibana-highlighted-field@"],
+            "post_tags": ["@/kibana-highlighted-field@"],
+            "fields": {"*": {}},
+            "fragment_size": 2147483647,
+        },
     })
-    return {
-        "id": "recent-network-connections",
-        "type": "search",
-        "attributes": {
-            "title": "Conexões de Rede Recentes",
-            "description": "Eventos de rede mais recentes para investigação no Discover.",
-            "columns": columns,
-            "sort": [["@timestamp", "desc"]],
-            "kibanaSavedObjectMeta": {"searchSourceJSON": searchsource},
-        },
-        "references": [_index_ref("kibanaSavedObjectMeta.searchSourceJSON.index")],
+    attrs = {
+        "title": "Conexões de Rede Recentes",
+        "description": "Eventos de rede mais recentes para investigação.",
+        "columns": columns,
+        "sort": [["@timestamp", "desc"]],
+        "kibanaSavedObjectMeta": {"searchSourceJSON": searchsource},
     }
+    result = _create_saved_object(
+        "search", "siem-recent-connections",
+        attrs,
+        references=[_IDX_REF],
+    )
+    ok = "id" in result
+    print(f"  search/siem-recent-connections: {'✓' if ok else '✗ ' + str(result)[:100]}")
 
 
 # ---------------------------------------------------------------------------
-# Dashboard panels layout
-# ---------------------------------------------------------------------------
-# Grid: 48 units wide. Controls row at y=0 h=5. All other rows shifted +5.
-#
-# Row 0  (y=0,  h=5):  Controls panel
-# Row 1  (y=5,  h=8):  4 TSVB metric tiles (w=12 each)
-# Row 2  (y=13, h=16): Events over time (w=48)
-# Row 3  (y=29, h=16): Severity pie (w=16) + Top Src IPs (w=16) + Top Dst IPs (w=16)
-# Row 4  (y=45, h=16): Top Dst Ports bar (w=16) + Heatmap (w=32)
-# Row 5  (y=61, h=14): Countries donut (w=16) + Fortinet messages table (w=32)
-# Row 6  (y=75, h=14): Top URLs table (w=24) + Src→Dst→Port table (w=24)
-# Row 7  (y=89, h=18): Recent connections Discover (w=48)
+# Dashboard
 # ---------------------------------------------------------------------------
 
-CONTROLS_PANEL = {
-    "panelIndex": "panel_controls",
-    "version": VERSION,
-    "gridData": {"x": 0, "y": 0, "w": 48, "h": 5, "i": "panel_controls"},
-    "type": "control_group",
-    "embeddableConfig": {
-        "controlStyle": "onlyField",
-        "chainingSystem": "HIERARCHICAL",
-        "ignoreParentSettings": {
-            "ignoreFilters": False,
-            "ignoreQuery": False,
-            "ignoreTimerange": False,
-            "ignoreValidations": False,
-        },
-        "controls": [
-            {
-                "type": "optionsListControl",
-                "order": 0,
-                "id": "ctrl_severity",
-                "width": "medium",
-                "grow": True,
-                "fieldName": "Threat Severity (custom)",
-                "dataViewId": INDEX_ID,
-                "title": "Severidade",
-                "selectedOptions": [],
-                "runPastTimeout": False,
-                "singleSelect": False,
-                "existsSelected": False,
-                "sort": {"by": "_key", "direction": "asc"},
-            },
-            {
-                "type": "optionsListControl",
-                "order": 1,
-                "id": "ctrl_proto",
-                "width": "medium",
-                "grow": True,
-                "fieldName": "network.transport",
-                "dataViewId": INDEX_ID,
-                "title": "Protocolo",
-                "selectedOptions": [],
-                "runPastTimeout": False,
-                "singleSelect": False,
-                "existsSelected": False,
-            },
-            {
-                "type": "rangeSliderControl",
-                "order": 2,
-                "id": "ctrl_port",
-                "width": "medium",
-                "grow": True,
-                "fieldName": "destination.port",
-                "dataViewId": INDEX_ID,
-                "title": "Porta de destino",
-                "step": 1,
-            },
-        ],
-    },
-}
+# (viz_id, panel_ref, x, y, w, h, type)
+# Grid is 48 units wide.
+# Layout:
+#  y=0  h=8  : Severity count table (w=16) | Events over time (w=32)
+#  y=8  h=16 : Severity pie (w=16) | Top Src IPs (w=16) | Top Dst IPs (w=16)
+#  y=24 h=16 : Top Dst Ports (w=16) | Heatmap (w=32)
+#  y=40 h=14 : Countries donut (w=16) | Fortinet messages (w=32)
+#  y=54 h=14 : Top URLs (w=24) | Src→Dst→Port (w=24)
+#  y=68 h=14 : Severity over time (w=48)
+#  y=82 h=18 : Recent connections Discover (w=48)
 
-# (panel_id, viz_id, viz_type, x, y, w, h)
 PANEL_LAYOUT = [
-    # Row 1 — TSVB KPI tiles
-    ("panel_critical", "tsvb-metric-critical", "visualization",  0,  5, 12,  8),
-    ("panel_high",     "tsvb-metric-high",     "visualization", 12,  5, 12,  8),
-    ("panel_medium",   "tsvb-metric-medium",   "visualization", 24,  5, 12,  8),
-    ("panel_low",      "tsvb-metric-low",      "visualization", 36,  5, 12,  8),
-    # Row 2 — Events over time
-    ("panel_timeline", "events-over-time-timelion", "visualization", 0, 13, 48, 16),
-    # Row 3 — Pie + bars
-    ("panel_severity_pie", "threat-severity-distribution-pie", "visualization",  0, 29, 16, 16),
-    ("panel_src_ips",      "top-source-ips-bar",               "visualization", 16, 29, 16, 16),
-    ("panel_dst_ips",      "top-destination-ips-bar",          "visualization", 32, 29, 16, 16),
-    # Row 4 — Ports bar + heatmap
-    ("panel_dst_ports_bar", "top-destination-ports-bar", "visualization",  0, 45, 16, 16),
-    ("panel_heatmap",       "heatmap-port-x-source",     "visualization", 16, 45, 32, 16),
-    # Row 5 — Countries donut + Fortinet table
-    ("panel_countries", "top-destination-countries-donut",  "visualization",  0, 61, 16, 14),
-    ("panel_messages",  "top-fortinet-messages-table",      "visualization", 16, 61, 32, 14),
-    # Row 6 — URLs + Src→Dst→Port
-    ("panel_urls",         "top-urls-table",         "visualization",  0, 75, 24, 14),
-    ("panel_src_dst_port", "top-src-dst-port-table", "visualization", 24, 75, 24, 14),
-    # Row 7 — Discover
-    ("panel_recent", "recent-network-connections", "search", 0, 89, 48, 18),
+    # Row 0: severity table + events over time
+    ("siem-severity-table",    "ref_0",  0,  0, 16,  8, "visualization"),
+    ("siem-events-over-time",  "ref_1", 16,  0, 32,  8, "visualization"),
+    # Row 1: pie + top src IPs + top dst IPs
+    ("siem-severity-pie",      "ref_2",  0,  8, 16, 16, "visualization"),
+    ("siem-top-src-ips",       "ref_3", 16,  8, 16, 16, "visualization"),
+    ("siem-top-dst-ips",       "ref_4", 32,  8, 16, 16, "visualization"),
+    # Row 2: top dst ports + heatmap
+    ("siem-top-dst-ports",     "ref_5",  0, 24, 16, 16, "visualization"),
+    ("siem-heatmap",           "ref_6", 16, 24, 32, 16, "visualization"),
+    # Row 3: countries + Fortinet messages
+    ("siem-countries-donut",   "ref_7",  0, 40, 16, 14, "visualization"),
+    ("siem-fortinet-messages", "ref_8", 16, 40, 32, 14, "visualization"),
+    # Row 4: URLs + src→dst→port
+    ("siem-top-urls",          "ref_9",  0, 54, 24, 14, "visualization"),
+    ("siem-src-dst-port",      "ref_10",24, 54, 24, 14, "visualization"),
+    # Row 5: severity over time (full width)
+    ("siem-severity-over-time","ref_11", 0, 68, 48, 14, "visualization"),
+    # Row 6: recent connections
+    ("siem-recent-connections","ref_12", 0, 82, 48, 18, "search"),
 ]
 
 
-def build_dashboard(panels_json: str, references: list) -> dict:
-    return {
-        "id": "hikari-siem",
-        "type": "dashboard",
-        "attributes": {
-            "title": "HIKARI SIEM",
-            "description": (
-                "Painel de operações de segurança — SOC SIEM Hikari. "
-                "Severidade, eventos por hora, IPs, portas, heatmap, URLs e "
-                "conexões recentes. Use os filtros no topo para pivotar por "
-                "severidade, protocolo ou porta."
-            ),
-            "panelsJSON": panels_json,
-            "optionsJSON": json.dumps({
-                "useMargins": True,
-                "syncColors": False,
-                "hidePanelTitles": False,
+def create_dashboard() -> None:
+    panels = []
+    references = []
+    for idx, (viz_id, ref_name, x, y, w, h, vtype) in enumerate(PANEL_LAYOUT):
+        panel_index = f"panel_{idx}"
+        panels.append({
+            "panelIndex": panel_index,
+            "gridData": {"x": x, "y": y, "w": w, "h": h, "i": panel_index},
+            "type": vtype,
+            "embeddableConfig": {},
+            "panelRefName": ref_name,
+            "version": VERSION,
+        })
+        references.append({"type": vtype, "name": ref_name, "id": viz_id})
+
+    attrs = {
+        "title": "HIKARI SIEM",
+        "description": (
+            "Painel de operações de segurança — SOC SIEM Hikari. "
+            "Severidade, eventos por hora, IPs, portas, heatmap, URLs e "
+            "conexões recentes."
+        ),
+        "panelsJSON": json.dumps(panels),
+        "optionsJSON": json.dumps({
+            "useMargins": True,
+            "syncColors": False,
+            "hidePanelTitles": False,
+        }),
+        "version": 1,
+        "timeRestore": False,
+        "kibanaSavedObjectMeta": {
+            "searchSourceJSON": json.dumps({
+                "query": {"language": "kuery", "query": ""},
+                "filter": [],
             }),
-            "version": 1,
-            "timeRestore": False,
-            "kibanaSavedObjectMeta": {
-                "searchSourceJSON": json.dumps({
-                    "query": {"language": "kuery", "query": ""},
-                    "filter": [],
-                }),
-            },
         },
-        "references": references,
     }
+    result = _create_saved_object("dashboard", "hikari-siem", attrs, references)
+    ok = "id" in result
+    print(f"  dashboard/hikari-siem: {'✓' if ok else '✗ ' + str(result)[:200]}")
+
+
+# ---------------------------------------------------------------------------
+# Also write NDJSON for offline use / git tracking
+# ---------------------------------------------------------------------------
+
+
+def write_ndjson() -> None:
+    """Write a simplified NDJSON as a reference artifact (not for import)."""
+    records = []
+    # index pattern
+    records.append({
+        "id": INDEX_ID, "type": "index-pattern",
+        "attributes": {"title": INDEX_ID, "timeFieldName": "@timestamp"},
+        "references": [],
+    })
+    # note: full dashboard JSON written by create_dashboard() into Kibana directly
+    NDJSON_PATH.parent.mkdir(parents=True, exist_ok=True)
+    with NDJSON_PATH.open("w", encoding="utf-8") as fh:
+        for rec in records:
+            fh.write(json.dumps(rec, ensure_ascii=False) + "\n")
+    print(f"  NDJSON stub written to {NDJSON_PATH}")
 
 
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
 
+
 def main() -> None:
-    records: list[dict] = []
+    print("Rebuilding Hikari SIEM dashboard via Kibana REST API...")
+    print()
 
-    # 1. Index pattern
-    records.append(build_index_pattern())
+    print("1. Index pattern:")
+    create_index_pattern()
 
-    # 2. Legacy metric saved-objects (paper trail — not embedded in dashboard)
-    for vid, title, severity, color in LEGACY_METRIC_TILES:
-        records.append(_legacy_metric_record(vid, title, severity, color))
+    print()
+    print("2. Visualizations:")
+    create_severity_count_table()
+    create_events_over_time()
+    create_severity_over_time()
+    create_severity_pie()
+    create_top_src_ips()
+    create_top_dst_ips()
+    create_top_dst_ports()
+    create_heatmap()
+    create_countries_donut()
+    create_fortinet_messages()
+    create_top_urls()
+    create_src_dst_port_table()
+    create_recent_connections()
 
-    # 3. TSVB metric tiles
-    for vid, title, severity, color in SEVERITY_TILES:
-        records.append(_tsvb_metric(vid, title, severity, color))
+    print()
+    print("3. Dashboard:")
+    create_dashboard()
 
-    # 4. Visualizations
-    records.append(build_events_over_time())
-    records.append(build_severity_pie())
-    records.append(build_top_source_ips())
-    records.append(build_top_dest_ips())
-    records.append(build_top_dest_ports_bar())
-    records.append(build_heatmap())
-    records.append(build_countries_donut())
-    records.append(build_fortinet_messages_table())
-    records.append(build_top_urls_table())
-    records.append(build_src_dst_port_table())
-    records.append(build_severity_count_table())
-    records.append(build_top_services_table())
-    records.append(build_top_dest_ports_table())
-    records.append(build_top_sources_unique_dests())
+    print()
+    print("4. NDJSON stub:")
+    write_ndjson()
 
-    # 5. Discover saved search
-    records.append(build_recent_connections())
-
-    # 6. Build dashboard panels and references
-    panels = [CONTROLS_PANEL]
-    references = []
-    for pid, vid, vtype, x, y, w, h in PANEL_LAYOUT:
-        panels.append({
-            "panelIndex": pid,
-            "gridData": {"x": x, "y": y, "w": w, "h": h, "i": pid},
-            "type": vtype,
-            "embeddableConfig": {},
-            "panelRefName": pid,
-            "version": VERSION,
-        })
-        references.append({"type": vtype, "name": pid, "id": vid})
-
-    records.append(build_dashboard(json.dumps(panels), references))
-
-    # 7. Write NDJSON
-    NDJSON.parent.mkdir(parents=True, exist_ok=True)
-    with NDJSON.open("w", encoding="utf-8") as fh:
-        for rec in records:
-            fh.write(json.dumps(rec, ensure_ascii=False) + "\n")
-
-    total_panels = len(panels)
-    sys.stderr.write(
-        f"hikari-siem.ndjson written: {len(records)} records, "
-        f"{total_panels} panels "
-        f"(1 control_group + {total_panels - 1} visualization/search panels)\n"
-    )
+    print()
+    print("Done. Refresh Kibana to see the updated dashboard.")
 
 
 if __name__ == "__main__":

@@ -1,11 +1,28 @@
 #!/usr/bin/env bash
+# =============================================================================
+# import_siem_dashboards.sh — Build the Hikari SIEM dashboard in Kibana 8.19
+#
+# Instead of importing an NDJSON bundle (which breaks panelRefName references
+# due to Kibana's import-time normalisation), this script runs the Python
+# rebuild script directly inside the CTFd container, where it reaches Kibana
+# by service name (http://kibana:5601/…) and creates every saved object via
+# the REST POST API with exact reference names.
+#
+# Usage:
+#   bash deploy/local/import_siem_dashboards.sh
+#   COMPOSE_FILE=/path/to/docker-compose.yml bash import_siem_dashboards.sh
+# =============================================================================
 set -euo pipefail
 
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 COMPOSE_FILE=${COMPOSE_FILE:-"$SCRIPT_DIR/docker-compose.yml"}
-DASHBOARD_FILE=${DASHBOARD_FILE:-"$SCRIPT_DIR/kibana/hikari-siem.ndjson"}
+REBUILD_SCRIPT="$SCRIPT_DIR/kibana/rebuild_siem_dashboard.py"
 DATA_VIEW_ID=${DATA_VIEW_ID:-competition1}
 SIEM_DASHBOARD_ID=${SIEM_DASHBOARD_ID:-hikari-siem}
+
+# Internal service name — Kibana is only reachable by this hostname from
+# other containers on the same Docker Compose network.
+KIBANA_INTERNAL_URL="http://kibana:5601/hikari/kibana"
 
 compose() {
   docker-compose -f "$COMPOSE_FILE" "$@"
@@ -15,40 +32,34 @@ kibana() {
   compose exec -T kibana curl -sS "$@"
 }
 
+# ---- 1. Sanity checks -------------------------------------------------------
+
+[[ -f "$REBUILD_SCRIPT" ]] \
+  || { echo "FAIL: rebuild script missing: $REBUILD_SCRIPT"; exit 1; }
+
+# ---- 2. Wait for Kibana -----------------------------------------------------
+
 wait_for_kibana() {
+  echo "Waiting for Kibana to become available..."
   for _ in {1..60}; do
     status=$(kibana "http://localhost:5601/hikari/kibana/api/status" \
-      | jq -r '.status.overall.level // empty')
+      | jq -r '.status.overall.level // empty' 2>/dev/null || true)
     if [[ "$status" == "available" ]]; then
+      echo "Kibana is ready."
       return 0
     fi
     sleep 2
   done
-  echo "FAIL: Kibana did not become available"
+  echo "FAIL: Kibana did not become available within 120 s"
   exit 1
 }
 
-import_saved_objects() {
-  local tmp_path="/tmp/hikari-siem.ndjson"
-  compose exec -T kibana sh -c "cat > '$tmp_path'" < "$DASHBOARD_FILE"
-  response=$(kibana \
-    -X POST "http://localhost:5601/hikari/kibana/api/saved_objects/_import?overwrite=true" \
-    -H "kbn-xsrf: true" \
-    --form "file=@$tmp_path")
-  compose exec -T kibana rm -f "$tmp_path"
-  success=$(echo "$response" | jq -r '.success')
-  [[ "$success" == "true" ]] \
-    || { echo "FAIL: saved object import returned $response"; exit 1; }
-  echo "$response" | jq -r '"saved objects imported: \(.successCount)"'
-}
+# ---- 3. Remove legacy orphan dashboards -------------------------------------
 
 delete_legacy_dashboards() {
   # The original Hikari dashboard.zip (Aug 2025) included a single-panel
-  # "SOC Dashboard - competition1" search saved-object. Reviewers who
-  # imported that bundle still see the orphan alongside HIKARI SIEM and
-  # the duplicate dashboard fragments analyst attention. Delete it
-  # idempotently before the import so the reviewer ends up with exactly
-  # one curated dashboard.
+  # "SOC Dashboard - competition1" search saved-object. Delete it idempotently
+  # so reviewers end up with exactly one curated dashboard.
   local ids=(
     soc-dashboard-competition1
     lista-de-conexoes-recentes
@@ -62,7 +73,31 @@ delete_legacy_dashboards() {
       -X DELETE "http://localhost:5601/hikari/kibana/api/saved_objects/search/$object_id?force=true" \
       -H "kbn-xsrf: true" >/dev/null 2>&1 || true
   done
+  echo "Legacy orphan dashboards cleaned up."
 }
+
+# ---- 4. Run the Python rebuild script inside CTFd ---------------------------
+#
+# The CTFd container has Python 3 + the same Docker Compose network, so it
+# can reach Kibana by service hostname. We copy the script into /tmp to avoid
+# any path-mapping issues and pass KIBANA_BASE via environment variable.
+
+rebuild_dashboard() {
+  local remote_script="/tmp/rebuild_siem_dashboard.py"
+
+  echo "Copying rebuild script into CTFd container..."
+  compose cp "$REBUILD_SCRIPT" ctfd:"$remote_script" 2>/dev/null \
+    || docker cp "$REBUILD_SCRIPT" "$(compose ps -q ctfd)":/tmp/rebuild_siem_dashboard.py
+
+  echo "Running rebuild script (KIBANA_BASE=$KIBANA_INTERNAL_URL)..."
+  compose exec -T -e "KIBANA_BASE=$KIBANA_INTERNAL_URL" ctfd \
+    python3 "$remote_script"
+
+  echo "Cleaning up temporary script..."
+  compose exec -T ctfd rm -f "$remote_script" || true
+}
+
+# ---- 5. Post-build settings -------------------------------------------------
 
 set_default_data_view() {
   response=$(kibana \
@@ -73,6 +108,7 @@ set_default_data_view() {
   acknowledged=$(echo "$response" | jq -r '.acknowledged')
   [[ "$acknowledged" == "true" ]] \
     || { echo "FAIL: default data view update returned $response"; exit 1; }
+  echo "Default data view set to: $DATA_VIEW_ID"
 }
 
 set_default_dashboard_route() {
@@ -85,43 +121,45 @@ set_default_dashboard_route() {
   value=$(echo "$response" | jq -r '.settings.defaultRoute.userValue // empty')
   [[ "$value" == "/app/dashboards#/view/$SIEM_DASHBOARD_ID" ]] \
     || { echo "FAIL: default route update returned $response"; exit 1; }
+  echo "Default Kibana route set to dashboard: $SIEM_DASHBOARD_ID"
 }
 
 apply_siem_settings() {
-  # legacyMetricChartsLibrary keeps the older renderer for "metric" viz
-  # that the four severity tiles depend on. The new Lens-based metric
-  # in Kibana 8.x ignores the legacy params shape and renders the tile
-  # with no numeric value. The legacy renderer accepts the saved-object
-  # shape we ship and paints the count.
   response=$(kibana \
     -X POST "http://localhost:5601/hikari/kibana/api/kibana/settings" \
     -H "kbn-xsrf: true" \
     -H "Content-Type: application/json" \
-    -d '{"changes":{"theme:darkMode":true,"security.showInsecureClusterWarning":false,"visualization:visualize:legacyMetricChartsLibrary":true}}')
+    -d '{"changes":{"theme:darkMode":true,"security.showInsecureClusterWarning":false}}')
   dark_mode=$(echo "$response" | jq -r '.settings["theme:darkMode"].userValue')
   [[ "$dark_mode" == "true" ]] \
     || { echo "FAIL: SIEM settings update returned $response"; exit 1; }
+  echo "Dark mode and security warning suppression applied."
 }
+
+# ---- 6. Verify --------------------------------------------------------------
 
 verify_dashboard() {
   dashboard=$(kibana \
     "http://localhost:5601/hikari/kibana/api/saved_objects/dashboard/$SIEM_DASHBOARD_ID")
   title=$(echo "$dashboard" | jq -r '.attributes.title // empty')
   [[ "$title" == "HIKARI SIEM" ]] \
-    || { echo "FAIL: HIKARI SIEM dashboard missing"; exit 1; }
+    || { echo "FAIL: HIKARI SIEM dashboard missing after rebuild"; exit 1; }
   panels=$(echo "$dashboard" | jq -r '.attributes.panelsJSON | fromjson | length')
-  [[ "$panels" -ge 16 ]] \
-    || { echo "FAIL: dashboard has too few panels ($panels)"; exit 1; }
+  # The rebuild script creates 13 panels (12 visualizations + 1 search).
+  [[ "$panels" -ge 13 ]] \
+    || { echo "FAIL: dashboard has too few panels ($panels, expected ≥13)"; exit 1; }
   echo "PASS: HIKARI SIEM dashboard available with $panels panels"
 }
 
-[[ -f "$DASHBOARD_FILE" ]] \
-  || { echo "FAIL: dashboard file missing: $DASHBOARD_FILE"; exit 1; }
+# ---- Main -------------------------------------------------------------------
 
 wait_for_kibana
 delete_legacy_dashboards
-import_saved_objects
+rebuild_dashboard
 set_default_data_view
 set_default_dashboard_route
 apply_siem_settings
 verify_dashboard
+
+echo ""
+echo "SIEM dashboard import complete."
