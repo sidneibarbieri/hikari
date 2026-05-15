@@ -4,7 +4,7 @@ import os
 import sys
 
 from flask import abort, redirect, render_template, request, session, url_for
-from sqlalchemy.exc import IntegrityError, InvalidRequestError
+from sqlalchemy.exc import IntegrityError, InvalidRequestError, OperationalError
 from werkzeug.middleware.dispatcher import DispatcherMiddleware
 
 from CTFd.cache import clear_user_recent_ips
@@ -224,6 +224,18 @@ def init_request_processors(app):
         if request.endpoint == "views.themes":
             return
 
+        # Hikari: the Kibana proxy generates many concurrent POSTs per
+        # dashboard load (one per panel saved-object lookup, plus search
+        # RPCs). The stock CTFd tracker re-UPDATEs the same Tracking row
+        # on every POST, which serialises them on the row lock and emits
+        # MariaDB error 1020 ("Record has changed since last read") when
+        # writes collide — surfaced to the user as "INTERNAL SERVER
+        # ERROR" tiles in Kibana. The Hikari activity logger already
+        # captures every Kibana request with full classification, so the
+        # stock Tracking row is redundant here and safe to skip.
+        if request.path.startswith("/hikari/kibana/"):
+            return
+
         if import_in_progress():
             if request.endpoint == "admin.import_ctf":
                 return
@@ -253,6 +265,14 @@ def init_request_processors(app):
                     db.session.rollback()
                     db.session.close()
                     logout_user()
+                except OperationalError:
+                    # Concurrent writes can still collide outside the
+                    # Kibana proxy path (e.g. when an admin opens
+                    # multiple admin pages in quick succession). Roll
+                    # back and continue serving the request — the next
+                    # write will refresh the row. This is safer than
+                    # logging the user out for a transient lock.
+                    db.session.rollback()
                 else:
                     clear_user_recent_ips(user_id=session["id"])
 

@@ -38,23 +38,81 @@ Sem essas credenciais, o botão fica oculto e o CTFd responde
 em tentativas no fluxo OAuth (`ctfd/CTFd/auth.py:453`). Isso é
 comportamento herdado do CTFd; o Hikari não documenta nada além.
 
-## Google, Apple e outros provedores
+## Login com Google (opcional)
 
-O Hikari **não** disponibiliza login com Google, Apple, GitHub ou
-provedores semelhantes. Justificativa:
+O Hikari oferece login federado com Google de forma **opt-in**, via o
+módulo `hikari_auth`. Por padrão o botão fica oculto, garantindo que o
+revisor consiga subir e validar o stack sem precisar configurar nada.
+Quando o operador fornece `HIKARI_GOOGLE_CLIENT_ID` e
+`HIKARI_GOOGLE_CLIENT_SECRET`, um botão "Entrar com Google" aparece
+em `/login` e `/register`.
 
-- O CTFd não expõe esses provedores no fluxo OAuth nativo.
-- Habilitá-los exigiria registrar uma aplicação OAuth em cada provedor,
-  hospedar `client_id`/`client_secret` e ajustar políticas de privacidade
-  (LGPD, ver `docs/PRIVACY.md`).
-- Para o escopo do artefato — uma competição local com ambiente
-  reproduzível e atribuição de pesquisa — o cadastro local é suficiente
-  e auditável.
+### Como ativar
 
-Equipes que precisarem de SSO corporativo podem implementá-lo via plugin
-CTFd próprio. O Hikari mantém o ponto de extensão aberto: a tabela
-`users` aceita identidades externas (campo `oauth_id`) e o decorator
-`@authed` valida sessão independentemente da origem.
+1. Acesse <https://console.cloud.google.com/apis/credentials> e crie um
+   `OAuth 2.0 Client ID` do tipo `Web application`.
+2. Em `Authorized redirect URIs`, adicione:
+   - Para o stack local: `http://localhost:8000/auth/google/callback`
+   - Para produção: `https://SEU-DOMINIO/auth/google/callback`
+3. Copie o `Client ID` e o `Client secret`.
+4. No `deploy/local/.env` (ou nas variáveis de ambiente do CTFd em
+   produção), defina:
+   ```
+   HIKARI_GOOGLE_CLIENT_ID=seu-client-id
+   HIKARI_GOOGLE_CLIENT_SECRET=seu-client-secret
+   # Apenas necessário quando o callback público difere do host do
+   # servidor (proxy reverso, split-host, túnel). Em geral, deixe vazio.
+   HIKARI_OAUTH_REDIRECT_BASE=
+   ```
+5. Reinicie o serviço `ctfd`. O botão passa a ser renderizado
+   automaticamente, sem reiniciar o resto do stack.
+
+### Fluxo implementado
+
+- `GET /auth/google/login` — gera um `state` de 32 bytes (CSRF), grava
+  na sessão e redireciona para `accounts.google.com` com o escopo
+  `openid email profile`.
+- `GET /auth/google/callback` — valida o `state`, troca o `code` pelo
+  `access_token` no endpoint de token do Google, consulta o `userinfo`
+  e exige `email_verified=true`.
+- Se já existe usuário com aquele e-mail, faz `login_user`.
+- Se não existe, cria um usuário local marcado como `verified=true`
+  com senha aleatória de alta entropia (não usável via `/login`; só
+  via re-entrada por OAuth). O username segue o `name` do Google ou
+  o prefixo do e-mail, com sufixo aleatório em caso de colisão.
+
+### Por que não Authlib
+
+O fluxo é implementado direto com `requests` (já presente no CTFd) e
+`secrets`. Não acrescenta dependência nova, é pequeno o suficiente para
+auditoria visual (`hikari_auth/views.py`, ~150 linhas) e suporta
+testes de aceitação sem mocks adicionais.
+
+## Apple Sign In (fora de escopo)
+
+O Hikari **não** disponibiliza Apple Sign In. A integração é tecnicamente
+viável, mas inadequada para um artefato acadêmico autoexplicativo:
+
+- Exige conta paga `Apple Developer Program` (US$ 99/ano).
+- Demanda `Service ID` com domínio público verificado e callback HTTPS
+  resolvível pela Apple.
+- O `client_secret` é um JWT ES256 assinado com chave privada `.p8`,
+  válido por no máximo seis meses e rotacionável sem downtime.
+- A revisão LGPD precisa cobrir o compartilhamento com servidores Apple
+  fora do Brasil.
+
+Esses requisitos não cabem em um stack offline reproduzível. Operadores
+que precisarem de Apple Sign In em produção podem replicar a estrutura
+do `hikari_auth` (blueprint isolado, gating por env var, matching por
+e-mail verificado) trocando o IdP — todo o restante do fluxo (sessão,
+auto-cadastro, atribuição de pesquisa) permanece igual.
+
+## Outros provedores (GitHub, Microsoft, SAML…)
+
+O ponto de extensão é o módulo `hikari_auth`: cada provedor adicional
+fica em seu próprio submódulo com a mesma forma (rota `/auth/<idp>/login`,
+rota `/auth/<idp>/callback`, gating por env var, matching por e-mail
+verificado). Não há acoplamento entre eles.
 
 ## Sessão e CSRF
 

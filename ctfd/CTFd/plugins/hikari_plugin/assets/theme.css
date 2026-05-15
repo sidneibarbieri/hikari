@@ -1392,3 +1392,54 @@ select option {
         display: none;
     }
 }
+
+/* Federated login affordance.
+   Only rendered when HIKARI_GOOGLE_CLIENT_ID/SECRET are set; this rule
+   styles the divider and the Google button to match the surrounding
+   form so the addition reads as a first-class option, not an afterthought. */
+.hikari-auth-divider {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin: 1.1rem 0 0.85rem;
+    color: var(--hikari-text-muted);
+    font-size: 0.78rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+}
+.hikari-auth-divider::before,
+.hikari-auth-divider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--hikari-border);
+}
+.hikari-auth-google {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.7rem;
+    width: 100%;
+    padding: 0.75rem 1rem;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--hikari-border);
+    color: var(--hikari-text);
+    font-family: var(--hikari-font-display);
+    font-weight: 600;
+    font-size: 0.95rem;
+    letter-spacing: 0.02em;
+    text-decoration: none;
+    border-radius: var(--hikari-radius);
+    transition: background 120ms ease, border-color 120ms ease;
+}
+.hikari-auth-google:hover,
+.hikari-auth-google:focus-visible {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: var(--hikari-primary);
+    color: var(--hikari-text);
+    text-decoration: none;
+}
+.hikari-auth-google svg {
+    width: 1.15rem;
+    height: 1.15rem;
+}

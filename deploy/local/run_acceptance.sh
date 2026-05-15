@@ -15,6 +15,7 @@ steps=(
   "apply_theme.sh|apply Hikari design tokens"
   "apply_branding.sh|apply Hikari home page and footer"
   "verify_branding.sh|home page and footer render Hikari branding"
+  "verify_oauth.sh|Google OAuth button hidden by default, /auth/google/login bounces with clear message"
   "verify_public_pages.sh|public pages render without server errors"
   "verify_plugin.sh|admin can reach Hikari plugin"
   "verify_pipeline.sh|Kafka -> Elasticsearch data plane"

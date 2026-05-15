@@ -22,6 +22,7 @@ import CTFd.plugins.hikari_plugin.hikari_models as hikari_models
 import CTFd.plugins.hikari_challenge as hikari_challenge
 import CTFd.plugins.hikari_plugin.hikari_importer as hikari_importer
 from CTFd.plugins.hikari_plugin import hikari_activity
+from CTFd.plugins.hikari_plugin import hikari_auth
 from CTFd.plugins.hikari_plugin import hikari_feedback
 from CTFd.plugins.hikari_plugin import hikari_kibana_gateway
 from CTFd.plugins.hikari_plugin import hikari_live
@@ -456,7 +457,16 @@ def load(app):
     hikari_feedback.register(hikariplugin)
     hikari_kibana_gateway.register(hikariplugin)
     hikari_live.register(hikariplugin)
+    hikari_auth.register(hikariplugin)
     app.register_blueprint(hikariplugin)
+
+    # Expose Google OAuth availability to Jinja so the login and register
+    # templates can render the button conditionally. is_google_enabled
+    # only reads environment variables with safe defaults; it cannot
+    # raise, so no try/except wrapper is needed.
+    @app.context_processor
+    def _inject_hikari_auth_flags():
+        return {"hikari_google_enabled": hikari_auth.is_google_enabled()}
 
 
     ##############################################################################

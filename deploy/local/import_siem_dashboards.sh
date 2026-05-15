@@ -98,7 +98,7 @@ verify_dashboard() {
   [[ "$title" == "HIKARI SIEM" ]] \
     || { echo "FAIL: HIKARI SIEM dashboard missing"; exit 1; }
   panels=$(echo "$dashboard" | jq -r '.attributes.panelsJSON | fromjson | length')
-  [[ "$panels" -ge 10 ]] \
+  [[ "$panels" -ge 16 ]] \
     || { echo "FAIL: dashboard has too few panels ($panels)"; exit 1; }
   echo "PASS: HIKARI SIEM dashboard available with $panels panels"
 }

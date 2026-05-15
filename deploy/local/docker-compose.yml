@@ -27,6 +27,13 @@ services:
       HIKARI_KIBANA_BASE_PATH: /hikari/kibana
       KIBANA_USERNAME: ${KIBANA_USERNAME:-elastic}
       KIBANA_PASSWORD: ${KIBANA_PASSWORD:-}
+      # Optional Google OAuth — leave blank to keep federated login
+      # hidden. When both are set, the login and register pages render a
+      # "Entrar com Google" button next to the local username/password
+      # form. See docs/AUTH.md for the operator-facing setup.
+      HIKARI_GOOGLE_CLIENT_ID: ${HIKARI_GOOGLE_CLIENT_ID:-}
+      HIKARI_GOOGLE_CLIENT_SECRET: ${HIKARI_GOOGLE_CLIENT_SECRET:-}
+      HIKARI_OAUTH_REDIRECT_BASE: ${HIKARI_OAUTH_REDIRECT_BASE:-}
     volumes:
       - ctfd-uploads:/var/uploads
       - ctfd-logs:/var/log/CTFd
