@@ -5,11 +5,13 @@ The view layer composes them; this module is independent from HTTP.
 """
 
 import json
+import statistics
+from collections import defaultdict
 from typing import List, Optional
 
-from sqlalchemy import func
+from sqlalchemy import case, func
 
-from CTFd.models import Teams, db
+from CTFd.models import Challenges, Fails, Solves, Submissions, Teams, db
 from CTFd.plugins.hikari_plugin.hikari_activity.models import HikariActivity
 from CTFd.plugins.hikari_plugin.hikari_feedback.models import FeedbackResponse
 
@@ -18,9 +20,12 @@ from .dto import (
     FeedbackCount,
     FeedbackMetric,
     FeedbackSummary,
+    HuntingDepth,
     RecentEvent,
     ResearchFilters,
+    SubmissionPattern,
     TeamActivity,
+    TeamSubmissionPosture,
 )
 
 
@@ -195,3 +200,220 @@ def iter_all_events(filters: Optional[ResearchFilters] = None):
 
 def _average(values: List[float]) -> float:
     return round(sum(values) / len(values), 2)
+
+
+def _bucket(attempts: int) -> str:
+    """Map the attempt count of a (user, challenge) solve to a label.
+
+    Buckets are chosen to match the analyst-facing narrative the paper
+    cares about: an attempt of 1 means the solver knew the answer or
+    found it organically in the data; 2–5 is reasonable iteration;
+    6–20 looks like exhaustive search; anything past 20 is grinding.
+    """
+    if attempts <= 1:
+        return "organic"
+    if attempts <= 5:
+        return "exploratory"
+    if attempts <= 20:
+        return "brute_force"
+    return "grinding"
+
+
+def submission_patterns(limit: int = 50) -> List[SubmissionPattern]:
+    """For every challenge with at least one solve, classify each solve
+    by how many attempts the same (user, challenge) racked up before
+    succeeding. The output lets an admin see, at a glance, which
+    challenges teams "got" vs. which they had to grind through.
+    """
+
+    # First: collect every submission, ordered, so we can count failures
+    # before each solve cheaply. With ~10k submissions this is fast and
+    # avoids a per-(user,challenge) SQL roundtrip.
+    rows = (
+        db.session.query(
+            Submissions.challenge_id,
+            Submissions.user_id,
+            Submissions.type,
+            Submissions.date,
+        )
+        .order_by(Submissions.challenge_id.asc(), Submissions.user_id.asc(), Submissions.date.asc())
+        .all()
+    )
+
+    per_pair = defaultdict(lambda: {"attempts_before_solve": 0, "solved": False})
+    failures_per_challenge: defaultdict[int, int] = defaultdict(int)
+    for chal_id, user_id, sub_type, _date in rows:
+        if chal_id is None or user_id is None:
+            continue
+        key = (chal_id, user_id)
+        record = per_pair[key]
+        if record["solved"]:
+            continue
+        if sub_type == "correct":
+            record["solved"] = True
+        else:
+            record["attempts_before_solve"] += 1
+            failures_per_challenge[chal_id] += 1
+
+    by_chal: defaultdict[int, dict] = defaultdict(lambda: defaultdict(int))
+    attempts_per_chal: defaultdict[int, list] = defaultdict(list)
+    for (chal_id, _user_id), record in per_pair.items():
+        if not record["solved"]:
+            continue
+        total_attempts = record["attempts_before_solve"] + 1  # +1 for the correct one
+        by_chal[chal_id][_bucket(total_attempts)] += 1
+        by_chal[chal_id]["solvers"] += 1
+        attempts_per_chal[chal_id].append(total_attempts)
+
+    challenge_meta = {
+        row.id: row
+        for row in db.session.query(Challenges.id, Challenges.name, Challenges.category).all()
+    }
+
+    patterns = []
+    for chal_id, buckets in by_chal.items():
+        meta = challenge_meta.get(chal_id)
+        if meta is None:
+            continue
+        attempts_list = attempts_per_chal[chal_id]
+        patterns.append(
+            SubmissionPattern(
+                challenge_id=chal_id,
+                challenge_name=meta.name,
+                category=meta.category,
+                solvers=buckets["solvers"],
+                organic=buckets["organic"],
+                exploratory=buckets["exploratory"],
+                brute_force=buckets["brute_force"],
+                grinding=buckets["grinding"],
+                median_attempts=int(statistics.median(attempts_list)),
+                total_failures=failures_per_challenge.get(chal_id, 0),
+            )
+        )
+    patterns.sort(key=lambda p: (-p.solvers, p.challenge_name))
+    return patterns[:limit]
+
+
+def team_submission_posture(limit: int = 50) -> List[TeamSubmissionPosture]:
+    """Per-team solves, failures and median seconds between attempts.
+
+    The ``brute_force_ratio`` is failures per solve. A disciplined team
+    reads the data and the ratio stays low (≤2); a brute-forcing team
+    sees the ratio climb into the double digits.
+    """
+
+    rows = (
+        db.session.query(
+            Submissions.team_id,
+            Teams.name,
+            func.sum(case((Submissions.type == "correct", 1), else_=0)).label("solves"),
+            func.sum(case((Submissions.type == "incorrect", 1), else_=0)).label("failures"),
+        )
+        .outerjoin(Teams, Teams.id == Submissions.team_id)
+        .group_by(Submissions.team_id, Teams.name)
+        .order_by(func.count(Submissions.id).desc())
+        .limit(limit)
+        .all()
+    )
+
+    # Median seconds between submissions per team needs a second pass.
+    intervals: defaultdict[int, list] = defaultdict(list)
+    submission_rows = (
+        db.session.query(Submissions.team_id, Submissions.date)
+        .filter(Submissions.team_id.isnot(None))
+        .order_by(Submissions.team_id.asc(), Submissions.date.asc())
+        .all()
+    )
+    last_per_team: dict[int, "datetime"] = {}
+    for team_id, when in submission_rows:
+        prev = last_per_team.get(team_id)
+        if prev is not None:
+            intervals[team_id].append(int((when - prev).total_seconds()))
+        last_per_team[team_id] = when
+
+    out = []
+    for team_id, team_name, solves, failures in rows:
+        s = int(solves or 0)
+        f = int(failures or 0)
+        ratio = round(f / s, 2) if s > 0 else float(f)
+        median_seconds = (
+            int(statistics.median(intervals[team_id])) if intervals.get(team_id) else None
+        )
+        out.append(
+            TeamSubmissionPosture(
+                team_id=team_id,
+                team_name=team_name,
+                solves=s,
+                failures=f,
+                brute_force_ratio=ratio,
+                median_seconds_between_attempts=median_seconds,
+            )
+        )
+    return out
+
+
+def hunting_depth_by_actor(limit: int = 50) -> List[HuntingDepth]:
+    """Aggregate Kibana classification facts per actor.
+
+    Reads the payload the gateway recorded (``kibana.kind``,
+    ``kibana.indices``, ``kibana.query``) and rolls them up so admins
+    can see who actually explored the data.
+    """
+
+    rows = (
+        db.session.query(
+            HikariActivity.actor_id,
+            HikariActivity.actor_role,
+            HikariActivity.team_id,
+            HikariActivity.payload,
+            HikariActivity.event_type,
+        )
+        .filter(HikariActivity.event_type.like("kibana%"))
+        .yield_per(500)
+    )
+
+    by_actor: defaultdict[Optional[int], dict] = defaultdict(
+        lambda: {
+            "actor_role": None,
+            "team_id": None,
+            "total_requests": 0,
+            "indices": set(),
+            "queries": set(),
+            "discover_queries": 0,
+            "saved_object_views": 0,
+        }
+    )
+
+    for actor_id, actor_role, team_id, payload, event_type in rows:
+        bucket = by_actor[actor_id]
+        bucket["actor_role"] = actor_role
+        bucket["team_id"] = team_id
+        bucket["total_requests"] += 1
+        kibana = (payload or {}).get("kibana") or {}
+        indices = kibana.get("indices") or []
+        for index in indices:
+            bucket["indices"].add(index)
+        query = kibana.get("query")
+        if query:
+            bucket["queries"].add(query)
+        kind = kibana.get("kind")
+        if kind == "search":
+            bucket["discover_queries"] += 1
+        if kind == "saved-object":
+            bucket["saved_object_views"] += 1
+
+    out = [
+        HuntingDepth(
+            actor_id=actor_id,
+            actor_role=bucket["actor_role"],
+            team_id=bucket["team_id"],
+            total_requests=bucket["total_requests"],
+            distinct_indices=len(bucket["indices"]),
+            distinct_kql_queries=len(bucket["queries"]),
+            discover_queries=bucket["discover_queries"],
+            saved_object_views=bucket["saved_object_views"],
+        )
+        for actor_id, bucket in by_actor.items()
+    ]
+    out.sort(key=lambda h: -h.total_requests)
+    return out[:limit]

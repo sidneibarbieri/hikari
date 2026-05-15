@@ -42,18 +42,25 @@ import_saved_objects() {
   echo "$response" | jq -r '"saved objects imported: \(.successCount)"'
 }
 
-delete_legacy_metric_objects() {
+delete_legacy_dashboards() {
+  # The original Hikari dashboard.zip (Aug 2025) included a single-panel
+  # "SOC Dashboard - competition1" search saved-object. Reviewers who
+  # imported that bundle still see the orphan alongside HIKARI SIEM and
+  # the duplicate dashboard fragments analyst attention. Delete it
+  # idempotently before the import so the reviewer ends up with exactly
+  # one curated dashboard.
   local ids=(
-    low-events-metric
-    medium-events-metric
-    high-events-metric
-    critical-events-metric
+    soc-dashboard-competition1
+    lista-de-conexoes-recentes
   )
   local object_id
   for object_id in "${ids[@]}"; do
     kibana \
-      -X DELETE "http://localhost:5601/hikari/kibana/api/saved_objects/visualization/$object_id?force=true" \
-      -H "kbn-xsrf: true" >/dev/null || true
+      -X DELETE "http://localhost:5601/hikari/kibana/api/saved_objects/dashboard/$object_id?force=true" \
+      -H "kbn-xsrf: true" >/dev/null 2>&1 || true
+    kibana \
+      -X DELETE "http://localhost:5601/hikari/kibana/api/saved_objects/search/$object_id?force=true" \
+      -H "kbn-xsrf: true" >/dev/null 2>&1 || true
   done
 }
 
@@ -81,11 +88,16 @@ set_default_dashboard_route() {
 }
 
 apply_siem_settings() {
+  # legacyMetricChartsLibrary keeps the older renderer for "metric" viz
+  # that the four severity tiles depend on. The new Lens-based metric
+  # in Kibana 8.x ignores the legacy params shape and renders the tile
+  # with no numeric value. The legacy renderer accepts the saved-object
+  # shape we ship and paints the count.
   response=$(kibana \
     -X POST "http://localhost:5601/hikari/kibana/api/kibana/settings" \
     -H "kbn-xsrf: true" \
     -H "Content-Type: application/json" \
-    -d '{"changes":{"theme:darkMode":true,"security.showInsecureClusterWarning":false}}')
+    -d '{"changes":{"theme:darkMode":true,"security.showInsecureClusterWarning":false,"visualization:visualize:legacyMetricChartsLibrary":true}}')
   dark_mode=$(echo "$response" | jq -r '.settings["theme:darkMode"].userValue')
   [[ "$dark_mode" == "true" ]] \
     || { echo "FAIL: SIEM settings update returned $response"; exit 1; }
@@ -107,8 +119,8 @@ verify_dashboard() {
   || { echo "FAIL: dashboard file missing: $DASHBOARD_FILE"; exit 1; }
 
 wait_for_kibana
+delete_legacy_dashboards
 import_saved_objects
-delete_legacy_metric_objects
 set_default_data_view
 set_default_dashboard_route
 apply_siem_settings

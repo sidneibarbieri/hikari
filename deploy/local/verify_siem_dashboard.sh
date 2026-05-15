@@ -36,13 +36,29 @@ panels=$(echo "$dashboard" | jq -r '.attributes.panelsJSON | fromjson | length')
   || { echo "FAIL: dashboard has too few panels ($panels)"; exit 1; }
 echo "PASS: HIKARI SIEM dashboard has $panels panels"
 
+# Four severity metric tiles (Low/Medium/High/Critical) ride at the top
+# of the dashboard. They were unblocked alongside the rest of the
+# aggBased viz once the CTFd tracker stopped contending the row lock.
 metric_panels=$(kibana \
   -H "kbn-xsrf: true" \
   "http://localhost:5601/hikari/kibana/api/saved_objects/_find?type=visualization&search_fields=title&per_page=100" \
   | jq -r '[.saved_objects[] | select((.attributes.visState | fromjson).type == "metric")] | length')
-[[ "$metric_panels" == "0" ]] \
-  || { echo "FAIL: legacy metric visualizations still present ($metric_panels)"; exit 1; }
-echo "PASS: SIEM dashboard avoids unstable legacy metric panels"
+[[ "$metric_panels" -ge 4 ]] \
+  || { echo "FAIL: expected four severity metric tiles, found $metric_panels"; exit 1; }
+echo "PASS: $metric_panels severity metric tiles present"
+
+# Only one SIEM dashboard should be installed. The original
+# dashboard.zip carried an obsolete "SOC Dashboard - competition1"
+# whose data view diverges from the current pipeline; importing it
+# alongside HIKARI SIEM splits attention. The import script deletes it
+# during the import — this check enforces that.
+orphan_count=$(kibana \
+  -H "kbn-xsrf: true" \
+  "http://localhost:5601/hikari/kibana/api/saved_objects/_find?type=dashboard&per_page=100" \
+  | jq -r '[.saved_objects[] | select(.attributes.title | test("SOC Dashboard"; "i"))] | length')
+[[ "$orphan_count" == "0" ]] \
+  || { echo "FAIL: legacy SOC Dashboard still present ($orphan_count copies)"; exit 1; }
+echo "PASS: no legacy SOC dashboards lingering"
 
 data_view=$(kibana \
   -H "kbn-xsrf: true" \

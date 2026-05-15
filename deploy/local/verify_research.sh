@@ -48,6 +48,12 @@ grep -q "Respostas do questionário" "$dashboard" \
   || { echo "FAIL: dashboard missing feedback summary"; exit 1; }
 grep -q "Médias do questionário" "$dashboard" \
   || { echo "FAIL: dashboard missing feedback metrics section"; exit 1; }
+grep -q "Padrão de submissões" "$dashboard" \
+  || { echo "FAIL: dashboard missing submission-pattern section"; exit 1; }
+grep -q "Postura de submissão por equipe" "$dashboard" \
+  || { echo "FAIL: dashboard missing team posture section"; exit 1; }
+grep -q "Profundidade de hunting" "$dashboard" \
+  || { echo "FAIL: dashboard missing Kibana hunting depth section"; exit 1; }
 if grep -q "A new CTFd version is available" "$dashboard"; then
   echo "FAIL: admin dashboard still renders the upstream version banner"
   exit 1

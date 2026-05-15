@@ -105,6 +105,15 @@
     text-transform: uppercase;
     letter-spacing: 0;
 }
+.research-card-help {
+    margin: -0.4rem 0 0.85rem;
+    color: var(--hikari-text-muted);
+    font-size: 0.82rem;
+    line-height: 1.45;
+}
+.research-card-help strong {
+    color: var(--hikari-text);
+}
 
 .research-card--metric {
     display: flex;
