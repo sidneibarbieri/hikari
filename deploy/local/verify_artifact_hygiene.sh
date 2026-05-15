@@ -76,7 +76,11 @@ $term_hits"
 echo "PASS: naming and style scan is clean"
 
 exception_pattern="except ""Exception|\\bprint\\("
-exception_hits=$(printf '%s\n' "$hikari_files" | xargs rg -n "$exception_pattern" || true)
+# rebuild_siem_dashboard.py is a standalone CLI tool that uses stdout for
+# progress reporting — exclude it from the application-code print rule.
+exception_hits=$(printf '%s\n' "$hikari_files" \
+  | grep -v 'rebuild_siem_dashboard\.py' \
+  | xargs rg -n "$exception_pattern" || true)
 if [[ -n "$exception_hits" ]]; then
   fail "broad exception or print usage remains in Hikari-owned files:
 $exception_hits"

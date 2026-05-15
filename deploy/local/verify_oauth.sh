@@ -22,48 +22,82 @@ trap 'rm -f "$login_page" "$register_page" "$oauth_response"' EXIT
 curl -sSL -o "$login_page" "$CTFD_URL/login"
 curl -sSL -o "$register_page" "$CTFD_URL/register"
 
-if grep -q 'hikari-auth-google' "$login_page"; then
-  echo "FAIL: /login renders the Google OAuth button without credentials"
-  exit 1
-fi
-if grep -q 'hikari-auth-google' "$register_page"; then
-  echo "FAIL: /register renders the Google OAuth button without credentials"
-  exit 1
-fi
-echo "PASS: Google OAuth button hidden when HIKARI_GOOGLE_CLIENT_ID is unset"
+# Detect whether the running CTFd container has OAuth credentials configured.
+# When credentials are present the button is intentionally rendered; hide-by-
+# default only applies when the environment carries no client ID at all.
+COMPOSE_FILE=${COMPOSE_FILE:-"$(dirname "$0")/docker-compose.yml"}
+ctfd_client_id=$(docker-compose -f "$COMPOSE_FILE" exec -T ctfd \
+  sh -c 'echo "${HIKARI_GOOGLE_CLIENT_ID:-}"' 2>/dev/null || true)
 
-# /auth/google/login must exist (route registered) but bounce back to
-# /login when credentials are missing. Verify the redirect target by
-# inspecting Location, not the rendered HTML — flash messages live in
-# the session and only show after the redirect lands on /login, which
-# requires preserving the cookie. The redirect itself is the proof that
-# the route is wired and the gating is in place.
+if [[ -z "$ctfd_client_id" ]]; then
+  # No credentials — button must be hidden.
+  if grep -q 'hikari-auth-google' "$login_page"; then
+    echo "FAIL: /login renders the Google OAuth button without credentials"
+    exit 1
+  fi
+  if grep -q 'hikari-auth-google' "$register_page"; then
+    echo "FAIL: /register renders the Google OAuth button without credentials"
+    exit 1
+  fi
+  echo "PASS: Google OAuth button hidden when HIKARI_GOOGLE_CLIENT_ID is unset"
+else
+  # Credentials present — button must be visible.
+  if grep -q 'hikari-auth-google' "$login_page"; then
+    echo "PASS: Google OAuth button rendered (HIKARI_GOOGLE_CLIENT_ID is set)"
+  else
+    echo "FAIL: HIKARI_GOOGLE_CLIENT_ID is set but the OAuth button is not rendered"
+    exit 1
+  fi
+fi
+
+# /auth/google/login must exist (route registered).
+# When credentials are ABSENT it must bounce back to /login with a flash.
+# When credentials are PRESENT it is expected to redirect to Google — the
+# live OAuth round-trip is not tested here (requires outbound network).
 cookies=$(mktemp); trap 'rm -f "$cookies"' RETURN
 location=$(curl -sS -o /dev/null -D - -c "$cookies" "$CTFD_URL/auth/google/login" \
   | grep -i '^location:' | tr -d '\r\n' | awk '{print $2}')
-case "$location" in
-  */login*)
-    echo "PASS: /auth/google/login -> $location when credentials missing"
-    ;;
-  *accounts.google.com*)
-    echo "FAIL: /auth/google/login leaked to Google despite missing credentials"
-    exit 1
-    ;;
-  *)
-    echo "FAIL: /auth/google/login unexpected Location: $location"
-    exit 1
-    ;;
-esac
 
-# Follow the redirect with the session cookie so the flash survives.
-# Location can be absolute or path-only; normalize before curling.
-case "$location" in
-  http*) target="$location" ;;
-  *) target="$CTFD_URL$location" ;;
-esac
-curl -sSL -b "$cookies" -o "$oauth_response" "$target"
-grep -q 'Login com Google não está configurado' "$oauth_response" \
-  || { echo "FAIL: /login after bounce did not surface the not-configured flash"; exit 1; }
-echo "PASS: /login after bounce shows the not-configured flash message"
+if [[ -z "$ctfd_client_id" ]]; then
+  # No credentials — route must gate and redirect back to /login.
+  case "$location" in
+    */login*)
+      echo "PASS: /auth/google/login -> $location when credentials missing"
+      ;;
+    *accounts.google.com*)
+      echo "FAIL: /auth/google/login leaked to Google despite missing credentials"
+      exit 1
+      ;;
+    *)
+      echo "FAIL: /auth/google/login unexpected Location: $location"
+      exit 1
+      ;;
+  esac
+
+  # Follow the redirect so the flash message is rendered.
+  case "$location" in
+    http*) target="$location" ;;
+    *) target="$CTFD_URL$location" ;;
+  esac
+  curl -sSL -b "$cookies" -o "$oauth_response" "$target"
+  grep -q 'Login com Google não está configurado' "$oauth_response" \
+    || { echo "FAIL: /login after bounce did not surface the not-configured flash"; exit 1; }
+  echo "PASS: /login after bounce shows the not-configured flash message"
+else
+  # Credentials present — redirect to Google is the correct behavior.
+  case "$location" in
+    *accounts.google.com*)
+      echo "PASS: /auth/google/login redirects to Google (credentials are set)"
+      ;;
+    */login*)
+      echo "FAIL: /auth/google/login bounced despite HIKARI_GOOGLE_CLIENT_ID being set"
+      exit 1
+      ;;
+    *)
+      echo "FAIL: /auth/google/login unexpected Location: $location"
+      exit 1
+      ;;
+  esac
+fi
 
 echo "OAuth defaults verified."
