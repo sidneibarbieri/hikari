@@ -63,12 +63,12 @@
       <div>
         <h2 class="text-center">
           {% if account.place %}
-            {{ account.place }} <small>place</small>
+            {{ account.place }} <small>º lugar</small>
           {% endif %}
         </h2>
         <h2 class="text-center">
           {% if account %}
-            {{ account.get_score(admin=True) }} <small>points</small>
+            {{ account.get_score(admin=True) }} <small>pontos</small>
           {% endif %}
         </h2>
       </div>
@@ -95,7 +95,7 @@
       {% if awards %}
         <div class="row">
           <div class="col-md-12">
-            <h3>{% trans %}Awards{% endtrans %}</h3>
+            <h3>Prêmios</h3>
 
           </div>
           {% for award in awards %}
@@ -117,14 +117,14 @@
 
       <div class="row">
         <div class="col-md-12">
-          <h3>{% trans %}Solves{% endtrans %}</h3>
+          <h3>Soluções</h3>
           <table class="table table-striped align-middle">
             <thead>
             <tr>
-              <th>{% trans %}Challenge{% endtrans %}</th>
-              <th class="d-none d-md-block d-lg-block">{% trans %}Category{% endtrans %}</th>
-              <th>{% trans %}Value{% endtrans %}</th>
-              <th>{% trans %}Time{% endtrans %}</th>
+              <th>Desafio</th>
+              <th class="d-none d-md-block d-lg-block">Categoria</th>
+              <th>Pontuação</th>
+              <th>Hora</th>
             </tr>
             </thead>
             <tbody>
@@ -169,13 +169,13 @@
             <svg height="16" width="16">
               <circle cx="8" cy="8" r="5" fill="rgb(0, 209, 64)" />
             </svg>
-            <small x-text="`Solves (${getSolvePercentage()}%)`"></small>
+            <small x-text="`Acertos (${getSolvePercentage()}%)`"></small>
           </div>
           <div class="ps-2 float-start">
             <svg height="16" width="16">
               <circle cx="8" cy="8" r="5" fill="rgb(207, 38, 0)" />
             </svg>
-            <small x-text="`Fails (${getFailPercentage()}%)`"></small>
+            <small x-text="`Erros (${getFailPercentage()}%)`"></small>
           </div>
         </div>
         <div class="col-md-6 d-none d-md-block d-lg-block py-4">
@@ -210,7 +210,7 @@
     {% else %}
       <div class="row min-vh-25">
         <h3 class="opacity-50 text-center w-100 justify-content-center align-self-center">
-          {% trans %}No solves yet{% endtrans %}
+          Nenhuma solução ainda
         </h3>
       </div>
     {% endif %}

@@ -31,24 +31,29 @@ TILES = [
 # dashboard omits them. The plugin's own /hikari/siem page
 # already renders four native HTML metric tiles at the top with the
 # same data, so the information is not lost.
+# The legacy `line` and stacked-`area` viz with date_histogram never
+# paint a series in Kibana 8.19 — they render the axes and stop. Same
+# diagnosis as the metric tiles: Elastic moved time-series visuals to
+# Lens / TSVB and the legacy renderer is incomplete. The saved-objects
+# stay on disk; the dashboard omits them. The Discover panel
+# (recent-network-connections) and the area-equivalent severity
+# breakdown (pie + table) already cover the same insight.
 PANELS = [
     # (panel id, viz id, type, x, y, w, h)
     ("panel_severity", "severity-count-table", "visualization", 0, 0, 16, 12),
     ("panel_severity_pie", "threat-severity-distribution-pie", "visualization", 16, 0, 16, 12),
     ("panel_services", "top-services-table", "visualization", 32, 0, 16, 12),
-    ("panel_timeline", "events-over-time-line", "visualization", 0, 12, 48, 14),
-    ("panel_dest_ports", "top-destination-ports-bar", "visualization", 0, 26, 16, 14),
-    ("panel_dest_ips", "top-destination-ips-bar", "visualization", 16, 26, 16, 14),
-    ("panel_source_ips", "top-source-ips-bar", "visualization", 32, 26, 16, 14),
-    ("panel_countries", "top-destination-countries-donut", "visualization", 0, 40, 16, 14),
-    ("panel_heatmap", "heatmap-port-x-source", "visualization", 16, 40, 32, 16),
-    ("panel_ports_table", "top-destination-ports-table", "visualization", 0, 56, 24, 14),
-    ("panel_messages", "top-fortinet-messages-table", "visualization", 24, 56, 24, 14),
-    ("panel_urls", "top-urls-table", "visualization", 0, 70, 24, 14),
-    ("panel_recent", "recent-network-connections", "search", 24, 70, 24, 18),
-    ("panel_severity_area", "severity-stacked-area", "visualization", 0, 88, 48, 16),
-    ("panel_unique_dests", "top-sources-unique-dests", "visualization", 0, 104, 24, 16),
-    ("panel_src_dst_port", "top-src-dst-port-table", "visualization", 24, 104, 24, 16),
+    ("panel_dest_ports", "top-destination-ports-bar", "visualization", 0, 12, 16, 14),
+    ("panel_dest_ips", "top-destination-ips-bar", "visualization", 16, 12, 16, 14),
+    ("panel_source_ips", "top-source-ips-bar", "visualization", 32, 12, 16, 14),
+    ("panel_countries", "top-destination-countries-donut", "visualization", 0, 26, 16, 14),
+    ("panel_heatmap", "heatmap-port-x-source", "visualization", 16, 26, 32, 16),
+    ("panel_ports_table", "top-destination-ports-table", "visualization", 0, 42, 24, 14),
+    ("panel_messages", "top-fortinet-messages-table", "visualization", 24, 42, 24, 14),
+    ("panel_urls", "top-urls-table", "visualization", 0, 56, 24, 14),
+    ("panel_recent", "recent-network-connections", "search", 24, 56, 24, 18),
+    ("panel_unique_dests", "top-sources-unique-dests", "visualization", 0, 74, 24, 16),
+    ("panel_src_dst_port", "top-src-dst-port-table", "visualization", 24, 74, 24, 16),
 ]
 
 

@@ -32,7 +32,7 @@ title=$(echo "$dashboard" | jq -r '.attributes.title // empty')
 [[ "$title" == "HIKARI SIEM" ]] \
   || { echo "FAIL: HIKARI SIEM dashboard not found"; exit 1; }
 panels=$(echo "$dashboard" | jq -r '.attributes.panelsJSON | fromjson | length')
-[[ "$panels" -ge 16 ]] \
+[[ "$panels" -ge 14 ]] \
   || { echo "FAIL: dashboard has too few panels ($panels)"; exit 1; }
 echo "PASS: HIKARI SIEM dashboard has $panels panels"
 

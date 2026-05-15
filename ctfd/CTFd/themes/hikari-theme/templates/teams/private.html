@@ -5,8 +5,8 @@
     <div class="modal-dialog modal-lg">
       <div class="modal-content">
         <div class="modal-header">
-          <h2 class="modal-action text-center w-100">{% trans %}Edit Team{% endtrans %}</h2>
-          <button type="button" class="cursor-pointer btn-close" data-bs-dismiss="modal" aria-label="Close">
+          <h2 class="modal-action text-center w-100">Editar equipe</h2>
+          <button type="button" class="cursor-pointer btn-close" data-bs-dismiss="modal" aria-label="Fechar">
           </button>
         </div>
 
@@ -72,18 +72,18 @@
                     class="alert alert-success alert-dismissible submit-row"
                     role="alert" x-cloak="success" x-show="success"
                 >
-                  <strong>Success!</strong>
-                  {% trans %}Your team's profile has been updated{% endtrans %}
-                  <button type="button" class="cursor-pointer btn-close" data-bs-dismiss="alert" aria-label="Close">
+                  <strong>Sucesso!</strong>
+                  O perfil da equipe foi atualizado.
+                  <button type="button" class="cursor-pointer btn-close" data-bs-dismiss="alert" aria-label="Fechar">
                   </button>
                 </div>
 
                 <template x-for="(msg, idx) in errors" :key="idx">
                   <div class="alert alert-danger alert-dismissible" role="alert">
-                    <span class="sr-only">{% trans %}Error:{% endtrans %}</span>
+                    <span class="sr-only">Erro:</span>
                     <span x-text="msg"></span>
 
-                    <button type="button" class="cursor-pointer btn-close" data-bs-dismiss="alert" aria-label="Close">
+                    <button type="button" class="cursor-pointer btn-close" data-bs-dismiss="alert" aria-label="Fechar">
                     </button>
                   </div>
                 </template>
@@ -101,8 +101,8 @@
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
-          <h2 class="modal-action text-center w-100">{% trans %}Choose Captain{% endtrans %}</h2>
-          <button type="button" class="cursor-pointer btn-close" data-bs-dismiss="modal" aria-label="Close">
+          <h2 class="modal-action text-center w-100">Escolher capitão</h2>
+          <button type="button" class="cursor-pointer btn-close" data-bs-dismiss="modal" aria-label="Fechar">
           </button>
         </div>
         <div class="modal-body clearfix">
@@ -111,7 +111,7 @@
               <div class="mb-3">
                 {{ form.captain_id.label(class="form-label") }}
                 {% for member in team.members %}
-                  {# Append members to the select choices #}
+                  {# Adiciona membros às opções do select #}
                   {% set _ = form.captain_id.choices.append((member.id, member.name)) %}
                 {% endfor %}
                 {{ form.captain_id(class="form-select mb-2") }}
@@ -123,16 +123,16 @@
                     x-cloak="success"
                     x-show="success"
                 >
-                  <strong>Success!</strong>
-                  {% trans %}Your captain rights have been transferred{% endtrans %}
-                  <button type="button" class="cursor-pointer btn-close" data-bs-dismiss="alert" aria-label="Close">
+                  <strong>Sucesso!</strong>
+                  Os direitos de capitão foram transferidos.
+                  <button type="button" class="cursor-pointer btn-close" data-bs-dismiss="alert" aria-label="Fechar">
                   </button>
                 </div>
                 <template x-for="(msg, idx) in errors" :key="idx">
                   <div class="alert alert-danger alert-dismissible" role="alert">
-                    <span class="sr-only">Error:</span>
+                    <span class="sr-only">Erro:</span>
                     <span x-text="msg"></span>
-                    <button type="button" class="cursor-pointer btn-close" data-bs-dismiss="alert" aria-label="Close">
+                    <button type="button" class="cursor-pointer btn-close" data-bs-dismiss="alert" aria-label="Fechar">
                     </button>
                   </div>
                 </template>
@@ -150,7 +150,7 @@
       <div class="modal-content">
         <div class="modal-header">
           <h2 class="modal-action text-center w-100">Convidar usuários</h2>
-          <button type="button" class="cursor-pointer btn-close" data-bs-dismiss="modal" aria-label="Close">
+          <button type="button" class="cursor-pointer btn-close" data-bs-dismiss="modal" aria-label="Fechar">
           </button>
         </div>
         <div class="modal-body clearfix">
@@ -168,10 +168,10 @@
                 </div>
 
                 <small class="form-text text-muted">
-                  {% trans %}Share this link with your team members for them to join your team{% endtrans %}
+                  Compartilhe este link com os membros da sua equipe para que eles possam entrar.
                 </small>
                 <small class="form-text text-muted">
-                  {% trans %}Invite links can be re-used and expire after 1 day{% endtrans %}
+                  Os links de convite são reutilizáveis e expiram após 1 dia.
                 </small>
               </div>
             </form>
@@ -185,17 +185,17 @@
     <div class="modal-dialog" role="document">
       <div class="modal-content">
         <div class="modal-header">
-          <h2 class="modal-action text-center w-100">{% trans %}Disband Team{% endtrans %}</h2>
-          <button type="button" class="cursor-pointer btn-close" data-bs-dismiss="modal" aria-label="Close">
+          <h2 class="modal-action text-center w-100">Dissolver equipe</h2>
+          <button type="button" class="cursor-pointer btn-close" data-bs-dismiss="modal" aria-label="Fechar">
           </button>
         </div>
         <div class="modal-body">
-          <p class="mb-0">{% trans %}Are you sure you want to disband your team?{% endtrans %}</p>
+          <p class="mb-0">Tem certeza de que deseja dissolver sua equipe?</p>
 
           <div class="mt-3">
             <template x-for="(msg, idx) in errors" :key="idx">
               <div class="alert alert-danger" role="alert">
-                <span class="sr-only">{% trans %}Error:{% endtrans %}</span>
+                <span class="sr-only">Erro:</span>
                 <span x-text="msg"></span>
               </div>
             </template>
@@ -203,8 +203,8 @@
 
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-danger" data-bs-dismiss="modal">{% trans %}No{% endtrans %}</button>
-          <button type="button" class="btn btn-primary" @click="disbandTeam()" :disabled="errors.length > 0">{% trans %}Yes{% endtrans %}</button>
+          <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Não</button>
+          <button type="button" class="btn btn-primary" @click="disbandTeam()" :disabled="errors.length > 0">Sim</button>
         </div>
       </div>
     </div>
@@ -215,7 +215,7 @@
       <h1 id="team-id" team-id="{{ team.id }}">{{ team.name }}</h1>
       {% if team.oauth_id %}
         <a href="https://majorleaguecyber.org/t/{{ team.name }}">
-          <h3><span class="badge bg-primary">{% trans %}Official{% endtrans %}</span></h3>
+          <h3><span class="badge bg-primary">Oficial</span></h3>
         </a>
       {% endif %}
 
@@ -251,13 +251,11 @@
       {% endfor %}
 
       <h2 id="team-place" class="text-center">
-        {# This intentionally hides the team's place when scores are hidden because this can be their internal profile
-           and we don't want to leak their place in the CTF. #}
-        {# Public page hiding is done at the route level #}
+        {# Oculta a posição da equipe quando os scores estão escondidos. #}
         {% if scores_visible() %}
           {% if place %}
             {{ place }}
-            <small>{% trans %}place{% endtrans %}</small>
+            <small>º lugar</small>
           {% endif %}
         {% endif %}
       </h2>
@@ -265,7 +263,7 @@
       <h2 id="team-score" class="text-center">
         {% if score %}
           {{ score }}
-          <small>{% trans %}points{% endtrans %}</small>
+          <small>pontos</small>
         {% endif %}
       </h2>
 
@@ -274,14 +272,14 @@
           <i
               class="cursor-pointer fas fa-cogs fa-2x px-2 pt-3"
               data-bs-toggle="tooltip" data-bs-placement="top"
-              title="Edit Team"
+              title="Editar equipe"
           ></i>
         </a>
         <a class="edit-captain text-white" @click="chooseCaptain()">
           <i
               class="cursor-pointer fas fa-user-tag fa-2x px-2 pt-3"
               data-bs-toggle="tooltip" data-bs-placement="top"
-              title="Choose Captain"
+              title="Escolher capitão"
           ></i>
         </a>
 
@@ -289,14 +287,14 @@
           <i
               class="cursor-pointer fas fa-ticket-alt fa-2x px-2 pt-3"
               data-bs-toggle="tooltip" data-bs-placement="top"
-              title="Invite Users"
+              title="Convidar usuários"
           ></i>
         </a>
         <a class="disband-team text-white" @click="disbandTeam()">
           <i
               class="cursor-pointer fas fa-trash-alt fa-2x px-2 pt-3"
               data-bs-toggle="tooltip" data-bs-placement="top"
-              title="Disband Team"
+              title="Dissolver equipe"
           ></i>
         </a>
       </div>
@@ -322,12 +320,12 @@
 
     <div class="row min-vh-25">
       <div class="col-md-12">
-        <h3>{% trans %}Members{% endtrans %}</h3>
+        <h3>Membros</h3>
         <table class="table table-striped align-middle">
           <thead>
           <tr>
-            <th>{% trans %}User Name{% endtrans %}</th>
-            <th>{% trans %}Score{% endtrans %}</th>
+            <th>Usuário</th>
+            <th>Pontuação</th>
           </tr>
           </thead>
           <tbody>
@@ -342,7 +340,7 @@
                   <span class="badge bg-secondary ms-2">{{ member.bracket.name }}</span>
                 {% endif %}
                 {% if team.captain_id == member.id %}
-                  <span class="badge bg-primary ms-2">{% trans %}Captain{% endtrans %}</span>
+                  <span class="badge bg-primary ms-2">Capitão</span>
                 {% endif %}
               </td>
               <td>{{ member.score }}</td>
@@ -358,7 +356,7 @@
       {% if awards %}
         <div class="row">
           <div class="col-md-12">
-            <h3>{% trans %}Awards{% endtrans %}</h3>
+            <h3>Prêmios</h3>
           </div>
 
           {% for award in awards %}
@@ -381,14 +379,14 @@
 
       <div class="row">
         <div class="col-md-12">
-          <h3>{% trans %}Solves{% endtrans %}</h3>
+          <h3>Soluções</h3>
           <table class="table table-striped align-middle">
             <thead>
             <tr>
-              <th>{% trans %}Challenge{% endtrans %}</th>
-              <th class="d-none d-md-block d-lg-block">{% trans %}Category{% endtrans %}</th>
-              <th>{% trans %}Value{% endtrans %}</th>
-              <th>{% trans %}Time{% endtrans %}</th>
+              <th>Desafio</th>
+              <th class="d-none d-md-block d-lg-block">Categoria</th>
+              <th>Pontuação</th>
+              <th>Hora</th>
             </tr>
             </thead>
             <tbody>
@@ -418,15 +416,15 @@
       <div class="row" x-data="TeamGraphs">
         <div class="col-md-6 d-none d-md-block d-lg-block py-4">
           <div class="progress">
-            <div 
-              class="progress-bar" 
-              role="progressbar" 
-              :style="{ width: `${getSolvePercentage()}%`, 'background-color': 'rgb(0, 209, 64)' }" 
+            <div
+              class="progress-bar"
+              role="progressbar"
+              :style="{ width: `${getSolvePercentage()}%`, 'background-color': 'rgb(0, 209, 64)' }"
             >
             </div>
-            <div 
-              class="progress-bar" 
-              role="progressbar" 
+            <div
+              class="progress-bar"
+              role="progressbar"
               :style="{ width: `${getFailPercentage()}%`, 'background-color': 'rgb(207, 38, 0)' }"
             >
             </div>
@@ -435,21 +433,21 @@
             <svg height="16" width="16">
               <circle cx="8" cy="8" r="5" fill="rgb(0, 209, 64)" />
             </svg>
-            <small x-text="`Solves (${getSolvePercentage()}%)`"></small>
+            <small x-text="`Acertos (${getSolvePercentage()}%)`"></small>
           </div>
           <div class="ps-2 float-start">
             <svg height="16" width="16">
               <circle cx="8" cy="8" r="5" fill="rgb(207, 38, 0)" />
             </svg>
-            <small x-text="`Fails (${getFailPercentage()}%)`"></small>
+            <small x-text="`Erros (${getFailPercentage()}%)`"></small>
           </div>
         </div>
         <div class="col-md-6 d-none d-md-block d-lg-block py-4">
           <div class="progress">
             <template x-for="category in getCategoryBreakdown()" :key="category.name">
-              <div 
-                class="progress-bar" 
-                role="progressbar" 
+              <div
+                class="progress-bar"
+                role="progressbar"
                 :style="{ width: `${category.percent}%`, 'background-color': category.color }"
               >
               </div>
@@ -478,7 +476,7 @@
     {% else %}
       <div class="row min-vh-25">
         <h3 class="opacity-50 text-center w-100 justify-content-center align-self-center">
-          {% trans %}No solves yet{% endtrans %}
+          Nenhuma solução ainda
         </h3>
       </div>
     {% endif %}

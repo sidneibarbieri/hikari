@@ -7,7 +7,7 @@
 
       {% if team.oauth_id %}
         <a href="https://majorleaguecyber.org/t/{{ team.name }}">
-          <h3 class="d-inline-block mx-1"><span class="badge bg-primary rounded-pill">{% trans %}Official{% endtrans %}</span></h3>
+          <h3 class="d-inline-block mx-1"><span class="badge bg-primary rounded-pill">Oficial</span></h3>
         </a>
       {% endif %}
 
@@ -60,14 +60,11 @@
       {% endif %}
 
       <h2 id="team-place" class="text-center">
-        {# This intentionally hides the team's place when scores are hidden because this can be
-          their internal profile and we don't want to leak their place in the CTF. #}
-
-        {# Public page hiding is done at the route level #}
+        {# A visibilidade pública do lugar é controlada no nível da rota. #}
         {% if scores_visible() %}
           {% if place %}
             {{ place }}
-            <small>place</small>
+            <small>º lugar</small>
           {% endif %}
         {% endif %}
       </h2>
@@ -75,7 +72,7 @@
       <h2 id="team-score" class="text-center">
         {% if score %}
           {{ score }}
-          <small>points</small>
+          <small>pontos</small>
         {% endif %}
       </h2>
     </div>
@@ -88,12 +85,12 @@
 
     <div class="row">
       <div class="col-md-12">
-        <h3>{% trans %}Members{% endtrans %}</h3>
+        <h3>Membros</h3>
         <table class="table table-striped align-middle">
           <thead>
           <tr>
-            <th>{% trans %}User Name{% endtrans %}</th>
-            <th>{% trans %}Score{% endtrans %}</th>
+            <th>Usuário</th>
+            <th>Pontuação</th>
           </tr>
           </thead>
           <tbody>
@@ -107,7 +104,7 @@
                   <span class="badge bg-secondary ms-2">{{ member.bracket.name }}</span>
                 {% endif %}
                 {% if team.captain_id == member.id %}
-                  <span class="badge bg-primary ms-2">{% trans %}Captain{% endtrans %}</span>
+                  <span class="badge bg-primary ms-2">Capitão</span>
                 {% endif %}
               </td>
               <td>{{ member.score }}</td>
@@ -122,7 +119,7 @@
       {% if awards %}
         <div class="row">
           <div class="col-md-12">
-            <h3>{% trans %}Awards{% endtrans %}</h3>
+            <h3>Prêmios</h3>
           </div>
 
           {% for award in awards %}
@@ -150,14 +147,14 @@
 
       <div class="row">
         <div class="col-md-12">
-          <h3>{% trans %}Solves{% endtrans %}</h3>
+          <h3>Soluções</h3>
           <table class="table table-striped align-middle">
             <thead>
             <tr>
-              <th class="text-center">{% trans %}Challenge{% endtrans %}</th>
-              <th class="d-none d-md-block d-lg-block">{% trans %}Category{% endtrans %}</th>
-              <th>{% trans %}Value{% endtrans %}</th>
-              <th>{% trans %}Time{% endtrans %}</th>
+              <th class="text-center">Desafio</th>
+              <th class="d-none d-md-block d-lg-block">Categoria</th>
+              <th>Pontuação</th>
+              <th>Hora</th>
             </tr>
             </thead>
             <tbody>
@@ -202,13 +199,13 @@
             <svg height="16" width="16">
               <circle cx="8" cy="8" r="5" fill="rgb(0, 209, 64)" />
             </svg>
-            <small x-text="`Solves (${getSolvePercentage()}%)`"></small>
+            <small x-text="`Acertos (${getSolvePercentage()}%)`"></small>
           </div>
           <div class="ps-2 float-start">
             <svg height="16" width="16">
               <circle cx="8" cy="8" r="5" fill="rgb(207, 38, 0)" />
             </svg>
-            <small x-text="`Fails (${getFailPercentage()}%)`"></small>
+            <small x-text="`Erros (${getFailPercentage()}%)`"></small>
           </div>
         </div>
         <div class="col-md-6 d-none d-md-block d-lg-block py-4">
@@ -245,7 +242,7 @@
     {% else %}
       <div class="row min-vh-25">
         <h3 class="opacity-50 text-center w-100 justify-content-center align-self-center">
-          {% trans %}No solves yet{% endtrans %}
+          Nenhuma solução ainda
         </h3>
       </div>
     {% endif %}

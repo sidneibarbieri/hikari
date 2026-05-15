@@ -352,7 +352,7 @@ def settings():
         team_url = url_for("teams.private")
         infos.append(
             markup(
-                f'In order to participate you must either <a href="{team_url}">join or create a team</a>.'
+                f'Para participar você precisa <a href="{team_url}">entrar em uma equipe ou criar uma nova</a>.'
             )
         )
 

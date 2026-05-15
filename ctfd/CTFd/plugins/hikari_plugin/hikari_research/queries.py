@@ -389,17 +389,20 @@ def hunting_depth_by_actor(limit: int = 50) -> List[HuntingDepth]:
         bucket["actor_role"] = actor_role
         bucket["team_id"] = team_id
         bucket["total_requests"] += 1
+        # The gateway stores classification facts under payload.kibana.
+        # Fields: query_kind ("search" | "bsearch" | "console" |
+        # "saved-object" | "dashboard_open"), indices (list),
+        # free_text_excerpt (the KQL string when present).
         kibana = (payload or {}).get("kibana") or {}
-        indices = kibana.get("indices") or []
-        for index in indices:
+        for index in kibana.get("indices") or []:
             bucket["indices"].add(index)
-        query = kibana.get("query")
-        if query:
-            bucket["queries"].add(query)
-        kind = kibana.get("kind")
-        if kind == "search":
+        excerpt = kibana.get("free_text_excerpt")
+        if excerpt:
+            bucket["queries"].add(excerpt)
+        kind = kibana.get("query_kind")
+        if kind in ("search", "bsearch"):
             bucket["discover_queries"] += 1
-        if kind == "saved-object":
+        if kind == "saved_object":
             bucket["saved_object_views"] += 1
 
     out = [
