@@ -162,14 +162,14 @@ ok "CTFd está rodando."
 # ---- 7. Configurar admin e branding -----------------------------------------
 info "Configurando administrador e branding..."
 cd "$PLATFORM_DIR/deploy/local"
-ADMIN_EMAIL="${ADMIN_EMAIL}" ADMIN_PASSWORD="${ADMIN_PASSWORD}" bash ensure_admin.sh
-bash apply_theme.sh
-bash apply_branding.sh
+ADMIN_EMAIL="${ADMIN_EMAIL}" ADMIN_PASSWORD="${ADMIN_PASSWORD}" bash scripts/ensure_admin.sh
+bash scripts/apply_theme.sh
+bash scripts/apply_branding.sh
 ok "Admin e branding configurados."
 
 # ---- 8. Importar dashboard SIEM ---------------------------------------------
 info "Importando dashboard SIEM..."
-bash import_siem_dashboards.sh
+bash scripts/import_siem_dashboards.sh
 ok "Dashboard SIEM importado."
 
 # ---- 9. Recarregar Nginx com SSL -------------------------------------------
@@ -185,7 +185,7 @@ cat > "$BACKUP_SCRIPT" <<'BACKUP'
 BACKUP_DIR=/opt/hikari/backups
 mkdir -p "$BACKUP_DIR"
 FILENAME="hikari-$(date +%Y-%m-%d-%H%M).zip"
-cd /opt/hikari/hikari-platform/deploy/local && bash import_backup.sh --export "$BACKUP_DIR/$FILENAME"
+cd /opt/hikari/hikari-platform/deploy/local && bash scripts/import_backup.sh --export "$BACKUP_DIR/$FILENAME"
 # Mantém apenas os últimos 7 backups
 ls -t "$BACKUP_DIR"/hikari-*.zip | tail -n +8 | xargs -r rm --
 echo "Backup criado: $BACKUP_DIR/$FILENAME"

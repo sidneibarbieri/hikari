@@ -8,7 +8,7 @@ set -euo pipefail
 
 CTFD_URL=${CTFD_URL:-http://localhost:8000}
 ADMIN_EMAIL=${ADMIN_EMAIL:-admin@hikari.local}
-ADMIN_PASSWORD=${ADMIN_PASSWORD:-hikari-admin-pw}
+ADMIN_PASSWORD=${ADMIN_PASSWORD:-hikari_comp@2026}
 
 cookie_jar=$(mktemp)
 trap 'rm -f "$cookie_jar"' EXIT

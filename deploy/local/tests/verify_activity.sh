@@ -8,8 +8,10 @@ set -euo pipefail
 
 CTFD_URL=${CTFD_URL:-http://localhost:8000}
 ADMIN_EMAIL=${ADMIN_EMAIL:-admin@hikari.local}
-ADMIN_PASSWORD=${ADMIN_PASSWORD:-hikari-admin-pw}
-COMPOSE_FILE=${COMPOSE_FILE:-$(cd "$(dirname "$0")" && pwd)/docker-compose.yml}
+ADMIN_PASSWORD=${ADMIN_PASSWORD:-hikari_comp@2026}
+SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+LOCAL_DIR=$(cd "$SCRIPT_DIR/.." && pwd)
+COMPOSE_FILE=${COMPOSE_FILE:-"$LOCAL_DIR/docker-compose.yml"}
 
 cookie_jar=$(mktemp)
 trap 'rm -f "$cookie_jar"' EXIT

@@ -9,7 +9,7 @@ set -euo pipefail
 
 CTFD_URL=${CTFD_URL:-http://localhost:8000}
 ADMIN_EMAIL=${ADMIN_EMAIL:-admin@hikari.local}
-ADMIN_PASSWORD=${ADMIN_PASSWORD:-hikari-admin-pw}
+ADMIN_PASSWORD=${ADMIN_PASSWORD:-hikari_comp@2026}
 
 INDEX_CONTENT='<main class="hikari-landing">
   <section class="hikari-hero" aria-labelledby="hikari-home-title">

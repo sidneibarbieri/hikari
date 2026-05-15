@@ -25,7 +25,9 @@ curl -sSL -o "$register_page" "$CTFD_URL/register"
 # Detect whether the running CTFd container has OAuth credentials configured.
 # When credentials are present the button is intentionally rendered; hide-by-
 # default only applies when the environment carries no client ID at all.
-COMPOSE_FILE=${COMPOSE_FILE:-"$(dirname "$0")/docker-compose.yml"}
+SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+LOCAL_DIR=$(cd "$SCRIPT_DIR/.." && pwd)
+COMPOSE_FILE=${COMPOSE_FILE:-"$LOCAL_DIR/docker-compose.yml"}
 ctfd_client_id=$(docker-compose -f "$COMPOSE_FILE" exec -T ctfd \
   sh -c 'echo "${HIKARI_GOOGLE_CLIENT_ID:-}"' 2>/dev/null || true)
 

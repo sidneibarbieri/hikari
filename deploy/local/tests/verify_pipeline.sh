@@ -7,7 +7,9 @@
 set -euo pipefail
 
 TOPIC=${TOPIC:-competition1}
-COMPOSE_FILE=${COMPOSE_FILE:-$(cd "$(dirname "$0")" && pwd)/docker-compose.yml}
+SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+LOCAL_DIR=$(cd "$SCRIPT_DIR/.." && pwd)
+COMPOSE_FILE=${COMPOSE_FILE:-"$LOCAL_DIR/docker-compose.yml"}
 
 probe_id="hikari-smoke-$(date +%s)"
 payload=$(printf '{"event":"smoke","probe_id":"%s","ts":"%s"}' \

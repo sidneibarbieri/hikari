@@ -7,7 +7,7 @@ set -euo pipefail
 
 CTFD_URL=${CTFD_URL:-http://localhost:8000}
 ADMIN_EMAIL=${ADMIN_EMAIL:-admin@hikari.local}
-ADMIN_PASSWORD=${ADMIN_PASSWORD:-hikari-admin-pw}
+ADMIN_PASSWORD=${ADMIN_PASSWORD:-hikari_comp@2026}
 
 THEME_HEADER='<link rel="stylesheet" href="/plugins/hikari_plugin/assets/theme.css?cache=20260514c">'
 

@@ -9,11 +9,9 @@
 {% block content %}
   <div class="jumbotron hikari-page-hero">
     <div class="container">
-      <h1>
-        Configurações
-      </h1>
+      <h1>Configurações</h1>
       <p class="hikari-page-hero-copy">
-        Atualize seus dados de perfil e gere tokens de API quando precisar integrar ferramentas externas.
+        Perfil, senha e tokens de acesso à API.
       </p>
     </div>
   </div>
@@ -194,82 +192,90 @@
               </form>
             {% endwith %}
 
-            {% if tokens %}
-              <hr>
+            {# Alpine scope wraps both the table and its delete modal so $refs resolve correctly #}
+            <div x-data="Tokens">
+              <div
+                  class="modal fade" x-ref="confirmModal" tabindex="-1" role="dialog"
+                  aria-modal="true"
+              >
+                <div class="modal-dialog" role="document">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <h5 class="modal-title">Excluir token</h5>
+                      <button
+                          type="button" class="btn-close" data-bs-dismiss="modal"
+                          aria-label="Fechar"
+                      ></button>
+                    </div>
 
-              <h4 class="mt-3">Tokens ativos</h4>
+                    <div class="modal-body">
+                      <p>Esta ação é irreversível. O token será revogado imediatamente.</p>
+                    </div>
 
-              {# This has to be wrapping the table modal, because div with modal will get pushed out
-                 of the table and alpine ref will not work #}
-              <div x-data="Tokens">
-                <div
-                    class="modal fade" x-ref="confirmModal" tabindex="-1" role="dialog"
-                    aria-modal="true"
-                >
-                  <div class="modal-dialog" role="document">
-                    <div class="modal-content">
-                      <div class="modal-header">
-                        <h5 class="modal-title">Excluir token</h5>
-                        <button
-                            type="button" class="btn-close" data-bs-dismiss="modal"
-                            aria-label="Close"
-                        >
-                        </button>
-                      </div>
-
-                      <div class="modal-body">
-                        <p>Tem certeza de que deseja excluir este token?</p>
-                      </div>
-
-                      <div class="modal-footer">
-                        <button type="button" class="btn btn-danger" data-bs-dismiss="modal">
-                          Não
-                        </button>
-                        <button
-                            type="button" class="btn btn-primary" data-bs-dismiss="modal"
-                            @click="deleteSelectedToken()"
-                        >Sim
-                        </button>
-                      </div>
+                    <div class="modal-footer">
+                      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        Cancelar
+                      </button>
+                      <button
+                          type="button" class="btn btn-danger" data-bs-dismiss="modal"
+                          @click="deleteSelectedToken()"
+                      >
+                        Excluir token
+                      </button>
                     </div>
                   </div>
                 </div>
+              </div>
 
-                <table class="table table-striped">
+              {% if tokens %}
+                <header class="hikari-settings-section" style="margin-top:1.6rem">
+                  <h2>Tokens ativos</h2>
+                  <p>Revogue qualquer token que não esteja mais em uso para reduzir superfície de ataque.</p>
+                </header>
+
+                <table class="table table-striped" aria-label="Tokens de API ativos">
                   <thead>
-                  <tr>
-                    <td class="text-center"><b>Criado em</b></td>
-                    <td><b>Vencimento</b></td>
-                    <td><b>Descrição</b></td>
-                    <td><b>Excluir</b></td>
-                  </tr>
+                    <tr>
+                      <th scope="col" class="text-center">Criado em</th>
+                      <th scope="col">Vencimento</th>
+                      <th scope="col">Descrição</th>
+                      <th scope="col" class="text-center">Revogar</th>
+                    </tr>
                   </thead>
                   <tbody>
-                  {% for token in tokens %}
-                    <tr x-ref="token-{{ token.id }}">
-                      <td class="text-center">
-                        <span data-time="{{ token.created | isoformat }}"></span>
-                      </td>
-                      <td>
-                        <span data-time="{{ token.expiration | isoformat }}"></span>
-                      </td>
-                      <td>
-                        <span>{{ token.description | default('', true) }}</span>
-                      </td>
-                      <td class="text-center">
-                        <span
-                            class="delete-token" role="button"
-                            @click="deleteTokenModal({{ token.id }})">
-                            <i class="cursor-pointer fas fa-times"></i>
-                        </span>
-                      </td>
-                    </tr>
-                  {% endfor %}
-
+                    {% for token in tokens %}
+                      <tr x-ref="token-{{ token.id }}">
+                        <td class="text-center">
+                          <span data-time="{{ token.created | isoformat }}"></span>
+                        </td>
+                        <td>
+                          <span data-time="{{ token.expiration | isoformat }}"></span>
+                        </td>
+                        <td>
+                          <span>{{ token.description | default('—', true) }}</span>
+                        </td>
+                        <td class="text-center">
+                          <span
+                              class="delete-token"
+                              role="button"
+                              aria-label="Revogar token"
+                              style="cursor:pointer"
+                              @click="deleteTokenModal({{ token.id }})"
+                          >
+                            <i class="fas fa-times"></i>
+                          </span>
+                        </td>
+                      </tr>
+                    {% endfor %}
                   </tbody>
                 </table>
-              </div>
-            {% endif %}
+
+              {% else %}
+                <p class="mt-3" style="color:var(--hikari-text-muted);font-size:0.92rem">
+                  Nenhum token ativo. Gere um token acima para integrações externas.
+                </p>
+              {% endif %}
+            </div>
 
           </div>
         </div>

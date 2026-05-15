@@ -1,19 +1,31 @@
-.PHONY: review up acceptance down clean-local
+.PHONY: help up acceptance down clean
 
-COMPOSE_DIR := deploy/local
+LOCAL := deploy/local
+
+help:
+	@echo "Hikari Platform — comandos disponíveis:"
+	@echo ""
+	@echo "  make up          Sobe todos os serviços (Docker Compose)"
+	@echo "  make acceptance  Roda a suíte completa de testes de aceitação"
+	@echo "  make down        Para e remove os contêineres"
+	@echo "  make clean       Remove artefatos locais e caches"
+	@echo ""
+	@echo "Atalho para revisores (sobe + testa):"
+	@echo "  make review"
+	@echo ""
 
 review: up acceptance
 
 up:
-	cd $(COMPOSE_DIR) && test -f .env || cp .env.example .env
-	cd $(COMPOSE_DIR) && docker-compose up -d --build
+	@test -f $(LOCAL)/.env || cp $(LOCAL)/.env $(LOCAL)/.env
+	docker-compose -f $(LOCAL)/docker-compose.yml up -d --build
 
 acceptance:
-	cd $(COMPOSE_DIR) && bash run_acceptance.sh
+	bash $(LOCAL)/run_acceptance.sh
 
 down:
-	cd $(COMPOSE_DIR) && docker-compose down
+	docker-compose -f $(LOCAL)/docker-compose.yml down
 
-clean-local:
-	rm -rf output .playwright-cli deploy/local/artifacts
+clean:
+	rm -rf output .playwright-cli $(LOCAL)/artifacts
 	find . \( -name '__pycache__' -o -name '*.pyc' -o -name '.DS_Store' \) -prune -exec rm -rf {} +

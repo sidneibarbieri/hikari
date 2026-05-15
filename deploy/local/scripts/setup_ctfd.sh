@@ -11,7 +11,7 @@ CTF_DESCRIPTION=${CTF_DESCRIPTION:-Hikari local development instance}
 USER_MODE=${USER_MODE:-teams}
 ADMIN_NAME=${ADMIN_NAME:-admin}
 ADMIN_EMAIL=${ADMIN_EMAIL:-admin@hikari.local}
-ADMIN_PASSWORD=${ADMIN_PASSWORD:-hikari-admin-pw}
+ADMIN_PASSWORD=${ADMIN_PASSWORD:-hikari_comp@2026}
 
 cookie_jar=$(mktemp)
 trap 'rm -f "$cookie_jar"' EXIT

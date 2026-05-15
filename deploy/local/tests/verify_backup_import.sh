@@ -5,6 +5,7 @@
 set -euo pipefail
 
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+LOCAL_DIR=$(cd "$SCRIPT_DIR/.." && pwd)
 cd "$SCRIPT_DIR"
 
 default_zip="$SCRIPT_DIR/../../../data_backup.zip"
@@ -17,7 +18,7 @@ CTFD_PORT=${HIKARI_IMPORT_PORT:-8011}
 MAIL_UI_PORT=${HIKARI_IMPORT_MAIL_UI_PORT:-1081}
 MAIL_SMTP_PORT=${HIKARI_IMPORT_MAIL_SMTP_PORT:-1026}
 CTFD_URL=${CTFD_URL:-http://localhost:${CTFD_PORT}}
-COMPOSE_FILE=${COMPOSE_FILE:-$SCRIPT_DIR/docker-compose.yml}
+COMPOSE_FILE=${COMPOSE_FILE:-$LOCAL_DIR/docker-compose.yml}
 COMPOSE=(docker-compose -f "$COMPOSE_FILE" -p "$PROJECT")
 
 cleanup() {

@@ -5,8 +5,10 @@ set -euo pipefail
 
 ADMIN_NAME=${ADMIN_NAME:-admin}
 ADMIN_EMAIL=${ADMIN_EMAIL:-admin@hikari.local}
-ADMIN_PASSWORD=${ADMIN_PASSWORD:-hikari-admin-pw}
-COMPOSE_FILE=${COMPOSE_FILE:-$(cd "$(dirname "$0")" && pwd)/docker-compose.yml}
+ADMIN_PASSWORD=${ADMIN_PASSWORD:-hikari_comp@2026}
+SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+LOCAL_DIR=$(cd "$SCRIPT_DIR/.." && pwd)
+COMPOSE_FILE=${COMPOSE_FILE:-"$LOCAL_DIR/docker-compose.yml"}
 
 docker-compose -f "$COMPOSE_FILE" exec -T ctfd env \
   ADMIN_NAME="$ADMIN_NAME" \

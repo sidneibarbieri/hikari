@@ -2,10 +2,11 @@
 set -euo pipefail
 
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
-COMPOSE_FILE=${COMPOSE_FILE:-"$SCRIPT_DIR/docker-compose.yml"}
+LOCAL_DIR=$(cd "$SCRIPT_DIR/.." && pwd)
+COMPOSE_FILE=${COMPOSE_FILE:-"$LOCAL_DIR/docker-compose.yml"}
 CTFD_URL=${CTFD_URL:-http://localhost:8000}
 ADMIN_EMAIL=${ADMIN_EMAIL:-admin@hikari.local}
-ADMIN_PASSWORD=${ADMIN_PASSWORD:-hikari-admin-pw}
+ADMIN_PASSWORD=${ADMIN_PASSWORD:-hikari_comp@2026}
 
 compose() {
   docker-compose -f "$COMPOSE_FILE" "$@"

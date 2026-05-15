@@ -6,11 +6,12 @@
 set -euo pipefail
 
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+LOCAL_DIR=$(cd "$SCRIPT_DIR/.." && pwd)
 cd "$SCRIPT_DIR"
 
 WAIT=${1:-}
 CTFD_URL=${CTFD_URL:-http://localhost:8000}
-COMPOSE_FILE=${COMPOSE_FILE:-$SCRIPT_DIR/docker-compose.yml}
+COMPOSE_FILE=${COMPOSE_FILE:-$LOCAL_DIR/docker-compose.yml}
 
 fail() { echo "FAIL: $*" >&2; exit 1; }
 ok()   { echo "PASS: $*"; }

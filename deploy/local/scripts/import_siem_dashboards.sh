@@ -15,8 +15,9 @@
 set -euo pipefail
 
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
-COMPOSE_FILE=${COMPOSE_FILE:-"$SCRIPT_DIR/docker-compose.yml"}
-REBUILD_SCRIPT="$SCRIPT_DIR/kibana/rebuild_siem_dashboard.py"
+LOCAL_DIR=$(cd "$SCRIPT_DIR/.." && pwd)
+COMPOSE_FILE=${COMPOSE_FILE:-"$LOCAL_DIR/docker-compose.yml"}
+REBUILD_SCRIPT="$LOCAL_DIR/kibana/rebuild_siem_dashboard.py"
 DATA_VIEW_ID=${DATA_VIEW_ID:-competition1}
 SIEM_DASHBOARD_ID=${SIEM_DASHBOARD_ID:-hikari-siem}
 
