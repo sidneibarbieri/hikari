@@ -36,16 +36,19 @@ panels=$(echo "$dashboard" | jq -r '.attributes.panelsJSON | fromjson | length')
   || { echo "FAIL: dashboard has too few panels ($panels)"; exit 1; }
 echo "PASS: HIKARI SIEM dashboard has $panels panels"
 
-# Four severity metric tiles (Low/Medium/High/Critical) ride at the top
-# of the dashboard. They were unblocked alongside the rest of the
-# aggBased viz once the CTFd tracker stopped contending the row lock.
-metric_panels=$(kibana \
+# The four severity metric saved-objects (low/medium/high/critical) are
+# preserved in the NDJSON as a paper trail from the original Hikari
+# dashboard.zip, even though the dashboard no longer embeds them — the
+# legacy metric viz renderer was removed from Kibana 8.19 and the
+# tiles never finish their first render. The plugin's /hikari/siem
+# page carries native HTML metric tiles with the same severity counts.
+metric_saved_objects=$(kibana \
   -H "kbn-xsrf: true" \
   "http://localhost:5601/hikari/kibana/api/saved_objects/_find?type=visualization&search_fields=title&per_page=100" \
   | jq -r '[.saved_objects[] | select((.attributes.visState | fromjson).type == "metric")] | length')
-[[ "$metric_panels" -ge 4 ]] \
-  || { echo "FAIL: expected four severity metric tiles, found $metric_panels"; exit 1; }
-echo "PASS: $metric_panels severity metric tiles present"
+[[ "$metric_saved_objects" -ge 4 ]] \
+  || { echo "FAIL: expected at least four metric saved-objects, found $metric_saved_objects"; exit 1; }
+echo "PASS: $metric_saved_objects severity metric saved-objects preserved"
 
 # Only one SIEM dashboard should be installed. The original
 # dashboard.zip carried an obsolete "SOC Dashboard - competition1"

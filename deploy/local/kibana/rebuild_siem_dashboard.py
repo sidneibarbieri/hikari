@@ -6,6 +6,7 @@ overwrites the same panel set without duplicates.
 """
 
 import json
+import sys
 from pathlib import Path
 
 NDJSON = Path("deploy/local/kibana/hikari-siem.ndjson")
@@ -19,31 +20,35 @@ TILES = [
     ("critical-events-metric", "Eventos Critical", "critical", "#dc2626"),
 ]
 
-# Full panel layout. Metric tiles span the top row; everything else
-# stays as before. Width grid is 48 columns; 4 tiles of 12 columns each
-# fit the whole row.
+# Panel layout. The legacy `metric` viz type from the original Hikari
+# dashboard.zip can no longer render in Kibana 8.19 — the saved-objects
+# load fine but the renderer never completes its first pass
+# (data-render-complete stays false). Elastic removed the legacy metric
+# library from the bundle; `legacyMetricChartsLibrary=true` survives as
+# an advanced setting but no longer has the effect it did in 7.x. We
+# keep the four low/medium/high/critical metric saved-objects on disk
+# as a paper trail (and for sites running older Kibanas), but the
+# dashboard omits them. The plugin's own /hikari/siem page
+# already renders four native HTML metric tiles at the top with the
+# same data, so the information is not lost.
 PANELS = [
     # (panel id, viz id, type, x, y, w, h)
-    ("panel_metric_low", "low-events-metric", "visualization", 0, 0, 12, 8),
-    ("panel_metric_medium", "medium-events-metric", "visualization", 12, 0, 12, 8),
-    ("panel_metric_high", "high-events-metric", "visualization", 24, 0, 12, 8),
-    ("panel_metric_critical", "critical-events-metric", "visualization", 36, 0, 12, 8),
-    ("panel_severity", "severity-count-table", "visualization", 0, 8, 16, 12),
-    ("panel_severity_pie", "threat-severity-distribution-pie", "visualization", 16, 8, 16, 12),
-    ("panel_services", "top-services-table", "visualization", 32, 8, 16, 12),
-    ("panel_timeline", "events-over-time-line", "visualization", 0, 20, 48, 14),
-    ("panel_dest_ports", "top-destination-ports-bar", "visualization", 0, 34, 16, 14),
-    ("panel_dest_ips", "top-destination-ips-bar", "visualization", 16, 34, 16, 14),
-    ("panel_source_ips", "top-source-ips-bar", "visualization", 32, 34, 16, 14),
-    ("panel_countries", "top-destination-countries-donut", "visualization", 0, 48, 16, 14),
-    ("panel_heatmap", "heatmap-port-x-source", "visualization", 16, 48, 32, 16),
-    ("panel_ports_table", "top-destination-ports-table", "visualization", 0, 64, 24, 14),
-    ("panel_messages", "top-fortinet-messages-table", "visualization", 24, 64, 24, 14),
-    ("panel_urls", "top-urls-table", "visualization", 0, 78, 24, 14),
-    ("panel_recent", "recent-network-connections", "search", 24, 78, 24, 18),
-    ("panel_severity_area", "severity-stacked-area", "visualization", 0, 96, 48, 16),
-    ("panel_unique_dests", "top-sources-unique-dests", "visualization", 0, 112, 24, 16),
-    ("panel_src_dst_port", "top-src-dst-port-table", "visualization", 24, 112, 24, 16),
+    ("panel_severity", "severity-count-table", "visualization", 0, 0, 16, 12),
+    ("panel_severity_pie", "threat-severity-distribution-pie", "visualization", 16, 0, 16, 12),
+    ("panel_services", "top-services-table", "visualization", 32, 0, 16, 12),
+    ("panel_timeline", "events-over-time-line", "visualization", 0, 12, 48, 14),
+    ("panel_dest_ports", "top-destination-ports-bar", "visualization", 0, 26, 16, 14),
+    ("panel_dest_ips", "top-destination-ips-bar", "visualization", 16, 26, 16, 14),
+    ("panel_source_ips", "top-source-ips-bar", "visualization", 32, 26, 16, 14),
+    ("panel_countries", "top-destination-countries-donut", "visualization", 0, 40, 16, 14),
+    ("panel_heatmap", "heatmap-port-x-source", "visualization", 16, 40, 32, 16),
+    ("panel_ports_table", "top-destination-ports-table", "visualization", 0, 56, 24, 14),
+    ("panel_messages", "top-fortinet-messages-table", "visualization", 24, 56, 24, 14),
+    ("panel_urls", "top-urls-table", "visualization", 0, 70, 24, 14),
+    ("panel_recent", "recent-network-connections", "search", 24, 70, 24, 18),
+    ("panel_severity_area", "severity-stacked-area", "visualization", 0, 88, 48, 16),
+    ("panel_unique_dests", "top-sources-unique-dests", "visualization", 0, 104, 24, 16),
+    ("panel_src_dst_port", "top-src-dst-port-table", "visualization", 24, 104, 24, 16),
 ]
 
 
@@ -138,4 +143,6 @@ with NDJSON.open("w", encoding="utf-8") as handle:
     for r in records:
         handle.write(json.dumps(r, ensure_ascii=False) + "\n")
 
-print(f"NDJSON now has {len(records)} records and {len(panels)} panels")
+sys.stderr.write(
+    f"NDJSON now has {len(records)} records and {len(panels)} panels\n"
+)
