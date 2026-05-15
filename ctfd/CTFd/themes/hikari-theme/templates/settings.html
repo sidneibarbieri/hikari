@@ -1,6 +1,11 @@
 {% extends "base.html" %}
 {% from "macros/forms.html" import render_extra_fields %}
 
+{% block stylesheets %}
+{{ super() }}
+<link rel="stylesheet" href="/plugins/hikari_plugin/assets/theme.css">
+{% endblock %}
+
 {% block content %}
   <div class="jumbotron hikari-page-hero">
     <div class="container">

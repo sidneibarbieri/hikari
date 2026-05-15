@@ -1,5 +1,10 @@
 {% extends "base.html" %}
 
+{% block stylesheets %}
+{{ super() }}
+<link rel="stylesheet" href="/plugins/hikari_plugin/assets/theme.css">
+{% endblock %}
+
 {% block content %}
   <div id="team-edit-modal" class="modal fade">
     <div class="modal-dialog modal-lg">

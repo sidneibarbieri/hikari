@@ -219,16 +219,59 @@ def _bucket(attempts: int) -> str:
     return "grinding"
 
 
+def _accumulate_submission_attempts(
+    rows: list,
+) -> tuple[defaultdict, defaultdict]:
+    """Walk every submission row and accumulate per-(challenge,user) state.
+
+    Returns ``(per_pair, failures_per_challenge)`` where ``per_pair`` maps
+    ``(challenge_id, user_id)`` to ``{attempts_before_solve, solved}`` and
+    ``failures_per_challenge`` maps ``challenge_id`` to raw failure count.
+    """
+    per_pair: defaultdict = defaultdict(lambda: {"attempts_before_solve": 0, "solved": False})
+    failures_per_challenge: defaultdict[int, int] = defaultdict(int)
+    for chal_id, user_id, sub_type, _date in rows:
+        if chal_id is None or user_id is None:
+            continue
+        state = per_pair[(chal_id, user_id)]
+        if state["solved"]:
+            continue
+        if sub_type == "correct":
+            state["solved"] = True
+        else:
+            state["attempts_before_solve"] += 1
+            failures_per_challenge[chal_id] += 1
+    return per_pair, failures_per_challenge
+
+
+def _group_by_challenge(
+    per_pair: defaultdict,
+) -> tuple[defaultdict, defaultdict]:
+    """Convert per-(challenge,user) state into per-challenge bucket counts.
+
+    Returns ``(by_chal, attempts_per_chal)``.
+    """
+    by_chal: defaultdict[int, dict] = defaultdict(lambda: defaultdict(int))
+    attempts_per_chal: defaultdict[int, list] = defaultdict(list)
+    for (chal_id, _user_id), state in per_pair.items():
+        if not state["solved"]:
+            continue
+        total_attempts = state["attempts_before_solve"] + 1  # +1 for the solve itself
+        by_chal[chal_id][_bucket(total_attempts)] += 1
+        by_chal[chal_id]["solvers"] += 1
+        attempts_per_chal[chal_id].append(total_attempts)
+    return by_chal, attempts_per_chal
+
+
 def submission_patterns(limit: int = 50) -> List[SubmissionPattern]:
     """For every challenge with at least one solve, classify each solve
     by how many attempts the same (user, challenge) racked up before
     succeeding. The output lets an admin see, at a glance, which
     challenges teams "got" vs. which they had to grind through.
     """
-
-    # First: collect every submission, ordered, so we can count failures
-    # before each solve cheaply. With ~10k submissions this is fast and
-    # avoids a per-(user,challenge) SQL roundtrip.
+    # Collect every submission ordered so failure counts are cheap.
+    # With ~10k submissions this is fast and avoids per-(user,challenge)
+    # SQL roundtrips.
     rows = (
         db.session.query(
             Submissions.challenge_id,
@@ -240,30 +283,8 @@ def submission_patterns(limit: int = 50) -> List[SubmissionPattern]:
         .all()
     )
 
-    per_pair = defaultdict(lambda: {"attempts_before_solve": 0, "solved": False})
-    failures_per_challenge: defaultdict[int, int] = defaultdict(int)
-    for chal_id, user_id, sub_type, _date in rows:
-        if chal_id is None or user_id is None:
-            continue
-        key = (chal_id, user_id)
-        record = per_pair[key]
-        if record["solved"]:
-            continue
-        if sub_type == "correct":
-            record["solved"] = True
-        else:
-            record["attempts_before_solve"] += 1
-            failures_per_challenge[chal_id] += 1
-
-    by_chal: defaultdict[int, dict] = defaultdict(lambda: defaultdict(int))
-    attempts_per_chal: defaultdict[int, list] = defaultdict(list)
-    for (chal_id, _user_id), record in per_pair.items():
-        if not record["solved"]:
-            continue
-        total_attempts = record["attempts_before_solve"] + 1  # +1 for the correct one
-        by_chal[chal_id][_bucket(total_attempts)] += 1
-        by_chal[chal_id]["solvers"] += 1
-        attempts_per_chal[chal_id].append(total_attempts)
+    per_pair, failures_per_challenge = _accumulate_submission_attempts(rows)
+    by_chal, attempts_per_chal = _group_by_challenge(per_pair)
 
     challenge_meta = {
         row.id: row

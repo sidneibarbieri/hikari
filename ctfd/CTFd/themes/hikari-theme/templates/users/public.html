@@ -1,7 +1,12 @@
 {% extends "base.html" %}
 
+{% block stylesheets %}
+{{ super() }}
+<link rel="stylesheet" href="/plugins/hikari_plugin/assets/theme.css">
+{% endblock %}
+
 {% block content %}
-  <div class="jumbotron">
+  <div class="jumbotron hikari-page-hero">
     <div class="container">
       <h1>{{ user.name }}</h1>
 
