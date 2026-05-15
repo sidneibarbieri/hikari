@@ -3,25 +3,25 @@
 {% block content %}
 <div class="jumbotron">
 	<div class="container">
-		<h1>Statistics</h1>
+		<h1>Estatísticas</h1>
 	</div>
 </div>
 <div class="container">
 	<div class="row d-flex align-items-center">
 		<div class="col-md-4 text-right">
-			<h5><b>{{ user_count }}</b> users registered</h5>
+			<h5><b>{{ user_count }}</b> usuários cadastrados</h5>
 			{% if get_config('user_mode') == 'teams' %}
-			<h5><b>{{ team_count }}</b> teams registered</h5>
+			<h5><b>{{ team_count }}</b> equipes cadastradas</h5>
 			{% endif %}
-			<h5><b>{{ ip_count }}</b> IP addresses</h5>
+			<h5><b>{{ ip_count }}</b> endereços IP</h5>
 			<hr>
-			<h5><b>{{ total_points }}</b> total possible points</h5>
-			<h5><b>{{ challenge_count }}</b> challenges</h5>
+			<h5><b>{{ total_points }}</b> pontos totais possíveis</h5>
+			<h5><b>{{ challenge_count }}</b> desafios</h5>
 			{% if most_solved %}
-				<h5><b>{{ most_solved }}</b> has the most solves with <br>{{ solve_data[most_solved] }} solves</h5>
+				<h5><b>{{ most_solved }}</b> tem o maior número de soluções: {{ solve_data[most_solved] }}</h5>
 			{% endif %}
 			{% if least_solved %}
-			<h5><b>{{ least_solved }}</b> has the least solves with <br>{{ solve_data[least_solved] }} solves</h5>
+			<h5><b>{{ least_solved }}</b> tem o menor número de soluções: {{ solve_data[least_solved] }}</h5>
 			{% endif %}
 		</div>
 
@@ -68,8 +68,8 @@
 				</div>
 			</div>
 			<div class="text-center">
-				<h5><b>{{ solve_count }}</b> right submissions</h5>
-				<h5><b>{{ wrong_count }}</b> wrong submissions</h5>
+				<h5><b>{{ solve_count }}</b> submissões corretas</h5>
+				<h5><b>{{ wrong_count }}</b> submissões incorretas</h5>
 			</div>
 		</div>
 		<div class="col-md-6">
