@@ -1,0 +1,66 @@
+# =============================================================================
+# Hikari Platform — Docker Compose de Produção
+# Sobrescreve apenas o que difere do docker-compose.yml de desenvolvimento:
+# restart policies, portas não expostas externamente, volumes nomeados,
+# e variáveis sensíveis injetadas pelo setup_production.sh.
+# Uso: docker compose -f docker-compose.production.yml --env-file .compose.env up -d
+# =============================================================================
+
+version: "3.9"
+
+# Reutiliza o compose base de desenvolvimento como âncora
+# (define os serviços, imagens, redes e volumes base)
+include:
+  - path: ../local/docker-compose.yml
+    env_file: .compose.env
+
+services:
+  ctfd:
+    restart: unless-stopped
+    # Em produção, o CTFd escuta apenas em localhost (Nginx faz o proxy SSL)
+    ports:
+      - "127.0.0.1:${CTFD_PORT:-8000}:8000"
+    environment:
+      SECRET_KEY: "${SECRET_KEY}"
+      DATABASE_URL: "mysql+pymysql://ctfd:${DATABASE_PASSWORD:-ctfd}@db/ctfd"
+      REDIS_URL: "redis://cache:6379"
+      SERVER_PUBLICBASEURL: "https://${HIKARI_DOMAIN}/hikari/kibana"
+      HIKARI_GOOGLE_CLIENT_ID: "${HIKARI_GOOGLE_CLIENT_ID:-}"
+      HIKARI_GOOGLE_CLIENT_SECRET: "${HIKARI_GOOGLE_CLIENT_SECRET:-}"
+      HIKARI_OAUTH_REDIRECT_BASE: "https://${HIKARI_DOMAIN}"
+      WORKERS: "4"
+
+  db:
+    restart: unless-stopped
+    # MariaDB nunca exposto publicamente em produção
+    ports: []
+    environment:
+      MYSQL_ROOT_PASSWORD: "${DATABASE_PASSWORD:-ctfd}"
+      MYSQL_PASSWORD: "${DATABASE_PASSWORD:-ctfd}"
+
+  cache:
+    restart: unless-stopped
+
+  kafka:
+    restart: unless-stopped
+
+  elasticsearch:
+    restart: unless-stopped
+    # Elasticsearch nunca exposto publicamente em produção
+    ports: []
+    environment:
+      KIBANA_ENCRYPTION_KEY: "${KIBANA_ENCRYPTION_KEY}"
+      ES_ENCRYPTION_KEY: "${ES_ENCRYPTION_KEY}"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+
+  kibana:
+    restart: unless-stopped
+    # Kibana acessado apenas via proxy CTFd — nunca exposto diretamente
+    environment:
+      XPACK_ENCRYPTEDSAVEDOBJECTS_ENCRYPTIONKEY: "${KIBANA_ENCRYPTION_KEY}"
+
+  logstash:
+    restart: unless-stopped
