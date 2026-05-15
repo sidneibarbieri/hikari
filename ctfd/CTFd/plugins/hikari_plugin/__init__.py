@@ -33,11 +33,11 @@ from CTFd.plugins.hikari_plugin import hikari_research
 
 UPLOADERS = {"filesystem": FilesystemUploader, "s3": S3Uploader}
 
-def get_uploader():
+def get_uploader() -> object:
     return UPLOADERS.get(get_app_config("UPLOAD_PROVIDER") or "filesystem")()
 
 
-def save_hikari_log_file(file_obj):
+def save_hikari_log_file(file_obj: object) -> "str | None":
     if file_obj is None or not file_obj.filename:
         return None
 

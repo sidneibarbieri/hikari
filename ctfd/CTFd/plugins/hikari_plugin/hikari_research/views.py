@@ -5,6 +5,8 @@ Two read-only endpoints behind admin auth:
   /admin/hikari/research/export.jsonl      streamed activity log export
 """
 
+from typing import Optional
+
 from flask import Response, render_template, request, stream_with_context
 from werkzeug.exceptions import BadRequest
 
@@ -14,7 +16,7 @@ from . import exporter, queries
 from .dto import ResearchFilters, ResearchSummary
 
 
-def _optional_int(value: str, field_name: str):
+def _optional_int(value: str, field_name: str) -> Optional[int]:
     if value == "":
         return None
     if not value.isdecimal():

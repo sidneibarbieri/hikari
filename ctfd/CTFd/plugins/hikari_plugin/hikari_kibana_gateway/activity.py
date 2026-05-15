@@ -9,7 +9,9 @@ import hashlib
 from datetime import datetime, timezone
 from typing import Optional
 
-from flask import request
+from confluent_kafka import KafkaException
+from flask import current_app, request
+from sqlalchemy.exc import SQLAlchemyError
 
 from CTFd.utils.user import get_current_user, get_ip
 
@@ -82,8 +84,24 @@ def record_kibana_activity(path: str, method: str, body: bytes, status_code: int
         request_ip=get_ip(),
     )
 
-    recorder.persist(record)
-    recorder.publish(record)
+    # Mirror the failure policy from hikari_activity/listeners.py: log the full
+    # traceback but let the response reach the user unaffected.
+    try:
+        recorder.persist(record)
+    except SQLAlchemyError:
+        current_app.logger.exception(
+            "hikari.kibana_activity: persist failed event_type=%s actor_id=%s",
+            event_type,
+            record.actor_id,
+        )
+    try:
+        recorder.publish(record)
+    except (KafkaException, BufferError):
+        current_app.logger.exception(
+            "hikari.kibana_activity: publish failed event_type=%s actor_id=%s",
+            event_type,
+            record.actor_id,
+        )
 
 
 def _body_preview(body: bytes) -> Optional[str]:

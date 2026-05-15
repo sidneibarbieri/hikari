@@ -108,7 +108,7 @@ _DTO_FIELDS = (
 )
 
 
-def payload_from_form(form):
+def payload_from_form(form: object) -> FeedbackPayload:
     """Build the Pydantic payload from the WTForm, coercing empty strings to None."""
     raw = {name: _normalise(getattr(form, name).data) for name in _DTO_FIELDS}
     try:
@@ -117,9 +117,10 @@ def payload_from_form(form):
         raise ValueError(str(error)) from error
 
 
-def _normalise(value):
+def _normalise(value: object) -> object:
+    """Coerce empty strings and empty lists to None for uniform null handling."""
     if value == "" or value == []:
-        return None if value == "" else []
+        return None
     return value
 
 
@@ -129,7 +130,7 @@ def feedback_jsonl_lines():
         yield json.dumps(record_to_dict(record), sort_keys=True) + "\n"
 
 
-def record_to_dict(record):
+def record_to_dict(record: FeedbackResponse) -> dict:
     return {
         "id": record.id,
         "user_id": record.user_id,

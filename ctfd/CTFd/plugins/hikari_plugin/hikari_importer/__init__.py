@@ -116,18 +116,16 @@ class HikariImporter:
     def import_zerotier_config(self):
         self.import_data('zerotier_config.json', ZerotierConfig)
 
-    def import_uploads(self):
-        files = [f for f in self.backup.namelist() if f.startswith("uploads/")]
+    def import_uploads(self) -> None:
+        members = [m for m in self.backup.namelist() if m.startswith("uploads/")]
         uploader = get_uploader()
-        for f in files:
-            filename = f.split(os.sep, 1)
-            if (
-                len(filename) < 2 or os.path.basename(filename[1]) == ""
-            ):  # just an empty uploads directory (e.g. uploads/) or any directory
+        for member in members:
+            parts = member.split(os.sep, 1)
+            if len(parts) < 2 or os.path.basename(parts[1]) == "":
+                # Skip bare directory entries (e.g. "uploads/" with no filename).
                 continue
-
-            filename = filename[1]  # Get the second entry in the list (the actual filename)
-            source = self.backup.open(f)
+            filename = parts[1]
+            source = self.backup.open(member)
             uploader.store(fileobj=source, filename=filename)
 
 

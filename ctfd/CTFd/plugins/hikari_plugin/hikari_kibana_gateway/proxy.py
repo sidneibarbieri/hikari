@@ -69,7 +69,7 @@ def forwarded_headers() -> Dict[str, str]:
     return headers
 
 
-def response_headers(upstream_headers) -> Dict[str, str]:
+def response_headers(upstream_headers: Dict[str, str]) -> Dict[str, str]:
     headers = {}
     for key, value in upstream_headers.items():
         if key.lower() in HOP_BY_HOP_HEADERS:
