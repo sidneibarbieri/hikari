@@ -62,7 +62,7 @@
 
                 <div class="hikari-field">
                   <label class="form-label" for="{{ form.language.id }}">Idioma</label>
-                  {{ form.language(class="form-select", value=language) }}
+                  {{ form.language(class="form-select") }}
                 </div>
 
                 <header class="hikari-settings-section">
@@ -94,7 +94,7 @@
                 </div>
                 <div class="hikari-field">
                   <label class="form-label" for="{{ form.country.id }}">País</label>
-                  {{ form.country(class="form-select", value=country) }}
+                  {{ form.country(class="form-select") }}
                 </div>
 
                 {{ render_extra_fields(form.extra) }}

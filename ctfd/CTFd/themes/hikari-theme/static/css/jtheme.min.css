@@ -220,16 +220,16 @@
   margin-bottom: 1rem;
 }
 
-.jsearch-form > input,select {
-  flex:0.5;
+.jsearch-form > input,
+.jsearch-form > select {
+  flex: 0.5;
   margin-right: 1vh;
   margin-left: 1vh;
 }
 
 .jsearch-form > button {
-  flex:0.2;
+  flex: 0.2;
   border: none;
-  background-color: #02C502;
   border-radius: 10px;
   color: white;
 }
