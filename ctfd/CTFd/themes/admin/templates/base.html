@@ -77,7 +77,7 @@
 					<li class="nav-item"><a class="nav-link" href="{{ url_for('admin.notifications') }}">Notificações</a>
 					</li>
 					<li class="nav-item dropdown">
-						<a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="true">Páginas</a>
+						<a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown" data-boundary="viewport" role="button" aria-haspopup="true" aria-expanded="true">Páginas</a>
 						<div class="dropdown-menu">
 							<a class="dropdown-item" href="{{ url_for('admin.pages_listing') }}">Todas as páginas</a>
 							<a class="dropdown-item" href="{{ url_for('admin.pages_new') }}">Nova página</a>
@@ -90,7 +90,7 @@
 					<li class="nav-item"><a class="nav-link" href="{{ url_for('admin.scoreboard_listing') }}">Pontuação</a></li>
 					<li class="nav-item"><a class="nav-link" href="{{ url_for('admin.challenges_listing') }}">Desafios</a></li>
 					<li class="nav-item dropdown">
-						<a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown" role="button"
+						<a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown" data-boundary="viewport" role="button"
 						   aria-haspopup="true" aria-expanded="true">Submissões</a>
 						<div class="dropdown-menu">
 							<a class="dropdown-item" href="{{ url_for('admin.submissions_listing') }}">Todas as submissões</a>
@@ -122,7 +122,7 @@
 
 						{% if plugins %}
 						<li class="nav-item dropdown">
-							<a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Plugins <span class="caret"></span></a>
+							<a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown" data-boundary="viewport" role="button" aria-haspopup="true" aria-expanded="false">Plugins <span class="caret"></span></a>
 							<ul class="dropdown-menu">
 									{% for plugin in plugins %}
 											<a class="dropdown-item" href="{{ request.script_root }}{{ plugin.route }}">{{ plugin.name }}</a>

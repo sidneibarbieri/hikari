@@ -337,11 +337,29 @@ select option {
     font-size: 0.92rem;
     margin: 0;
 }
+/* Match the compact .hikari-input geometry used on the feedback form.
+ * The earlier `min-height: 2.75rem` made settings inputs noticeably taller
+ * than the feedback ones — same product, different fields, broken rhythm.
+ * Padding/border/focus values mirror .hikari-input in research.css so the
+ * two surfaces look like siblings. */
 .hikari-field .form-control,
 .hikari-field .form-select,
 .hikari-field textarea {
-    min-height: 2.75rem;
     width: 100%;
+    padding: 0.6rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    transition: border-color 140ms ease, box-shadow 140ms ease;
+}
+.hikari-field .form-control:focus,
+.hikari-field .form-select:focus,
+.hikari-field textarea:focus {
+    border-color: var(--hikari-primary);
+    box-shadow: 0 0 0 3px var(--hikari-primary-soft);
+}
+.hikari-field textarea {
+    min-height: 3.5rem;
+    resize: vertical;
 }
 .hikari-settings-actions {
     display: flex;
