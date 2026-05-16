@@ -619,11 +619,17 @@ pre {
     color: var(--hk-text);
     font-weight: 700;
 }
-.hikari-stats-banner a {
+/* :not(.btn) is the linchpin — the CTA inside the banner is also an <a>,
+ * and applying the green link color to a green button made the text
+ * invisible (green on green). Scoping by :not(.btn) keeps body-text links
+ * green and lets the button keep its dark contrast color. */
+.hikari-stats-banner a:not(.btn) {
     color: var(--hk-primary);
     text-decoration: underline;
 }
 .hikari-stats-banner .btn {
     flex-shrink: 0;
     white-space: nowrap;
+    color: #06101f !important;
+    text-decoration: none;
 }

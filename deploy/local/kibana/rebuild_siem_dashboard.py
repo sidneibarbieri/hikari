@@ -339,10 +339,15 @@ def create_top_src_ips() -> None:
         "times": [],
         "addTimeMarker": False,
     }
+    # NOTE: histogram visualizations use schema "segment" for the bucketing
+    # dimension (X-axis or, when categoryAxes.position is "left", Y-axis).
+    # Using schema "bucket" — which is the right value for table viz —
+    # makes Kibana silently fall back to a single "_all" category, hiding
+    # the per-IP breakdown the user actually wants to see.
     aggs = [
         {"id": "1", "enabled": True, "type": "count", "schema": "metric", "params": {}},
         {
-            "id": "2", "enabled": True, "type": "terms", "schema": "bucket",
+            "id": "2", "enabled": True, "type": "terms", "schema": "segment",
             "params": {"field": "Source IP.keyword", "size": 10, "order": "desc", "orderBy": "1", "otherBucket": False},
         },
     ]
@@ -375,7 +380,7 @@ def create_top_dst_ips() -> None:
     aggs = [
         {"id": "1", "enabled": True, "type": "count", "schema": "metric", "params": {}},
         {
-            "id": "2", "enabled": True, "type": "terms", "schema": "bucket",
+            "id": "2", "enabled": True, "type": "terms", "schema": "segment",
             "params": {"field": "Destination IP.keyword", "size": 10, "order": "desc", "orderBy": "1", "otherBucket": False},
         },
     ]
@@ -404,7 +409,7 @@ def create_top_dst_ports() -> None:
     aggs = [
         {"id": "1", "enabled": True, "type": "count", "schema": "metric", "params": {}},
         {
-            "id": "2", "enabled": True, "type": "terms", "schema": "bucket",
+            "id": "2", "enabled": True, "type": "terms", "schema": "segment",
             "params": {"field": "Destination Port.keyword", "size": 15, "order": "desc", "orderBy": "1", "otherBucket": False},
         },
     ]
