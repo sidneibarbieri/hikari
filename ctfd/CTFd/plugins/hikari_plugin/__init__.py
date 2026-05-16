@@ -2,7 +2,11 @@ from flask import current_app, render_template, request, redirect, url_for, flas
 import random
 from sqlalchemy import event, inspect
 from sqlalchemy.exc import IntegrityError
-from CTFd.plugins import register_admin_plugin_menu_bar, register_plugin_assets_directory
+from CTFd.plugins import (
+    register_admin_plugin_menu_bar,
+    register_admin_plugin_stylesheet,
+    register_plugin_assets_directory,
+)
 from CTFd.utils.decorators import admins_only
 from CTFd.models import Teams
 from CTFd.models import Users
@@ -57,6 +61,16 @@ def load(app):
 
     # Register plugin assets directory
     register_plugin_assets_directory(app, base_path='/plugins/hikari_plugin/assets/')
+
+    # Inject Hikari dark-mode CSS into every admin page. CTFd's admin/base.html
+    # iterates get_registered_admin_stylesheets() AFTER its own bundle, so this
+    # wins the cascade. The mtime query string busts stale browser caches
+    # whenever the file is edited (cheap: file is ~12 KB).
+    admin_css_path = os.path.join(os.path.dirname(__file__), "assets", "admin.css")
+    admin_css_version = int(os.path.getmtime(admin_css_path)) if os.path.exists(admin_css_path) else 0
+    register_admin_plugin_stylesheet(
+        url=f"/plugins/hikari_plugin/assets/admin.css?v={admin_css_version}"
+    )
 
     # Register Hikari analytics in the CTFd admin sidebar under "Plugins".
     register_admin_plugin_menu_bar(title="Análise científica", route="/admin/hikari/research")

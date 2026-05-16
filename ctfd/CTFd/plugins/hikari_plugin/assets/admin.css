@@ -32,13 +32,46 @@
     --hk-radius-sm:    6px;
 }
 
-/* ---------------------------------------------------------------- canvas */
+/* ---------------------------------------------------------------- canvas
+ * Rules below use `body` as a specificity bump (0,1,1 instead of 0,1,0)
+ * so they reliably beat Bootstrap rules carried inside main-css-*.css
+ * regardless of cascade order. Tested against the cached-asset case
+ * where the browser still has the pre-Hikari admin bundle.
+ */
 html, body {
     background-color: var(--hk-bg);
     color: var(--hk-text);
 }
 body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+body .jumbotron {
+    background:
+        linear-gradient(135deg, rgba(18, 27, 39, 0.92), rgba(12, 18, 27, 0.98)),
+        radial-gradient(420px 220px at 8% 20%, rgba(16, 185, 129, 0.16), transparent 68%);
+    border: 1px solid var(--hk-border);
+    border-radius: var(--hk-radius);
+    color: var(--hk-text);
+}
+body .btn-primary {
+    background-color: var(--hk-primary);
+    border-color: var(--hk-primary);
+    color: #06101f;
+}
+body .table {
+    color: var(--hk-text);
+    background-color: var(--hk-surface);
+}
+body .form-control,
+body .custom-select {
+    background-color: var(--hk-surface-2);
+    border-color: var(--hk-border);
+    color: var(--hk-text);
+}
+body .card {
+    background-color: var(--hk-surface);
+    border-color: var(--hk-border);
+    color: var(--hk-text);
 }
 main[role="main"] {
     padding-bottom: 3rem;
