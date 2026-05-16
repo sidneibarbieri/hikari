@@ -33,10 +33,10 @@ title=$(echo "$dashboard" | jq -r '.attributes.title // empty')
 [[ "$title" == "HIKARI SIEM" ]] \
   || { echo "FAIL: HIKARI SIEM dashboard not found"; exit 1; }
 panels=$(echo "$dashboard" | jq -r '.attributes.panelsJSON | fromjson | length')
-# The rebuild script builds 13 panels (12 visualizations + 1 saved search).
-# Accept ≥13 to stay forward-compatible with future panel additions.
-[[ "$panels" -ge 13 ]] \
-  || { echo "FAIL: dashboard has too few panels ($panels, expected ≥13)"; exit 1; }
+# The rebuild script v2 builds 22 panels: 4 severity KPI tiles + 16
+# visualizations + 2 saved searches. Accept ≥20 to stay forward-compatible.
+[[ "$panels" -ge 20 ]] \
+  || { echo "FAIL: dashboard has too few panels ($panels, expected ≥20)"; exit 1; }
 echo "PASS: HIKARI SIEM dashboard has $panels panels"
 
 # Only one SIEM dashboard should be installed. The original
