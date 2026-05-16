@@ -268,7 +268,7 @@ Os critérios de aceite são os checks automatizados em `deploy/local/run_accept
 **para** analisar os dados com ferramentas externas (pandas, R, Excel).
 
 **Critérios de aceite:**
-- O endpoint `/admin/hikari/research/export` entrega um stream JSONL válido (um JSON por linha).
+- O endpoint `/admin/hikari/research/export.jsonl` entrega um stream JSONL válido (um JSON por linha).
 - O arquivo inclui: id, event_type, actor_id, actor_role, team_id, target_kind, target_id, occurred_at, request_ip, payload.
 - Eventos Kibana incluem em `payload.kibana`: query_kind, indices, free_text_excerpt, must/should/filter counts, result_size.
 - Com filtros aplicados, o JSONL contém apenas os registros correspondentes.
@@ -283,7 +283,8 @@ Os critérios de aceite são os checks automatizados em `deploy/local/run_accept
 **Critérios de aceite:**
 - O formulário coleta métricas NASA-TLX, SUS e NPS.
 - Cada competidor pode responder uma vez.
-- As respostas ficam disponíveis para o administrador em `/admin/hikari/feedback`.
+- As respostas ficam disponíveis para administradores em `/admin/hikari/research`.
+- O export JSONL fica disponível em `/admin/hikari/research/feedback.jsonl`.
 
 **Verificação automatizada:** `verify_feedback.sh`.
 
@@ -322,12 +323,12 @@ Os critérios de aceite são os checks automatizados em `deploy/local/run_accept
 | US-12 Placar ao vivo | `verify_live_board.sh` | ✅ |
 | US-13 Criar desafio | `verify_plugin.sh` | ✅ |
 | US-14 Iniciar competição | `verify_progressive_unlock.sh` | ✅ |
-| US-15 Notificações | manual | — |
+| US-15 Notificações | `verify_notifications.sh` | ✅ |
 | US-16 Dashboard analytics | `verify_research.sh` | ✅ |
 | US-17 Filtros | `verify_research.sh` | ✅ |
 | US-18 Export JSONL | `verify_research.sh` | ✅ |
 | US-19 Feedback | `verify_feedback.sh` | ✅ |
 | US-20 LGPD | `verify_artifact_hygiene.sh` + docs | ✅ |
 
-**17 de 20 histórias com verificação automatizada (85%).**  
-As três restantes (recuperação de senha, gerenciamento de equipe, notificações) são verificadas por inspeção visual durante a auditoria de identidade visual.
+**18 de 20 histórias com verificação automatizada (90%).**  
+As duas restantes (US-04 recuperação de senha, US-07 gerenciamento de equipe) dependem de SMTP real e UI interativa, e são verificadas por inspeção visual durante a auditoria de release.
