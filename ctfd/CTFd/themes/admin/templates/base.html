@@ -11,6 +11,8 @@
 	{{ Assets.css("assets/css/fonts.scss", theme="admin") }}
 	{{ Assets.css("assets/css/admin.scss", theme="admin") }}
 	{{ Assets.css("assets/css/codemirror.scss", theme="admin") }}
+	{# Hikari dark-mode overrides. Loaded last so it wins the cascade. #}
+	<link rel="stylesheet" type="text/css" href="{{ request.script_root }}/plugins/hikari_plugin/assets/admin.css">
 	<style>
 		.hikari-admin-brand {
 			display: inline-flex;

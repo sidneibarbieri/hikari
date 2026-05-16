@@ -1,0 +1,449 @@
+/*
+ * Hikari admin theme overrides.
+ *
+ * CTFd's admin templates (themes/admin/) extend Bootstrap 4 with a light
+ * default look. This file repaints them with the Hikari dark identity so
+ * the admin surface matches the competitor-facing pages. Loaded once via
+ * a <link> tag injected in themes/admin/templates/base.html.
+ *
+ * Scope rules:
+ *   - We do NOT touch interactive plumbing (dropdowns, modals, tooltips,
+ *     CodeMirror) other than colors. Behaviour stays Bootstrap-default.
+ *   - All colors come from CSS variables so a future re-brand only edits
+ *     this :root block.
+ */
+
+:root {
+    --hk-bg:           #0a1220;
+    --hk-surface:      #0f1a2c;
+    --hk-surface-2:    #142139;
+    --hk-surface-3:    #1a2944;
+    --hk-border:       #1f2f4a;
+    --hk-border-soft:  #18253c;
+    --hk-text:         #edf3f8;
+    --hk-text-muted:   #9aa7b7;
+    --hk-text-dim:     #6b7990;
+    --hk-primary:      #10b981;
+    --hk-primary-soft: rgba(16, 185, 129, 0.18);
+    --hk-primary-strong: #0ea372;
+    --hk-danger:       #ef4444;
+    --hk-warning:      #f59e0b;
+    --hk-radius:       10px;
+    --hk-radius-sm:    6px;
+}
+
+/* ---------------------------------------------------------------- canvas */
+html, body {
+    background-color: var(--hk-bg);
+    color: var(--hk-text);
+}
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+main[role="main"] {
+    padding-bottom: 3rem;
+}
+a {
+    color: var(--hk-primary);
+}
+a:hover {
+    color: var(--hk-primary-strong);
+}
+hr {
+    border-color: var(--hk-border);
+}
+
+/* ---------------------------------------------------------------- page hero
+ * Every admin page wraps its title in <div class="jumbotron">. Bootstrap 4's
+ * default is light grey; here we match the public side's hikari-page-hero.
+ */
+.jumbotron {
+    background:
+        linear-gradient(135deg, rgba(18, 27, 39, 0.92), rgba(12, 18, 27, 0.98)),
+        radial-gradient(420px 220px at 8% 20%, rgba(16, 185, 129, 0.16), transparent 68%);
+    border: 1px solid var(--hk-border);
+    border-radius: var(--hk-radius);
+    margin: 1.2rem 1rem 1.6rem;
+    padding: clamp(1.4rem, 4vw, 2.4rem);
+    color: var(--hk-text);
+}
+.jumbotron h1 {
+    color: var(--hk-text);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    margin: 0;
+}
+.jumbotron .btn,
+.jumbotron a {
+    color: var(--hk-text);
+}
+
+/* ---------------------------------------------------------------- buttons */
+.btn-primary {
+    background-color: var(--hk-primary);
+    border-color: var(--hk-primary);
+    color: #06101f;
+    font-weight: 600;
+}
+.btn-primary:hover,
+.btn-primary:focus,
+.btn-primary:active,
+.btn-primary:not(:disabled):not(.disabled):active {
+    background-color: var(--hk-primary-strong);
+    border-color: var(--hk-primary-strong);
+    color: #06101f;
+    box-shadow: 0 0 0 0.2rem var(--hk-primary-soft);
+}
+.btn-secondary {
+    background-color: var(--hk-surface-3);
+    border-color: var(--hk-border);
+    color: var(--hk-text);
+}
+.btn-secondary:hover {
+    background-color: var(--hk-surface-2);
+    border-color: var(--hk-border);
+    color: var(--hk-text);
+}
+.btn-outline-secondary {
+    color: var(--hk-text);
+    border-color: var(--hk-border);
+}
+.btn-outline-secondary:hover {
+    background-color: var(--hk-surface-3);
+    color: var(--hk-text);
+    border-color: var(--hk-border);
+}
+.btn-danger {
+    background-color: var(--hk-danger);
+    border-color: var(--hk-danger);
+}
+.btn-outline-danger {
+    color: var(--hk-danger);
+    border-color: var(--hk-danger);
+}
+.btn-outline-danger:hover {
+    background-color: var(--hk-danger);
+    color: #fff;
+    border-color: var(--hk-danger);
+}
+.btn-info {
+    background-color: var(--hk-surface-3);
+    border-color: var(--hk-border);
+    color: var(--hk-text);
+}
+
+/* ---------------------------------------------------------------- forms */
+.form-control,
+.custom-select,
+.input-group-text,
+textarea.form-control,
+select.form-control {
+    background-color: var(--hk-surface-2);
+    border: 1px solid var(--hk-border);
+    color: var(--hk-text);
+    border-radius: var(--hk-radius-sm);
+}
+.form-control:focus,
+.custom-select:focus {
+    background-color: var(--hk-surface-2);
+    border-color: var(--hk-primary);
+    color: var(--hk-text);
+    box-shadow: 0 0 0 0.15rem var(--hk-primary-soft);
+}
+.form-control::placeholder {
+    color: var(--hk-text-muted);
+}
+.form-control:disabled,
+.form-control[readonly] {
+    background-color: var(--hk-surface);
+    color: var(--hk-text-muted);
+}
+/* Dropdown arrow on <select> needs an inverted SVG for visibility on dark */
+.custom-select,
+select.form-control {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='%23edf3f8' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3E%3C/svg%3E");
+    background-size: 12px 12px;
+}
+label,
+.col-form-label {
+    color: var(--hk-text);
+    font-weight: 600;
+}
+small.form-text,
+.form-text.text-muted,
+.text-muted {
+    color: var(--hk-text-muted) !important;
+}
+.custom-control-label {
+    color: var(--hk-text);
+}
+.custom-control-input:checked ~ .custom-control-label::before {
+    background-color: var(--hk-primary);
+    border-color: var(--hk-primary);
+}
+
+/* ---------------------------------------------------------------- tables */
+.table {
+    color: var(--hk-text);
+    background-color: var(--hk-surface);
+    border-color: var(--hk-border);
+}
+.table thead th {
+    background-color: var(--hk-surface-3);
+    color: var(--hk-text);
+    border-color: var(--hk-border);
+    border-bottom-width: 1px;
+    font-weight: 600;
+    font-size: 0.92rem;
+    letter-spacing: 0.01em;
+}
+.table td,
+.table th {
+    border-color: var(--hk-border-soft);
+    vertical-align: middle;
+}
+.table-striped tbody tr:nth-of-type(odd) {
+    background-color: rgba(255, 255, 255, 0.018);
+    color: var(--hk-text);
+}
+.table-striped tbody tr:nth-of-type(even) {
+    background-color: transparent;
+    color: var(--hk-text);
+}
+.table-hover tbody tr:hover {
+    background-color: rgba(16, 185, 129, 0.06);
+    color: var(--hk-text);
+}
+.table a {
+    color: var(--hk-primary);
+}
+.table a:hover {
+    color: var(--hk-primary-strong);
+}
+
+/* ---------------------------------------------------------------- cards
+ * Statistics page wraps each chart in .card. Same with config sections.
+ */
+.card {
+    background-color: var(--hk-surface);
+    border: 1px solid var(--hk-border);
+    border-radius: var(--hk-radius);
+    color: var(--hk-text);
+}
+.card-header {
+    background-color: var(--hk-surface-2);
+    border-bottom: 1px solid var(--hk-border);
+    color: var(--hk-text);
+    font-weight: 600;
+}
+.card-body {
+    color: var(--hk-text);
+}
+.card-footer {
+    background-color: var(--hk-surface-2);
+    border-top: 1px solid var(--hk-border);
+}
+
+/* ---------------------------------------------------------------- modals */
+.modal-content {
+    background-color: var(--hk-surface);
+    color: var(--hk-text);
+    border: 1px solid var(--hk-border);
+    border-radius: var(--hk-radius);
+}
+.modal-header,
+.modal-footer {
+    border-color: var(--hk-border);
+}
+.modal-header .close {
+    color: var(--hk-text);
+    text-shadow: none;
+    opacity: 0.7;
+}
+.modal-header .close:hover {
+    opacity: 1;
+}
+
+/* ---------------------------------------------------------------- dropdowns */
+.dropdown-menu {
+    background-color: var(--hk-surface);
+    border: 1px solid var(--hk-border);
+    border-radius: var(--hk-radius-sm);
+    box-shadow: 0 10px 32px rgba(0, 0, 0, 0.55);
+}
+.dropdown-item {
+    color: var(--hk-text);
+}
+.dropdown-item:hover,
+.dropdown-item:focus {
+    background-color: var(--hk-surface-3);
+    color: var(--hk-text);
+}
+.dropdown-divider {
+    border-color: var(--hk-border);
+}
+
+/* ---------------------------------------------------------------- nav tabs / pills */
+.nav-tabs {
+    border-bottom-color: var(--hk-border);
+}
+.nav-tabs .nav-link {
+    color: var(--hk-text-muted);
+    border-color: transparent;
+}
+.nav-tabs .nav-link:hover {
+    color: var(--hk-text);
+    border-color: transparent;
+}
+.nav-tabs .nav-link.active {
+    color: var(--hk-text);
+    background-color: var(--hk-surface);
+    border-color: var(--hk-border) var(--hk-border) var(--hk-surface);
+}
+.nav-pills .nav-link.active {
+    background-color: var(--hk-primary);
+    color: #06101f;
+}
+
+/* ---------------------------------------------------------------- pagination */
+.pagination .page-link {
+    background-color: var(--hk-surface-2);
+    border-color: var(--hk-border);
+    color: var(--hk-text);
+}
+.pagination .page-link:hover {
+    background-color: var(--hk-surface-3);
+    color: var(--hk-text);
+}
+.pagination .page-item.active .page-link {
+    background-color: var(--hk-primary);
+    border-color: var(--hk-primary);
+    color: #06101f;
+}
+.pagination .page-item.disabled .page-link {
+    background-color: var(--hk-surface);
+    color: var(--hk-text-dim);
+}
+
+/* ---------------------------------------------------------------- badges */
+.badge-primary,
+.badge.bg-primary {
+    background-color: var(--hk-primary);
+    color: #06101f;
+}
+.badge-secondary {
+    background-color: var(--hk-surface-3);
+    color: var(--hk-text);
+}
+.badge-success {
+    background-color: var(--hk-primary);
+    color: #06101f;
+}
+.badge-danger {
+    background-color: var(--hk-danger);
+}
+.badge-warning {
+    background-color: var(--hk-warning);
+    color: #06101f;
+}
+.badge-info {
+    background-color: var(--hk-surface-3);
+    color: var(--hk-text);
+}
+
+/* ---------------------------------------------------------------- alerts */
+.alert {
+    border-radius: var(--hk-radius-sm);
+    border-width: 1px;
+}
+.alert-success {
+    background-color: rgba(16, 185, 129, 0.12);
+    border-color: rgba(16, 185, 129, 0.45);
+    color: var(--hk-text);
+}
+.alert-danger {
+    background-color: rgba(239, 68, 68, 0.12);
+    border-color: rgba(239, 68, 68, 0.45);
+    color: var(--hk-text);
+}
+.alert-warning {
+    background-color: rgba(245, 158, 11, 0.12);
+    border-color: rgba(245, 158, 11, 0.45);
+    color: var(--hk-text);
+}
+.alert-info {
+    background-color: var(--hk-surface-2);
+    border-color: var(--hk-border);
+    color: var(--hk-text);
+}
+
+/* ---------------------------------------------------------------- list groups */
+.list-group-item {
+    background-color: var(--hk-surface);
+    border-color: var(--hk-border);
+    color: var(--hk-text);
+}
+
+/* ---------------------------------------------------------------- charts background fix
+ * Statistics page uses Chart.js inside .card. The default canvas BG is
+ * white; force it transparent so the dark card shows through.
+ */
+.card canvas {
+    background-color: transparent;
+}
+
+/* ---------------------------------------------------------------- search bars
+ * Several admin pages render a search form: <select>+<input>+<button>.
+ * Bootstrap 4's .btn padding makes the button taller than siblings.
+ */
+.form-row .btn,
+.input-group .btn {
+    height: calc(1.5em + 0.75rem + 2px);
+    line-height: 1;
+}
+
+/* ---------------------------------------------------------------- icons */
+.fas, .far, .fab {
+    color: inherit;
+}
+.trash-icon {
+    color: var(--hk-danger);
+}
+
+/* ---------------------------------------------------------------- footer */
+.footer {
+    background-color: transparent;
+    color: var(--hk-text-muted);
+    padding: 1.5rem 0;
+    border-top: 1px solid var(--hk-border-soft);
+    margin-top: 2rem;
+}
+
+/* ---------------------------------------------------------------- misc text */
+h1, h2, h3, h4, h5, h6 {
+    color: var(--hk-text);
+}
+code, pre {
+    color: var(--hk-text);
+    background-color: var(--hk-surface);
+    border-radius: var(--hk-radius-sm);
+}
+pre {
+    border: 1px solid var(--hk-border);
+    padding: 0.75rem;
+}
+
+/* CodeMirror used for page/challenge editing. Keep its own theme but
+ * make its container blend with the dark surface. */
+.CodeMirror {
+    background-color: var(--hk-surface-2) !important;
+    color: var(--hk-text) !important;
+    border: 1px solid var(--hk-border);
+    border-radius: var(--hk-radius-sm);
+}
+
+/* ---------------------------------------------------------------- update banner */
+.bg-warning.text-center {
+    background-color: var(--hk-warning) !important;
+    color: #06101f !important;
+}
