@@ -297,19 +297,18 @@ small.form-text,
     opacity: 1;
 }
 
-/* ---------------------------------------------------------------- dropdowns
- * Specificity-bumped (body prefix) because Bootstrap 4 ships its own
- * .dropdown-menu rules with high cascade priority and we lose without it.
- * z-index 1040 so the menu lives ABOVE the fixed-top navbar (z 1030); the
- * default 1000 puts it underneath, which renders as "invisible dropdown".
- */
+/* ---------------------------------------------------------------- dropdowns */
 body .dropdown-menu {
     background-color: var(--hk-surface) !important;
     border: 1px solid var(--hk-border) !important;
     border-radius: var(--hk-radius-sm);
     box-shadow: 0 10px 32px rgba(0, 0, 0, 0.55);
-    z-index: 1040;
+    z-index: 1050 !important;
     padding: 0.35rem 0;
+}
+/* Keep navbar menus above admin panels that create stacking contexts. */
+body .navbar .dropdown-menu.show {
+    position: fixed !important;
 }
 body .dropdown-item {
     color: var(--hk-text) !important;
