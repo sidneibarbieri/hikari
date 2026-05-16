@@ -354,9 +354,13 @@ def team_submission_posture(limit: int = 50) -> List[TeamSubmissionPosture]:
 
     out = []
     for team_id, team_name, solves, failures in rows:
-        s = int(solves or 0)
-        f = int(failures or 0)
-        ratio = round(f / s, 2) if s > 0 else float(f)
+        solves_count = int(solves or 0)
+        failures_count = int(failures or 0)
+        ratio = (
+            round(failures_count / solves_count, 2)
+            if solves_count > 0
+            else float(failures_count)
+        )
         median_seconds = (
             int(statistics.median(intervals[team_id])) if intervals.get(team_id) else None
         )

@@ -198,9 +198,9 @@ def load(app):
 
         # Reset all challenges
         challenges = hikari_models.HikariChallengeModel.query.all()
-        for c in challenges:
-            c.logs_activated = False
-            c.is_first_challenge = False
+        for challenge in challenges:
+            challenge.logs_activated = False
+            challenge.is_first_challenge = False
         db.session.commit()
 
         return redirect(url_for('hikariplugin.hikari_main'))
