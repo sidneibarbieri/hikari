@@ -200,3 +200,37 @@ docker compose -f docker-compose.production.yml up -d --build ctfd
 - [ ] Não exponha as portas 9200 (Elasticsearch), 5601 (Kibana), 3306 (MariaDB) publicamente
 - [ ] Configure alertas de disco (aviso em 80%)
 - [ ] Agende backup automático diário (cron já configurado pelo `setup_production.sh`)
+
+---
+
+## Gestão de índices Elasticsearch (ILM)
+
+**Pergunta frequente:** preciso reindexar de tempos em tempos?
+
+**Resposta para competição (uso atual):** **não.** O fluxo importa o
+dataset uma vez (via `import_backup.sh`) e os dashboards lêem read-only
+durante o evento. O índice `competition1` não cresce, então não precisa
+de rotação nem reindexação. Os painéis lêem em tempo real do mesmo
+índice — zero impacto.
+
+**Para produção com ingestão Live contínua** (Logstash escrevendo a cada
+segundo), rode uma vez:
+
+```bash
+bash deploy/production/setup_ilm.sh
+```
+
+O script cria uma policy `hikari-events` com três fases:
+
+| Fase     | Quando         | O que faz                                  |
+|----------|----------------|---------------------------------------------|
+| `hot`    | Imediato       | Aceita escritas; rolaciona a 30GB ou 30 dias |
+| `warm`   | Após 30 dias   | Encolhe para 1 shard + force-merge          |
+| `delete` | Após 90 dias   | Remove o índice                             |
+
+Aponte o Logstash para o alias `hikari-events` (em vez de um índice fixo)
+e a rotação acontece sem nenhuma intervenção. Para inspecionar:
+
+```bash
+curl -s http://localhost:9200/hikari-events/_ilm/explain | jq .
+```

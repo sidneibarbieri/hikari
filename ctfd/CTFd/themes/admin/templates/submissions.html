@@ -7,7 +7,7 @@
 
 <div class="jumbotron">
 	<div class="container">
-		<h1>{% if type %}{{ type|title }} {% endif %}Submissions</h1>
+		<h1>{% if type == 'correct' %}Submissões Corretas{% elif type == 'incorrect' %}Submissões Incorretas{% else %}Submissões{% endif %}</h1>
 	</div>
 </div>
 

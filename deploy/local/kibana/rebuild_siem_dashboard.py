@@ -561,13 +561,13 @@ def create_recent_connections() -> None:
 
 
 # ---------------------------------------------------------------------------
-# State-of-the-art SOC panels (v2)
+# SOC-grade hunt panels
 #
-# Added 2026-05 to bring the dashboard closer to Splunk Enterprise Security
-# and Elastic SIEM defaults: severity KPIs at the top for at-a-glance triage,
-# detection-name and IOC tables for hunt pivot, suspicious process tree for
-# host-level investigation, and a lateral-movement signal (unique-destination
-# cardinality) that traditional volume-based panels miss.
+# These bring the dashboard closer to Splunk Enterprise Security and Elastic
+# SIEM defaults: severity KPIs at the top for at-a-glance triage, detection-
+# name and IOC tables for hunt pivot, suspicious process tree for host-level
+# investigation, and a lateral-movement signal (unique-destination cardinality)
+# that volume-based panels miss.
 # ---------------------------------------------------------------------------
 
 

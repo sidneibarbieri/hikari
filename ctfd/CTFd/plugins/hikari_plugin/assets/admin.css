@@ -443,6 +443,40 @@ small.form-text,
     color: var(--hk-danger);
 }
 
+/* ---------------------------------------------------------------- navbar
+ * Match the public-facing navbar exactly (rgba(5,8,13,0.97) + Hikari border)
+ * so the brand surface reads as one cohesive product, not two parallel ones.
+ * Bootstrap 4's .bg-dark resolves to #343a40 (a warm grey) which clashes with
+ * the cold dark of the rest of the surface — overridden here to win.
+ */
+body .navbar.bg-dark,
+body .navbar.navbar-dark.bg-dark {
+    background-color: rgba(5, 8, 13, 0.97) !important;
+    border-bottom: 1px solid var(--hk-border);
+    min-height: 3.75rem;
+}
+body .navbar .navbar-brand,
+body .navbar .nav-link {
+    color: var(--hk-text) !important;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+body .navbar .nav-link:hover,
+body .navbar .nav-link:focus {
+    color: var(--hk-primary) !important;
+}
+body .navbar .nav-link.dropdown-toggle::after {
+    margin-left: 0.35rem;
+    border-top-color: currentColor;
+}
+body .hikari-admin-brand img {
+    /* Match the subtle golden glow used on the public navbar emblem. */
+    filter: drop-shadow(0 0 16px rgba(212, 163, 90, 0.26));
+}
+body .hikari-admin-brand {
+    font-family: inherit;
+}
+
 /* ---------------------------------------------------------------- footer */
 .footer {
     background-color: transparent;
