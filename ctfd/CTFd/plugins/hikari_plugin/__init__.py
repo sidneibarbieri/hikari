@@ -2,7 +2,7 @@ from flask import current_app, render_template, request, redirect, url_for, flas
 import random
 from sqlalchemy import event, inspect
 from sqlalchemy.exc import IntegrityError
-from CTFd.plugins import register_plugin_assets_directory
+from CTFd.plugins import register_admin_plugin_menu_bar, register_plugin_assets_directory
 from CTFd.utils.decorators import admins_only
 from CTFd.models import Teams
 from CTFd.models import Users
@@ -57,6 +57,9 @@ def load(app):
 
     # Register plugin assets directory
     register_plugin_assets_directory(app, base_path='/plugins/hikari_plugin/assets/')
+
+    # Register Hikari analytics in the CTFd admin sidebar under "Plugins".
+    register_admin_plugin_menu_bar(title="Análise científica", route="/admin/hikari/research")
 
     hikariplugin = Blueprint('hikariplugin', __name__, template_folder="templates")
 
