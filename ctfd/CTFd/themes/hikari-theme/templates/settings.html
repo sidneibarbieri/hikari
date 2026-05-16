@@ -17,6 +17,8 @@
   </div>
 
   <div class="container hikari-settings">
+    {% include "components/errors.html" %}
+
     <div class="hikari-settings-layout">
       <aside class="hikari-settings-nav" aria-label="Seções de configuração">
         <div class="nav flex-column nav-pills hikari-settings-tabs" role="tablist">
@@ -36,8 +38,6 @@
       <section class="hikari-settings-panel">
         <div class="tab-content" id="v-pills-tabContent">
           <div class="tab-pane fade show active" id="profile" role="tabpanel">
-            {% include "components/errors.html" %}
-
             {% with form = Forms.self.SettingsForm(language=language, country=country) %}
               <form
                   method="post" accept-charset="utf-8" autocomplete="off" role="form"
