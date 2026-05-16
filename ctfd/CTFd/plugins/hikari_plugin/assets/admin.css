@@ -279,17 +279,9 @@ body .dropdown-menu {
     border: 1px solid var(--hk-border) !important;
     border-radius: var(--hk-radius-sm);
     box-shadow: 0 10px 32px rgba(0, 0, 0, 0.55);
-    z-index: 1060 !important;
+    z-index: 3001 !important;
     padding: 0.35rem 0;
 }
-/* Why 1060 and not the Bootstrap 1000 default:
- *   - .navbar.fixed-top sits at z=1030 and creates its own stacking context.
- *   - The dropdown menu lives INSIDE that context, so its z-index is
- *     evaluated against navbar siblings only — 1060 here just guarantees
- *     it wins against any descendant of the navbar that bumps z.
- *   - The matching data-boundary="viewport" on the trigger in admin/base.html
- *     tells Popper to compute placement against the viewport, so flyouts on
- *     pages with a grid wrapper (Análise científica) don't get clipped. */
 body .dropdown-item {
     color: var(--hk-text) !important;
     padding: 0.5rem 1rem;
@@ -438,6 +430,14 @@ body .navbar.navbar-dark.bg-dark {
     background-color: rgba(5, 8, 13, 0.97) !important;
     border-bottom: 1px solid var(--hk-border);
     min-height: 3.75rem;
+    z-index: 3000;
+    overflow: visible;
+}
+body .navbar .container,
+body .navbar-collapse,
+body .navbar-nav,
+body .nav-item.dropdown {
+    overflow: visible;
 }
 body .navbar .navbar-brand,
 body .navbar .nav-link {

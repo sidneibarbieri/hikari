@@ -368,8 +368,8 @@ def team_submission_posture(limit: int = 50) -> List[TeamSubmissionPosture]:
             TeamSubmissionPosture(
                 team_id=team_id,
                 team_name=team_name,
-                solves=s,
-                failures=f,
+                solves=solves_count,
+                failures=failures_count,
                 brute_force_ratio=ratio,
                 median_seconds_between_attempts=median_seconds,
             )
