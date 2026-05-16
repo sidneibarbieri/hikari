@@ -33,17 +33,10 @@ title=$(echo "$dashboard" | jq -r '.attributes.title // empty')
 [[ "$title" == "HIKARI SIEM" ]] \
   || { echo "FAIL: HIKARI SIEM dashboard not found"; exit 1; }
 panels=$(echo "$dashboard" | jq -r '.attributes.panelsJSON | fromjson | length')
-# The rebuild script builds 22 panels: 4 severity KPI tiles + 16
-# visualizations + 2 saved searches. Accept ≥20 to stay forward-compatible.
 [[ "$panels" -ge 20 ]] \
   || { echo "FAIL: dashboard has too few panels ($panels, expected ≥20)"; exit 1; }
 echo "PASS: HIKARI SIEM dashboard has $panels panels"
 
-# Only one SIEM dashboard should be installed. The original
-# dashboard.zip carried an obsolete "SOC Dashboard - competition1"
-# whose data view diverges from the current pipeline; importing it
-# alongside HIKARI SIEM splits attention. The import script deletes it
-# during the import — this check enforces that.
 orphan_count=$(kibana \
   -H "kbn-xsrf: true" \
   "http://localhost:5601/hikari/kibana/api/saved_objects/_find?type=dashboard&per_page=100" \
@@ -51,6 +44,41 @@ orphan_count=$(kibana \
 [[ "$orphan_count" == "0" ]] \
   || { echo "FAIL: legacy SOC Dashboard still present ($orphan_count copies)"; exit 1; }
 echo "PASS: no legacy SOC dashboards lingering"
+
+visualization() {
+  kibana \
+    -H "kbn-xsrf: true" \
+    "http://localhost:5601/hikari/kibana/api/saved_objects/visualization/$1"
+}
+
+assert_visualization_title() {
+  local object_id=$1
+  local expected_title=$2
+  local title
+  title=$(visualization "$object_id" | jq -r '.attributes.title // empty')
+  [[ "$title" == "$expected_title" ]] \
+    || { echo "FAIL: $object_id title is '$title'"; exit 1; }
+}
+
+assert_histogram_terms_segment() {
+  local object_id=$1
+  local schema
+  schema=$(visualization "$object_id" \
+    | jq -r '.attributes.visState | fromjson | [.aggs[] | select(.type == "terms") | .schema][0] // empty')
+  [[ "$schema" == "segment" ]] \
+    || { echo "FAIL: $object_id uses schema '$schema' instead of segment"; exit 1; }
+}
+
+for chart in siem-top-src-ips siem-top-dst-ips siem-top-dst-ports siem-top-detect-names siem-sources-unique-dests; do
+  assert_histogram_terms_segment "$chart"
+done
+echo "PASS: histogram dashboards use per-field buckets"
+
+assert_visualization_title "siem-top-detect-names" "Detecções mais frequentes"
+assert_visualization_title "siem-sources-unique-dests" "Origens por destinos únicos"
+assert_visualization_title "siem-ioc-watchlist" "Indicadores web observados"
+assert_visualization_title "siem-process-tree" "Comandos e processos observados"
+echo "PASS: investigation panels use current Hikari labels"
 
 data_view=$(kibana \
   -H "kbn-xsrf: true" \
@@ -66,6 +94,28 @@ count=$(elasticsearch "http://localhost:9200/competition1/_count" | jq -r '.coun
 [[ "$count" -gt 0 ]] \
   || { echo "FAIL: competition1 index has no events"; exit 1; }
 echo "PASS: competition1 contains $count events"
+
+agg_response=$(elasticsearch \
+  "http://localhost:9200/competition1/_search" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "size": 0,
+    "aggs": {
+      "source_ips": {"terms": {"field": "Source IP.keyword", "size": 1}},
+      "destination_ips": {"terms": {"field": "Destination IP.keyword", "size": 1}},
+      "destination_ports": {"terms": {"field": "Destination Port.keyword", "size": 1}},
+      "event_names": {"terms": {"field": "Event Name.keyword", "size": 1}},
+      "urls": {"terms": {"field": "URL (custom).keyword", "size": 1}},
+      "command_lines": {"terms": {"field": "Command Line (custom).keyword", "size": 1}}
+    }
+  }')
+
+for bucket in source_ips destination_ips destination_ports event_names urls command_lines; do
+  size=$(echo "$agg_response" | jq -r --arg bucket "$bucket" '.aggregations[$bucket].buckets | length')
+  [[ "$size" -gt 0 ]] \
+    || { echo "FAIL: $bucket has no data for SIEM panels"; exit 1; }
+done
+echo "PASS: SIEM panels are backed by populated fields"
 
 echo "== validate authenticated dashboard route =="
 cookie_jar=$(mktemp)

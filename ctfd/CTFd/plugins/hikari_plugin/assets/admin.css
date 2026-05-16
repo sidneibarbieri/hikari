@@ -1,17 +1,4 @@
-/*
- * Hikari admin theme overrides.
- *
- * CTFd's admin templates (themes/admin/) extend Bootstrap 4 with a light
- * default look. This file repaints them with the Hikari dark identity so
- * the admin surface matches the competitor-facing pages. Loaded once via
- * a <link> tag injected in themes/admin/templates/base.html.
- *
- * Scope rules:
- *   - We do NOT touch interactive plumbing (dropdowns, modals, tooltips,
- *     CodeMirror) other than colors. Behaviour stays Bootstrap-default.
- *   - All colors come from CSS variables so a future re-brand only edits
- *     this :root block.
- */
+/* Hikari admin theme overrides. */
 
 :root {
     --hk-bg:           #0a1220;
@@ -32,12 +19,6 @@
     --hk-radius-sm:    6px;
 }
 
-/* ---------------------------------------------------------------- canvas
- * Rules below use `body` as a specificity bump (0,1,1 instead of 0,1,0)
- * so they reliably beat Bootstrap rules carried inside main-css-*.css
- * regardless of cascade order. Tested against the cached-asset case
- * where the browser still has the pre-Hikari admin bundle.
- */
 html, body {
     background-color: var(--hk-bg);
     color: var(--hk-text);
@@ -86,10 +67,6 @@ hr {
     border-color: var(--hk-border);
 }
 
-/* ---------------------------------------------------------------- page hero
- * Every admin page wraps its title in <div class="jumbotron">. Bootstrap 4's
- * default is light grey; here we match the public side's hikari-page-hero.
- */
 .jumbotron {
     background:
         linear-gradient(135deg, rgba(18, 27, 39, 0.92), rgba(12, 18, 27, 0.98)),
@@ -111,7 +88,6 @@ hr {
     color: var(--hk-text);
 }
 
-/* ---------------------------------------------------------------- buttons */
 .btn-primary {
     background-color: var(--hk-primary);
     border-color: var(--hk-primary);
@@ -165,7 +141,6 @@ hr {
     color: var(--hk-text);
 }
 
-/* ---------------------------------------------------------------- forms */
 .form-control,
 .custom-select,
 .input-group-text,
@@ -191,11 +166,13 @@ select.form-control {
     background-color: var(--hk-surface);
     color: var(--hk-text-muted);
 }
-/* Dropdown arrow on <select> needs an inverted SVG for visibility on dark */
 .custom-select,
 select.form-control {
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='%23edf3f8' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3E%3C/svg%3E");
+    background-position: right 0.85rem center;
+    background-repeat: no-repeat;
     background-size: 12px 12px;
+    padding-right: 2.4rem;
 }
 label,
 .col-form-label {
@@ -215,7 +192,6 @@ small.form-text,
     border-color: var(--hk-primary);
 }
 
-/* ---------------------------------------------------------------- tables */
 .table {
     color: var(--hk-text);
     background-color: var(--hk-surface);
@@ -452,12 +428,7 @@ body .dropdown-divider {
     color: var(--hk-danger);
 }
 
-/* ---------------------------------------------------------------- navbar
- * Match the public-facing navbar exactly (rgba(5,8,13,0.97) + Hikari border)
- * so the brand surface reads as one cohesive product, not two parallel ones.
- * Bootstrap 4's .bg-dark resolves to #343a40 (a warm grey) which clashes with
- * the cold dark of the rest of the surface — overridden here to win.
- */
+/* ---------------------------------------------------------------- navbar */
 body .navbar.bg-dark,
 body .navbar.navbar-dark.bg-dark {
     background-color: rgba(5, 8, 13, 0.97) !important;
@@ -479,19 +450,12 @@ body .navbar .nav-link.dropdown-toggle::after {
     border-top-color: currentColor;
 }
 body .hikari-admin-brand img {
-    /* Match the subtle golden glow used on the public navbar emblem. */
     filter: drop-shadow(0 0 16px rgba(212, 163, 90, 0.26));
 }
 body .hikari-admin-brand {
     font-family: inherit;
 }
 
-/* Prevent the multi-word "Análise científica" link from wrapping to two
- * lines on tight viewports, which created the "navbar drifting toward
- * center" effect when the wrap pushed everything sideways. Also widen the
- * container so the brand stays anchored on the left edge instead of being
- * squeezed by Bootstrap's 1140px container max-width on common laptop
- * resolutions. */
 body .navbar .nav-link {
     white-space: nowrap;
 }
@@ -505,11 +469,7 @@ body .navbar > .container {
     }
 }
 
-/* ---------------------------------------------------------------- stats page
- * /admin/statistics is now a clean snapshot of headline numbers — the broken
- * ECharts were removed in favor of the polished Análise científica panel,
- * linked via the banner at top of page.
- */
+/* ---------------------------------------------------------------- stats page */
 .hikari-stats-summary {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -579,8 +539,7 @@ pre {
     padding: 0.75rem;
 }
 
-/* CodeMirror used for page/challenge editing. Keep its own theme but
- * make its container blend with the dark surface. */
+/* Keep CodeMirror readable inside the dark admin surface. */
 .CodeMirror {
     background-color: var(--hk-surface-2) !important;
     color: var(--hk-text) !important;
@@ -594,12 +553,7 @@ pre {
     color: #06101f !important;
 }
 
-/* ---------------------------------------------------------------- stats redirect banner
- * Inserted on /admin/statistics to route admins to the Hikari research
- * dashboard, which is the polished analytics surface (KPIs, bars, ECharts-
- * free CSS visualizations). The default CTFd statistics page keeps working
- * for those who want the raw charts.
- */
+/* ---------------------------------------------------------------- stats redirect banner */
 .hikari-stats-banner {
     display: flex;
     align-items: center;
@@ -619,10 +573,6 @@ pre {
     color: var(--hk-text);
     font-weight: 700;
 }
-/* :not(.btn) is the linchpin — the CTA inside the banner is also an <a>,
- * and applying the green link color to a green button made the text
- * invisible (green on green). Scoping by :not(.btn) keeps body-text links
- * green and lets the button keep its dark contrast color. */
 .hikari-stats-banner a:not(.btn) {
     color: var(--hk-primary);
     text-decoration: underline;

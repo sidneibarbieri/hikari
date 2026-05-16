@@ -16,24 +16,6 @@
     </div>
   </div>
 
-  {# Fix Safari rendering: CTFd's SELECT_LANGUAGE_LIST and country list both
-     start with ("", "") — an empty placeholder option. When the user has
-     no preference saved, no <option> is selected and Safari paints the
-     control with its spell-check pattern (wavy underline tiles) because
-     the field looks like an empty text input to its accessibility layer.
-     Replacing the empty label with a visible "— Selecione —" gives Safari
-     real text to render and the pattern disappears. #}
-  <script>
-    document.addEventListener('DOMContentLoaded', function () {
-      document.querySelectorAll('select.form-select').forEach(function (sel) {
-        var empty = sel.querySelector('option[value=""]');
-        if (empty && empty.textContent.trim() === '') {
-          empty.textContent = '— Selecione —';
-        }
-      });
-    });
-  </script>
-
   <div class="container hikari-settings">
     {% include "components/errors.html" %}
 

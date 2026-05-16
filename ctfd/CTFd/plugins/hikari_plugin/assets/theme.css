@@ -246,10 +246,10 @@ select option {
 }
 .form-select {
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='%23edf3f8' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3E%3C/svg%3E");
-    /* Defensive: kill any inherited spell-check or text-decoration styling.
-     * Safari renders an empty <select> with the spell-check wavy pattern;
-     * the template-side script replaces the empty label with a placeholder,
-     * but these CSS guards stop the pattern in any leftover edge case. */
+    background-position: right 0.85rem center;
+    background-repeat: no-repeat;
+    background-size: 0.85rem 0.85rem;
+    padding-right: 2.4rem;
     text-decoration: none !important;
     text-decoration-line: none !important;
     -webkit-text-decoration: none !important;
@@ -432,6 +432,13 @@ select option {
     padding: 0 0.9rem;
     font-size: 0.95rem;
 }
+.jsearch-form select,
+.page-select {
+    background-position: right 0.85rem center;
+    background-repeat: no-repeat;
+    background-size: 0.85rem 0.85rem;
+    padding-right: 2.4rem;
+}
 .jsearch-form button {
     height: 2.75rem;
     line-height: 1;
@@ -467,18 +474,6 @@ select option {
     margin: 0 0 0.85rem;
 }
 
-/* Nav pills (settings page side tabs).
- *
- * Two real defects fixed here. (1) The inactive <button> rendered with
- * the browser's default button background (light grey on dark — text
- * became nearly invisible). (2) Hover/focus had no visual feedback, so
- * the tab felt unresponsive even though Bootstrap's Tab JS was firing.
- *
- * Background uses a slightly elevated surface to read as "clickable
- * card", text uses the full body color (not muted) so the label is
- * legible. The active state still wins via the green primary fill —
- * contrast between states is the affordance.
- */
 .nav-pills .nav-link {
     color: var(--hikari-text);
     background-color: var(--hikari-surface-2, #142139);
@@ -498,9 +493,6 @@ select option {
     border-color: var(--hikari-primary);
     color: #06101f;
 }
-/* Inside the settings tab list specifically, the buttons are full-width
- * pill cards stacked vertically. They inherit the rules above, then this
- * tightens the icon/text alignment. */
 .hikari-settings-tabs .nav-link {
     box-shadow: 0 1px 0 rgba(0, 0, 0, 0.18);
 }

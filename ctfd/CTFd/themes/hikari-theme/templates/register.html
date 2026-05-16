@@ -22,7 +22,14 @@
           <form method="post" accept-charset="utf-8" role="form">
 
             <div class="jform-control mb-3">
-              {{ form.name(class="", value=name, autocomplete="username", placeholder="Nome de Usuário") }}
+              {{ form.name(
+                class="",
+                value=name,
+                autocomplete="username",
+                placeholder="Nome de usuário",
+                pattern="[A-Za-z0-9]+",
+                title="Use apenas letras sem acento e números."
+              ) }}
             </div>
 
             <div class="jform-control mb-3">
@@ -74,12 +81,4 @@
 
       </div>
   </div>
-
-  <script>
-  const input = document.getElementById('name');
-
-  input.addEventListener('input', function () {
-    this.value = this.value.replace(/[^a-zA-Z0-9]/g, '');
-  });
-  </script>
 {% endblock %}

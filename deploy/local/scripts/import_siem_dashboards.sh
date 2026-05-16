@@ -1,17 +1,4 @@
 #!/usr/bin/env bash
-# =============================================================================
-# import_siem_dashboards.sh — Build the Hikari SIEM dashboard in Kibana 8.19
-#
-# Instead of importing an NDJSON bundle (which breaks panelRefName references
-# due to Kibana's import-time normalisation), this script runs the Python
-# rebuild script directly inside the CTFd container, where it reaches Kibana
-# by service name (http://kibana:5601/…) and creates every saved object via
-# the REST POST API with exact reference names.
-#
-# Usage:
-#   bash deploy/local/import_siem_dashboards.sh
-#   COMPOSE_FILE=/path/to/docker-compose.yml bash import_siem_dashboards.sh
-# =============================================================================
 set -euo pipefail
 
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
@@ -21,8 +8,6 @@ REBUILD_SCRIPT="$LOCAL_DIR/kibana/rebuild_siem_dashboard.py"
 DATA_VIEW_ID=${DATA_VIEW_ID:-competition1}
 SIEM_DASHBOARD_ID=${SIEM_DASHBOARD_ID:-hikari-siem}
 
-# Internal service name — Kibana is only reachable by this hostname from
-# other containers on the same Docker Compose network.
 KIBANA_INTERNAL_URL="http://kibana:5601/hikari/kibana"
 
 compose() {
@@ -33,12 +18,8 @@ kibana() {
   compose exec -T kibana curl -sS "$@"
 }
 
-# ---- 1. Sanity checks -------------------------------------------------------
-
 [[ -f "$REBUILD_SCRIPT" ]] \
   || { echo "FAIL: rebuild script missing: $REBUILD_SCRIPT"; exit 1; }
-
-# ---- 2. Wait for Kibana -----------------------------------------------------
 
 wait_for_kibana() {
   echo "Waiting for Kibana to become available..."
@@ -55,12 +36,7 @@ wait_for_kibana() {
   exit 1
 }
 
-# ---- 3. Remove legacy orphan dashboards -------------------------------------
-
 delete_legacy_dashboards() {
-  # The original Hikari dashboard.zip (Aug 2025) included a single-panel
-  # "SOC Dashboard - competition1" search saved-object. Delete it idempotently
-  # so reviewers end up with exactly one curated dashboard.
   local ids=(
     soc-dashboard-competition1
     lista-de-conexoes-recentes
@@ -77,12 +53,6 @@ delete_legacy_dashboards() {
   echo "Legacy orphan dashboards cleaned up."
 }
 
-# ---- 4. Run the Python rebuild script inside CTFd ---------------------------
-#
-# The CTFd container has Python 3 + the same Docker Compose network, so it
-# can reach Kibana by service hostname. We copy the script into /tmp to avoid
-# any path-mapping issues and pass KIBANA_BASE via environment variable.
-
 rebuild_dashboard() {
   local remote_script="/tmp/rebuild_siem_dashboard.py"
 
@@ -94,11 +64,8 @@ rebuild_dashboard() {
   compose exec -T -e "KIBANA_BASE=$KIBANA_INTERNAL_URL" ctfd \
     python3 "$remote_script"
 
-  echo "Cleaning up temporary script..."
-  compose exec -T ctfd rm -f "$remote_script" || true
+  compose exec -T ctfd rm -f "$remote_script" >/dev/null 2>&1 || true
 }
-
-# ---- 5. Post-build settings -------------------------------------------------
 
 set_default_data_view() {
   response=$(kibana \

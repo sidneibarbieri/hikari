@@ -39,6 +39,6 @@ LANGUAGE_NAMES = {
     "ca": "Català",
 }
 
-SELECT_LANGUAGE_LIST = [("", "")] + [
+SELECT_LANGUAGE_LIST = [("", "— Selecione —")] + [
     (str(lang), LANGUAGE_NAMES.get(str(lang))) for lang in Languages
 ]

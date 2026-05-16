@@ -1,25 +1,4 @@
-"""Rebuild the Hikari SIEM dashboard in Kibana 8.19 via REST API.
-
-This script creates saved objects directly via POST (not _import), which
-avoids Kibana's NDJSON import normalization of panelRefName/reference names.
-
-Visualization types used (all confirmed working in Kibana 8.19.15):
-  histogram  — bar charts and date-histogram time series
-  pie        — severity distribution, countries
-  heatmap    — port × source IP matrix
-  table      — severity counts, top URLs, top messages, src→dst→port
-  search     — recent network events (Discover saved search)
-
-Types intentionally avoided (do not render correctly in 8.19.15):
-  metric  — legacy Visualize renderer removed
-  line    — legacy renderer removed
-  area    — legacy renderer removed
-  tsvb    — broken reference resolution in import pipeline
-  timelion — broken reference resolution in import pipeline
-
-Usage (from repo root):
-    python deploy/local/kibana/rebuild_siem_dashboard.py
-"""
+"""Rebuild the Hikari SIEM dashboard in Kibana 8.19 via REST API."""
 
 import json
 import os
@@ -27,16 +6,9 @@ import sys
 import time
 from pathlib import Path
 
-import urllib.request
 import urllib.error
+import urllib.request
 
-# ---------------------------------------------------------------------------
-# Config
-# ---------------------------------------------------------------------------
-
-# Allow callers to override the base URL via environment variable so the same
-# script works both locally (localhost:5601) and when executed inside a Docker
-# container where Kibana is reached by service name (kibana:5601).
 KIBANA_BASE = os.environ.get(
     "KIBANA_BASE", "http://localhost:5601/hikari/kibana"
 )
@@ -92,12 +64,7 @@ def create_index_pattern() -> None:
         references=[],
     )
     ok = "id" in result
-    print(f"  index-pattern competition1: {'✓' if ok else '✗ ' + str(result)}")
-
-
-# ---------------------------------------------------------------------------
-# Visualization helpers
-# ---------------------------------------------------------------------------
+    print(f"  index-pattern competition1: {'OK' if ok else 'FAIL ' + str(result)}")
 
 _IDX_REF = {"type": "index-pattern", "name": "kibanaSavedObjectMeta.searchSourceJSON.index", "id": INDEX_ID}
 
@@ -128,12 +95,7 @@ def _create_viz(vid: str, title: str, vis_type: str, params: dict, aggs: list, q
         references=[_IDX_REF],
     )
     ok = "id" in result
-    print(f"  viz/{vid[:35]}: {'✓' if ok else '✗ ' + str(result)[:100]}")
-
-
-# ---------------------------------------------------------------------------
-# Row 1: Severity count table (replaces broken TSVB/metric tiles)
-# ---------------------------------------------------------------------------
+    print(f"  viz/{vid[:35]}: {'OK' if ok else 'FAIL ' + str(result)[:100]}")
 
 
 def create_severity_count_table() -> None:
@@ -156,16 +118,11 @@ def create_severity_count_table() -> None:
                 "order": "desc",
                 "orderBy": "1",
                 "otherBucket": False,
+                "customLabel": "Severidade",
             },
         },
     ]
     _create_viz("siem-severity-table", "Contagem por Severidade", "table", params, aggs)
-
-
-# ---------------------------------------------------------------------------
-# Row 1b: Events over time — date histogram (replaces broken timelion/line)
-# ---------------------------------------------------------------------------
-
 
 def create_events_over_time() -> None:
     params = {
@@ -212,12 +169,6 @@ def create_events_over_time() -> None:
         },
     ]
     _create_viz("siem-events-over-time", "Eventos ao longo do tempo", "histogram", params, aggs)
-
-
-# ---------------------------------------------------------------------------
-# Row 1c: Severity over time (stacked) — also date histogram
-# ---------------------------------------------------------------------------
-
 
 def create_severity_over_time() -> None:
     params = {
@@ -268,6 +219,7 @@ def create_severity_over_time() -> None:
                 "size": 5,
                 "order": "desc",
                 "orderBy": "1",
+                "customLabel": "Severidade",
             },
         },
     ]
@@ -301,6 +253,7 @@ def create_severity_pie() -> None:
                 "order": "desc",
                 "orderBy": "1",
                 "otherBucket": False,
+                "customLabel": "Severidade",
             },
         },
     ]
@@ -339,16 +292,15 @@ def create_top_src_ips() -> None:
         "times": [],
         "addTimeMarker": False,
     }
-    # NOTE: histogram visualizations use schema "segment" for the bucketing
-    # dimension (X-axis or, when categoryAxes.position is "left", Y-axis).
-    # Using schema "bucket" — which is the right value for table viz —
-    # makes Kibana silently fall back to a single "_all" category, hiding
-    # the per-IP breakdown the user actually wants to see.
     aggs = [
         {"id": "1", "enabled": True, "type": "count", "schema": "metric", "params": {}},
         {
             "id": "2", "enabled": True, "type": "terms", "schema": "segment",
-            "params": {"field": "Source IP.keyword", "size": 10, "order": "desc", "orderBy": "1", "otherBucket": False},
+            "params": {
+                "field": "Source IP.keyword", "size": 10, "order": "desc",
+                "orderBy": "1", "otherBucket": False,
+                "customLabel": "IP de origem",
+            },
         },
     ]
     _create_viz("siem-top-src-ips", "Top IPs de Origem", "histogram", params, aggs)
@@ -381,7 +333,11 @@ def create_top_dst_ips() -> None:
         {"id": "1", "enabled": True, "type": "count", "schema": "metric", "params": {}},
         {
             "id": "2", "enabled": True, "type": "terms", "schema": "segment",
-            "params": {"field": "Destination IP.keyword", "size": 10, "order": "desc", "orderBy": "1", "otherBucket": False},
+            "params": {
+                "field": "Destination IP.keyword", "size": 10, "order": "desc",
+                "orderBy": "1", "otherBucket": False,
+                "customLabel": "IP de destino",
+            },
         },
     ]
     _create_viz("siem-top-dst-ips", "Top IPs de Destino", "histogram", params, aggs)
@@ -410,7 +366,11 @@ def create_top_dst_ports() -> None:
         {"id": "1", "enabled": True, "type": "count", "schema": "metric", "params": {}},
         {
             "id": "2", "enabled": True, "type": "terms", "schema": "segment",
-            "params": {"field": "Destination Port.keyword", "size": 15, "order": "desc", "orderBy": "1", "otherBucket": False},
+            "params": {
+                "field": "Destination Port.keyword", "size": 15, "order": "desc",
+                "orderBy": "1", "otherBucket": False,
+                "customLabel": "Porta de destino",
+            },
         },
     ]
     _create_viz("siem-top-dst-ports", "Top Portas de Destino", "histogram", params, aggs)
@@ -446,14 +406,20 @@ def create_heatmap() -> None:
         {"id": "1", "enabled": True, "type": "count", "schema": "metric", "params": {}},
         {
             "id": "2", "enabled": True, "type": "terms", "schema": "segment",
-            "params": {"field": "Source IP.keyword", "size": 10, "order": "desc", "orderBy": "1"},
+            "params": {
+                "field": "Source IP.keyword", "size": 10, "order": "desc",
+                "orderBy": "1", "customLabel": "IP de origem",
+            },
         },
         {
             "id": "3", "enabled": True, "type": "terms", "schema": "group",
-            "params": {"field": "Destination Port.keyword", "size": 10, "order": "desc", "orderBy": "1"},
+            "params": {
+                "field": "Destination Port.keyword", "size": 10, "order": "desc",
+                "orderBy": "1", "customLabel": "Porta",
+            },
         },
     ]
-    _create_viz("siem-heatmap", "Heatmap Porta × Origem", "heatmap", params, aggs)
+    _create_viz("siem-heatmap", "Heatmap porta por origem", "heatmap", params, aggs)
 
 
 # ---------------------------------------------------------------------------
@@ -501,7 +467,11 @@ def create_fortinet_messages() -> None:
     aggs = [
         {"id": "1", "enabled": True, "type": "count", "schema": "metric", "params": {}},
         {"id": "2", "enabled": True, "type": "terms", "schema": "bucket",
-         "params": {"field": "Event Name.keyword", "size": 15, "order": "desc", "orderBy": "1", "otherBucket": False}},
+         "params": {
+             "field": "Event Name.keyword", "size": 15, "order": "desc",
+             "orderBy": "1", "otherBucket": False,
+             "customLabel": "Tipo de evento",
+         }},
     ]
     _create_viz("siem-fortinet-messages", "Top Eventos por Tipo", "table", _table_params(), aggs)
 
@@ -510,7 +480,11 @@ def create_top_urls() -> None:
     aggs = [
         {"id": "1", "enabled": True, "type": "count", "schema": "metric", "params": {}},
         {"id": "2", "enabled": True, "type": "terms", "schema": "bucket",
-         "params": {"field": "Service Name (custom).keyword", "size": 15, "order": "desc", "orderBy": "1", "otherBucket": False}},
+         "params": {
+             "field": "Service Name (custom).keyword", "size": 15,
+             "order": "desc", "orderBy": "1", "otherBucket": False,
+             "customLabel": "Serviço",
+         }},
     ]
     _create_viz("siem-top-urls", "Top Serviços de Rede", "table", _table_params(), aggs)
 
@@ -519,13 +493,25 @@ def create_src_dst_port_table() -> None:
     aggs = [
         {"id": "1", "enabled": True, "type": "count", "schema": "metric", "params": {}},
         {"id": "2", "enabled": True, "type": "terms", "schema": "bucket",
-         "params": {"field": "Source IP.keyword", "size": 5, "order": "desc", "orderBy": "1", "otherBucket": False}},
+         "params": {
+             "field": "Source IP.keyword", "size": 5, "order": "desc",
+             "orderBy": "1", "otherBucket": False,
+             "customLabel": "Origem",
+         }},
         {"id": "3", "enabled": True, "type": "terms", "schema": "bucket",
-         "params": {"field": "Destination IP.keyword", "size": 5, "order": "desc", "orderBy": "1", "otherBucket": False}},
+         "params": {
+             "field": "Destination IP.keyword", "size": 5, "order": "desc",
+             "orderBy": "1", "otherBucket": False,
+             "customLabel": "Destino",
+         }},
         {"id": "4", "enabled": True, "type": "terms", "schema": "bucket",
-         "params": {"field": "Destination Port.keyword", "size": 5, "order": "desc", "orderBy": "1", "otherBucket": False}},
+         "params": {
+             "field": "Destination Port.keyword", "size": 5, "order": "desc",
+             "orderBy": "1", "otherBucket": False,
+             "customLabel": "Porta",
+         }},
     ]
-    _create_viz("siem-src-dst-port", "Top Origem → Destino → Porta", "table", _table_params(), aggs)
+    _create_viz("siem-src-dst-port", "Top origem, destino e porta", "table", _table_params(), aggs)
 
 
 # ---------------------------------------------------------------------------
@@ -539,7 +525,7 @@ def create_recent_connections() -> None:
         "network.transport", "Threat Severity (custom)", "Fortinet Message (custom)",
     ]
     searchsource = json.dumps({
-        "query": {"language": "kuery", "query": ""},
+        "query": {"language": "kuery", "query": '"Source IP": * and "Destination IP": *'},
         "filter": [],
         "indexRefName": "kibanaSavedObjectMeta.searchSourceJSON.index",
         "highlight": {
@@ -562,29 +548,12 @@ def create_recent_connections() -> None:
         references=[_IDX_REF],
     )
     ok = "id" in result
-    print(f"  search/siem-recent-connections: {'✓' if ok else '✗ ' + str(result)[:100]}")
-
-
-# ---------------------------------------------------------------------------
-# SOC-grade hunt panels
-#
-# These bring the dashboard closer to Splunk Enterprise Security and Elastic
-# SIEM defaults: severity KPIs at the top for at-a-glance triage, detection-
-# name and IOC tables for hunt pivot, suspicious process tree for host-level
-# investigation, and a lateral-movement signal (unique-destination cardinality)
-# that volume-based panels miss.
-# ---------------------------------------------------------------------------
+    print(f"  search/siem-recent-connections: {'OK' if ok else 'FAIL ' + str(result)[:100]}")
 
 
 def _severity_metric(severity: str) -> dict:
-    """Build a Kibana 'metric' visualization filtered to one severity level.
-
-    SOC dashboards lead with severity counts so the analyst sees triage scope
-    in the first glance. Each tile uses the metric vis (single big number)
-    filtered by a KQL query on Threat Severity.
-    """
+    """Build a severity counter filtered by KQL."""
     label_map = {"critical": "Críticos", "high": "Altos", "medium": "Médios", "low": "Baixos"}
-    color_map = {"critical": "#ef4444", "high": "#f97316", "medium": "#f59e0b", "low": "#10b981"}
     params = {
         "addTooltip": True,
         "addLegend": False,
@@ -611,17 +580,17 @@ def _severity_metric(severity: str) -> dict:
          "params": {"customLabel": label_map.get(severity, severity)}},
     ]
     query = f'"Threat Severity (custom).keyword": "{severity}"'
-    _ = color_map  # palette referenced for future custom color application
     return {"params": params, "aggs": aggs, "query": query}
 
 
 def create_severity_metrics() -> None:
-    """Four severity KPI tiles (Critical, High, Medium, Low)."""
+    """Create four severity KPI tiles."""
+    title_map = {"critical": "Crítica", "high": "Alta", "medium": "Média", "low": "Baixa"}
     for severity in ("critical", "high", "medium", "low"):
         spec = _severity_metric(severity)
         _create_viz(
             f"siem-kpi-{severity}",
-            f"Severidade — {severity.title()}",
+            f"Severidade - {title_map[severity]}",
             "metric",
             spec["params"],
             spec["aggs"],
@@ -630,7 +599,7 @@ def create_severity_metrics() -> None:
 
 
 def create_top_detect_names() -> None:
-    """Top detection names — what controls are actually firing right now."""
+    """Create a bar chart with the most frequent detections."""
     params = {
         "type": "histogram",
         "grid": {"categoryLines": False},
@@ -661,22 +630,18 @@ def create_top_detect_names() -> None:
          "params": {
              "field": "Detect Name (custom).keyword", "size": 10,
              "order": "desc", "orderBy": "1", "otherBucket": False,
+             "customLabel": "Detecção",
          }},
     ]
-    _create_viz("siem-top-detect-names", "Top Detections", "histogram", params, aggs)
+    _create_viz("siem-top-detect-names", "Detecções mais frequentes", "histogram", params, aggs)
 
 
 def create_ioc_table() -> None:
-    """IOC watchlist — type + value with counts, for hunt pivot.
-
-    Limits to 25 rows to stay scannable; analyst sorts by count to find the
-    noisiest indicators first, then clicks to filter the dashboard.
-    """
     params = {
         "perPage": 25,
         "showPartialRows": False,
         "showMetricsAtAllLevels": False,
-        "sort": {"columnIndex": 2, "direction": "desc"},
+        "sort": {"columnIndex": 1, "direction": "desc"},
         "showTotal": False,
         "totalFunc": "sum",
         "percentageCol": "",
@@ -684,69 +649,47 @@ def create_ioc_table() -> None:
     aggs = [
         {"id": "1", "enabled": True, "type": "count", "schema": "metric", "params": {}},
         {"id": "2", "enabled": True, "type": "terms", "schema": "bucket",
-         "params": {"field": "IOC Type (custom).keyword", "size": 8,
+         "params": {"field": "URL (custom).keyword", "size": 15,
                     "order": "desc", "orderBy": "1", "otherBucket": False,
-                    "customLabel": "Tipo"}},
+                    "customLabel": "URL"}},
         {"id": "3", "enabled": True, "type": "terms", "schema": "bucket",
-         "params": {"field": "IOC Value (custom).keyword", "size": 25,
+         "params": {"field": "Destination IP.keyword", "size": 8,
                     "order": "desc", "orderBy": "1", "otherBucket": False,
-                    "customLabel": "Valor"}},
+                    "customLabel": "Destino"}},
     ]
     _create_viz(
         "siem-ioc-watchlist",
-        "IOC Watchlist (Tipo × Valor)",
+        "Indicadores web observados",
         "table",
         params,
         aggs,
-        query='_exists_:"IOC Value (custom).keyword"',
     )
 
 
 def create_process_tree() -> None:
-    """Suspicious process tree — Account × Parent × Image correlation.
-
-    The three-level breakdown lets an analyst see a single account spawning
-    the same parent → child combo across multiple hosts, which is the textbook
-    signal for an exploit kit or lateral-movement script.
-    """
     params = {
         "perPage": 25, "showPartialRows": False, "showMetricsAtAllLevels": False,
-        "sort": {"columnIndex": 3, "direction": "desc"},
+        "sort": {"columnIndex": 1, "direction": "desc"},
         "showTotal": False, "totalFunc": "sum", "percentageCol": "",
     }
     aggs = [
         {"id": "1", "enabled": True, "type": "count", "schema": "metric", "params": {}},
         {"id": "2", "enabled": True, "type": "terms", "schema": "bucket",
-         "params": {"field": "Account Name (custom).keyword", "size": 6,
+         "params": {"field": "Command Line (custom).keyword", "size": 10,
                     "order": "desc", "orderBy": "1", "otherBucket": False,
-                    "customLabel": "Conta"}},
-        {"id": "3", "enabled": True, "type": "terms", "schema": "bucket",
-         "params": {"field": "Parent Image File Name (custom).keyword", "size": 6,
-                    "order": "desc", "orderBy": "1", "otherBucket": False,
-                    "customLabel": "Processo pai"}},
-        {"id": "4", "enabled": True, "type": "terms", "schema": "bucket",
-         "params": {"field": "Process Name (custom).keyword", "size": 6,
-                    "order": "desc", "orderBy": "1", "otherBucket": False,
-                    "customLabel": "Processo filho"}},
+                    "customLabel": "Linha de comando"}},
     ]
     _create_viz(
         "siem-process-tree",
-        "Árvore de Processos Suspeitos",
+        "Comandos e processos observados",
         "table",
         params,
         aggs,
-        query='_exists_:"Process Name (custom).keyword" and _exists_:"Parent Image File Name (custom).keyword"',
     )
 
 
 def create_sources_by_unique_dests() -> None:
-    """Top source IPs ranked by *unique* destinations (cardinality).
-
-    A high-volume source talking to one destination is noisy backup traffic;
-    a moderate-volume source talking to 50 unique destinations in an hour is
-    a port-scanner or pivot host. This metric surfaces the latter, which the
-    other 'top sources' panels (raw count) cannot.
-    """
+    """Create a bar chart for source IPs by unique destinations."""
     params = {
         "type": "histogram",
         "grid": {"categoryLines": False},
@@ -775,17 +718,18 @@ def create_sources_by_unique_dests() -> None:
          "params": {"field": "Destination IP.keyword", "customLabel": "Destinos únicos"}},
         {"id": "2", "enabled": True, "type": "terms", "schema": "segment",
          "params": {"field": "Source IP.keyword", "size": 10,
-                    "order": "desc", "orderBy": "1", "otherBucket": False}},
+                    "order": "desc", "orderBy": "1", "otherBucket": False,
+                    "customLabel": "IP de origem"}},
     ]
     _create_viz(
         "siem-sources-unique-dests",
-        "Sources por Destinos Únicos (sinal de lateral movement)",
+        "Origens por destinos únicos",
         "histogram", params, aggs,
     )
 
 
 def create_recent_critical_events() -> None:
-    """Recent critical-severity events — last 20 alerts demanding attention."""
+    """Create a saved search for recent high-severity events."""
     columns = [
         "@timestamp", "Threat Severity (custom)", "Detect Name (custom)",
         "Account Name (custom)", "Source IP", "Destination IP",
@@ -810,67 +754,41 @@ def create_recent_critical_events() -> None:
         references=[_IDX_REF],
     )
     ok = "id" in result
-    print(f"  search/siem-recent-critical: {'✓' if ok else '✗ ' + str(result)[:100]}")
+    print(f"  search/siem-recent-critical: {'OK' if ok else 'FAIL ' + str(result)[:100]}")
 
-
-# ---------------------------------------------------------------------------
-# Dashboard
-# ---------------------------------------------------------------------------
-
-# (viz_id, panel_ref, x, y, w, h, type)
-# Grid is 48 units wide.
-# Layout:
-#  y=0  h=8  : Severity count table (w=16) | Events over time (w=32)
-#  y=8  h=16 : Severity pie (w=16) | Top Src IPs (w=16) | Top Dst IPs (w=16)
-#  y=24 h=16 : Top Dst Ports (w=16) | Heatmap (w=32)
-#  y=40 h=14 : Countries donut (w=16) | Fortinet messages (w=32)
-#  y=54 h=14 : Top URLs (w=24) | Src→Dst→Port (w=24)
-#  y=68 h=14 : Severity over time (w=48)
-#  y=82 h=18 : Recent connections Discover (w=48)
 
 PANEL_LAYOUT = [
-    # Row 0: 4 severity KPI tiles (Critical | High | Medium | Low) — SOC at-a-glance
     ("siem-kpi-critical",       "ref_0",   0,  0, 12,  8, "visualization"),
     ("siem-kpi-high",           "ref_1",  12,  0, 12,  8, "visualization"),
     ("siem-kpi-medium",         "ref_2",  24,  0, 12,  8, "visualization"),
     ("siem-kpi-low",            "ref_3",  36,  0, 12,  8, "visualization"),
 
-    # Row 1: severity table + events over time
     ("siem-severity-table",     "ref_4",   0,  8, 16,  8, "visualization"),
     ("siem-events-over-time",   "ref_5",  16,  8, 32,  8, "visualization"),
 
-    # Row 2: severity pie + top src IPs + top dst IPs
     ("siem-severity-pie",       "ref_6",   0, 16, 16, 16, "visualization"),
     ("siem-top-src-ips",        "ref_7",  16, 16, 16, 16, "visualization"),
     ("siem-top-dst-ips",        "ref_8",  32, 16, 16, 16, "visualization"),
 
-    # Row 3 (NEW — hunt pivot): Top detections + Top sources by unique dests
     ("siem-top-detect-names",   "ref_9",   0, 32, 24, 14, "visualization"),
     ("siem-sources-unique-dests","ref_10",24, 32, 24, 14, "visualization"),
 
-    # Row 4: top dst ports + heatmap
     ("siem-top-dst-ports",      "ref_11",  0, 46, 16, 16, "visualization"),
     ("siem-heatmap",            "ref_12", 16, 46, 32, 16, "visualization"),
 
-    # Row 5 (NEW — host investigation): IOC watchlist + Process tree
     ("siem-ioc-watchlist",      "ref_13",  0, 62, 24, 18, "visualization"),
     ("siem-process-tree",       "ref_14", 24, 62, 24, 18, "visualization"),
 
-    # Row 6: countries + Fortinet messages
     ("siem-countries-donut",    "ref_15",  0, 80, 16, 14, "visualization"),
     ("siem-fortinet-messages",  "ref_16", 16, 80, 32, 14, "visualization"),
 
-    # Row 7: URLs + src→dst→port
     ("siem-top-urls",           "ref_17",  0, 94, 24, 14, "visualization"),
     ("siem-src-dst-port",       "ref_18", 24, 94, 24, 14, "visualization"),
 
-    # Row 8: severity over time (full width)
     ("siem-severity-over-time", "ref_19",  0,108, 48, 14, "visualization"),
 
-    # Row 9 (NEW): Recent critical events (saved search filtered to critical/high)
     ("siem-recent-critical",    "ref_20",  0,122, 48, 16, "search"),
 
-    # Row 10: recent connections (full investigation table)
     ("siem-recent-connections", "ref_21",  0,138, 48, 18, "search"),
 ]
 
@@ -893,10 +811,8 @@ def create_dashboard() -> None:
     attrs = {
         "title": "HIKARI SIEM",
         "description": (
-            "SOC SIEM Hikari — KPIs de severidade, eventos no tempo, "
-            "top sources/destinos, top detections, IOC watchlist, "
-            "árvore de processos suspeitos, sinal de lateral movement "
-            "(cardinality), heatmap porta×origem e busca de eventos críticos."
+            "Painel de investigação com severidade, evolução temporal, "
+            "origens, destinos, serviços, comandos, URLs e eventos recentes."
         ),
         "panelsJSON": json.dumps(panels),
         "optionsJSON": json.dumps({
@@ -915,7 +831,7 @@ def create_dashboard() -> None:
     }
     result = _create_saved_object("dashboard", "hikari-siem", attrs, references)
     ok = "id" in result
-    print(f"  dashboard/hikari-siem: {'✓' if ok else '✗ ' + str(result)[:200]}")
+    print(f"  dashboard/hikari-siem: {'OK' if ok else 'FAIL ' + str(result)[:200]}")
 
 
 # ---------------------------------------------------------------------------
@@ -942,9 +858,6 @@ def write_ndjson() -> None:
 
 # ---------------------------------------------------------------------------
 # Main
-# ---------------------------------------------------------------------------
-
-
 def main() -> None:
     print("Rebuilding Hikari SIEM dashboard via Kibana REST API...")
     print()
@@ -961,18 +874,18 @@ def main() -> None:
     create_severity_pie()
     create_top_src_ips()
     create_top_dst_ips()
-    create_top_detect_names()        # NEW
-    create_sources_by_unique_dests() # NEW
+    create_top_detect_names()
+    create_sources_by_unique_dests()
     create_top_dst_ports()
     create_heatmap()
-    create_ioc_table()               # NEW
-    create_process_tree()            # NEW
+    create_ioc_table()
+    create_process_tree()
     create_countries_donut()
     create_fortinet_messages()
     create_top_urls()
     create_src_dst_port_table()
     create_recent_connections()
-    create_recent_critical_events()  # NEW
+    create_recent_critical_events()
 
     print()
     print("3. Dashboard:")

@@ -80,13 +80,9 @@ post_response=$(curl -sS -b "$admin_cookies" -c "$admin_cookies" \
   -X POST "$CTFD_URL/api/v1/notifications" \
   --data "$post_body")
 
-success=$(printf '%s' "$post_response" | python3 -c '
-import json, sys
-try:
-    d = json.loads(sys.stdin.read())
-    print("true" if d.get("success") else "false")
-except Exception:
-    print("false")')
+# Use jq directly — yields "true"/"false"/"null" without a Python detour
+# (the hygiene check intentionally forbids inline Python with print/except).
+success=$(printf '%s' "$post_response" | jq -r 'if .success == true then "true" else "false" end' 2>/dev/null || echo "false")
 [[ "$success" == "true" ]] \
   || { echo "FAIL: POST /api/v1/notifications did not return success — $post_response"; exit 1; }
 echo "PASS: notification posted via REST API"
