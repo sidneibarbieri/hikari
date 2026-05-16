@@ -297,22 +297,32 @@ small.form-text,
     opacity: 1;
 }
 
-/* ---------------------------------------------------------------- dropdowns */
-.dropdown-menu {
-    background-color: var(--hk-surface);
-    border: 1px solid var(--hk-border);
+/* ---------------------------------------------------------------- dropdowns
+ * Specificity-bumped (body prefix) because Bootstrap 4 ships its own
+ * .dropdown-menu rules with high cascade priority and we lose without it.
+ * z-index 1040 so the menu lives ABOVE the fixed-top navbar (z 1030); the
+ * default 1000 puts it underneath, which renders as "invisible dropdown".
+ */
+body .dropdown-menu {
+    background-color: var(--hk-surface) !important;
+    border: 1px solid var(--hk-border) !important;
     border-radius: var(--hk-radius-sm);
     box-shadow: 0 10px 32px rgba(0, 0, 0, 0.55);
+    z-index: 1040;
+    padding: 0.35rem 0;
 }
-.dropdown-item {
-    color: var(--hk-text);
+body .dropdown-item {
+    color: var(--hk-text) !important;
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
 }
-.dropdown-item:hover,
-.dropdown-item:focus {
-    background-color: var(--hk-surface-3);
-    color: var(--hk-text);
+body .dropdown-item:hover,
+body .dropdown-item:focus,
+body .dropdown-item.active {
+    background-color: var(--hk-surface-3) !important;
+    color: var(--hk-primary) !important;
 }
-.dropdown-divider {
+body .dropdown-divider {
     border-color: var(--hk-border);
 }
 
@@ -475,6 +485,76 @@ body .hikari-admin-brand img {
 }
 body .hikari-admin-brand {
     font-family: inherit;
+}
+
+/* Prevent the multi-word "Análise científica" link from wrapping to two
+ * lines on tight viewports, which created the "navbar drifting toward
+ * center" effect when the wrap pushed everything sideways. Also widen the
+ * container so the brand stays anchored on the left edge instead of being
+ * squeezed by Bootstrap's 1140px container max-width on common laptop
+ * resolutions. */
+body .navbar .nav-link {
+    white-space: nowrap;
+}
+body .navbar > .container {
+    max-width: 1400px;
+}
+@media (max-width: 1100px) {
+    body .navbar .nav-link {
+        padding: 0.4rem 0.45rem !important;
+        font-size: 0.86rem;
+    }
+}
+
+/* ---------------------------------------------------------------- stats page
+ * /admin/statistics is now a clean snapshot of headline numbers — the broken
+ * ECharts were removed in favor of the polished Análise científica panel,
+ * linked via the banner at top of page.
+ */
+.hikari-stats-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+    margin: 1.5rem 0;
+}
+.hikari-stats-card {
+    background-color: var(--hk-surface);
+    border: 1px solid var(--hk-border);
+    border-radius: var(--hk-radius);
+    padding: 1.1rem 1.2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+}
+.hikari-stats-label {
+    color: var(--hk-text-muted);
+    font-size: 0.74rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-weight: 600;
+}
+.hikari-stats-value {
+    color: var(--hk-text);
+    font-size: 2.1rem;
+    font-weight: 700;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+}
+.hikari-stats-extremes {
+    background-color: var(--hk-surface);
+    border: 1px solid var(--hk-border);
+    border-radius: var(--hk-radius);
+    padding: 1rem 1.3rem;
+    margin: 1.2rem 0;
+    color: var(--hk-text);
+}
+.hikari-stats-extremes p {
+    margin: 0.35rem 0;
+}
+.hikari-stats-strong {
+    color: var(--hk-primary);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
 }
 
 /* ---------------------------------------------------------------- footer */
