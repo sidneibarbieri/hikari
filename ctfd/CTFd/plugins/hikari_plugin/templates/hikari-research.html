@@ -49,47 +49,99 @@
     </div>
   </form>
 
-  <section class="research-grid">
+  {# KPI band — four ratio-anchored metrics, identical card geometry.    #}
+  {# Pre-compute totals once so the same numbers can drive bar widths.    #}
+  {% set _solves_total = (summary.submission_patterns | sum(attribute='solvers')) %}
+  {% set _failures_total = (summary.submission_patterns | sum(attribute='total_failures')) %}
+  {% set _active_teams = summary.teams_by_event_count | length %}
+  {% set _max_event_count = (summary.events_by_type | map(attribute='count') | max) if summary.events_by_type else 0 %}
+  {% set _max_team_events = (summary.teams_by_event_count | map(attribute='event_count') | max) if summary.teams_by_event_count else 0 %}
 
-    <article class="research-card research-card--metric">
-      <div class="metric-label">Total de eventos</div>
-      <div class="metric-value">{{ summary.total_events }}</div>
+  <section class="research-kpis">
+    <article class="research-kpi">
+      <div class="kpi-label">Total de eventos</div>
+      <div class="kpi-value">{{ "{:,}".format(summary.total_events).replace(",", ".") }}</div>
+      <div class="kpi-hint">no log hikari_activity</div>
     </article>
+    <article class="research-kpi">
+      <div class="kpi-label">Equipes ativas</div>
+      <div class="kpi-value">{{ _active_teams }}</div>
+      <div class="kpi-hint">com pelo menos 1 evento</div>
+    </article>
+    <article class="research-kpi">
+      <div class="kpi-label">Solves totais</div>
+      <div class="kpi-value">{{ _solves_total }}</div>
+      <div class="kpi-hint">{{ _failures_total }} falhas acumuladas</div>
+    </article>
+    <article class="research-kpi">
+      <div class="kpi-label">Respostas de feedback</div>
+      <div class="kpi-value">{{ summary.feedback.total_responses }}</div>
+      <div class="kpi-hint">questionário pós-competição</div>
+    </article>
+  </section>
+
+  <section class="research-grid research-grid--two">
 
     <article class="research-card">
       <h2>Eventos por tipo</h2>
+      <p class="research-card-help">Frequência de cada evento no log de atividade.</p>
       {% if summary.events_by_type %}
-      <table class="table table-sm">
-        <thead><tr><th>Evento</th><th class="text-right">Quantidade</th></tr></thead>
-        <tbody>
+        <ul class="bar-list">
         {% for row in summary.events_by_type %}
-          <tr><td><code>{{ row.label }}</code></td><td class="text-right">{{ row.count }}</td></tr>
+          {% set _pct = (row.count * 100 / _max_event_count) if _max_event_count else 0 %}
+          <li class="bar-row">
+            <span class="bar-label"><code>{{ row.label }}</code></span>
+            <span class="bar-track"><span class="bar-fill" style="width: {{ _pct }}%"></span></span>
+            <span class="bar-value">{{ row.count }}</span>
+          </li>
         {% endfor %}
-        </tbody>
-      </table>
+        </ul>
       {% else %}
-      <p class="text-muted">Ainda não há eventos.</p>
+        <p class="research-empty">Ainda não há eventos.</p>
       {% endif %}
     </article>
 
     <article class="research-card">
       <h2>Atividade por equipe</h2>
+      <p class="research-card-help">Top {{ [10, _active_teams] | min }} equipes por volume de eventos.</p>
       {% if summary.teams_by_event_count %}
-      <table class="table table-sm">
-        <thead><tr><th>Equipe</th><th class="text-right">Eventos</th></tr></thead>
-        <tbody>
-        {% for row in summary.teams_by_event_count %}
-          <tr>
-            <td>
-              {% if row.team_name %}{{ row.team_name }}{% elif row.team_id %}equipe #{{ row.team_id }}{% else %}<span class="text-muted">sem equipe</span>{% endif %}
-            </td>
-            <td class="text-right">{{ row.event_count }}</td>
-          </tr>
+        {% set _top = summary.teams_by_event_count[:10] %}
+        {% set _rest = summary.teams_by_event_count[10:] %}
+        <ul class="bar-list">
+        {% for row in _top %}
+          {% set _pct = (row.event_count * 100 / _max_team_events) if _max_team_events else 0 %}
+          <li class="bar-row">
+            <span class="bar-label">
+              {% if row.team_name %}{{ row.team_name }}
+              {% elif row.team_id %}equipe #{{ row.team_id }}
+              {% else %}<span class="text-muted">sem equipe</span>{% endif %}
+            </span>
+            <span class="bar-track"><span class="bar-fill" style="width: {{ _pct }}%"></span></span>
+            <span class="bar-value">{{ row.event_count }}</span>
+          </li>
         {% endfor %}
-        </tbody>
-      </table>
+        </ul>
+        {% if _rest %}
+          <details class="bar-overflow">
+            <summary>Ver mais {{ _rest | length }} equipe{{ "s" if _rest | length != 1 else "" }}</summary>
+            <ul class="bar-list">
+            {% for row in _rest %}
+              {% set _pct = (row.event_count * 100 / _max_team_events) if _max_team_events else 0 %}
+              <li class="bar-row">
+                <span class="bar-label">
+                  {% if row.team_name %}{{ row.team_name }}
+                  {% elif row.team_id %}equipe #{{ row.team_id }}
+                  {% else %}<span class="text-muted">sem equipe</span>{% endif %}
+                </span>
+                <span class="bar-track"><span class="bar-fill" style="width: {{ _pct }}%"></span></span>
+                <span class="bar-value">{{ row.event_count }}</span>
+              </li>
+            {% endfor %}
+            </ul>
+          </details>
+        {% endif %}
       {% else %}
-      <p class="text-muted">Ainda não há atividade por equipe.</p>
+        <p class="research-empty">Ainda não há atividade por equipe.</p>
       {% endif %}
     </article>
 

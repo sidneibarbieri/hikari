@@ -137,6 +137,139 @@
     font-variant-numeric: tabular-nums;
 }
 
+/* --------------------------------------------------------------- KPI band
+ * Four equal-width cards at the top of the dashboard. Tabular-nums so the
+ * big numbers stay aligned no matter how many digits they grow to.
+ */
+.research-kpis {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1rem;
+    margin: 0 0 1.4rem;
+}
+.research-kpi {
+    background-color: var(--hikari-surface);
+    border: 1px solid var(--hikari-border);
+    border-radius: var(--hikari-radius);
+    padding: 1.1rem 1.2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+.research-kpi .kpi-label {
+    color: var(--hikari-text-muted);
+    font-size: 0.74rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-weight: 600;
+}
+.research-kpi .kpi-value {
+    color: var(--hikari-text);
+    font-size: 2.1rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+    margin: 0.1rem 0;
+}
+.research-kpi .kpi-hint {
+    color: var(--hikari-text-dim, var(--hikari-text-muted));
+    font-size: 0.78rem;
+    line-height: 1.35;
+}
+
+/* --------------------------------------------------------------- bar lists
+ * Replace dense tables for "count + label" data with a 3-column grid:
+ * label | proportional bar | value. The bar gives instant visual ranking
+ * that a column of raw numbers cannot.
+ */
+.bar-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+}
+.bar-row {
+    display: grid;
+    grid-template-columns: minmax(8rem, 14rem) 1fr 3rem;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.88rem;
+}
+.bar-label {
+    color: var(--hikari-text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.bar-label code {
+    background-color: transparent;
+    padding: 0;
+    color: var(--hikari-primary);
+    font-size: 0.85rem;
+}
+.bar-track {
+    background-color: var(--hikari-surface-2);
+    border-radius: 999px;
+    height: 0.5rem;
+    overflow: hidden;
+}
+.bar-fill {
+    display: block;
+    height: 100%;
+    background: linear-gradient(90deg, var(--hikari-primary), rgba(16, 185, 129, 0.6));
+    border-radius: 999px;
+    transition: width 220ms ease;
+}
+.bar-value {
+    color: var(--hikari-text);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+    font-size: 0.9rem;
+}
+
+.bar-overflow {
+    margin-top: 0.75rem;
+    border-top: 1px solid var(--hikari-border-soft, var(--hikari-border));
+    padding-top: 0.6rem;
+}
+.bar-overflow > summary {
+    cursor: pointer;
+    color: var(--hikari-text-muted);
+    font-size: 0.82rem;
+    list-style: none;
+    padding: 0.25rem 0;
+    user-select: none;
+}
+.bar-overflow > summary::before {
+    content: "▸ ";
+    color: var(--hikari-primary);
+    margin-right: 0.2rem;
+}
+.bar-overflow[open] > summary::before {
+    content: "▾ ";
+}
+.bar-overflow > summary:hover {
+    color: var(--hikari-text);
+}
+.bar-overflow .bar-list {
+    margin-top: 0.6rem;
+}
+
+.research-empty {
+    color: var(--hikari-text-muted);
+    font-size: 0.88rem;
+    font-style: italic;
+    margin: 0.5rem 0 0;
+}
+
+/* Two-column grid variant for the events-by-type + activity-by-team pair */
+.research-grid--two {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .hikari-research .table {
     margin: 0;
     color: var(--hikari-text);
@@ -168,7 +301,22 @@
 
 .text-right { text-align: right; }
 
+@media (max-width: 1100px) {
+    .research-kpis {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .research-grid--two {
+        grid-template-columns: 1fr;
+    }
+}
 @media (max-width: 860px) {
+    .research-kpis {
+        grid-template-columns: 1fr;
+    }
+    .bar-row {
+        grid-template-columns: minmax(6rem, 9rem) 1fr 2.5rem;
+        font-size: 0.84rem;
+    }
     .research-header,
     .research-grid,
     .research-filter-bar {

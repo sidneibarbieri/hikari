@@ -4,6 +4,7 @@ from sqlalchemy import event, inspect
 from sqlalchemy.exc import IntegrityError
 from CTFd.plugins import (
     register_admin_plugin_menu_bar,
+    register_admin_plugin_script,
     register_admin_plugin_stylesheet,
     register_plugin_assets_directory,
 )
@@ -66,11 +67,17 @@ def load(app):
     # iterates get_registered_admin_stylesheets() AFTER its own bundle, so this
     # wins the cascade. The mtime query string busts stale browser caches
     # whenever the file is edited (cheap: file is ~12 KB).
-    admin_css_path = os.path.join(os.path.dirname(__file__), "assets", "admin.css")
-    admin_css_version = int(os.path.getmtime(admin_css_path)) if os.path.exists(admin_css_path) else 0
-    register_admin_plugin_stylesheet(
-        url=f"/plugins/hikari_plugin/assets/admin.css?v={admin_css_version}"
-    )
+    assets_dir = os.path.join(os.path.dirname(__file__), "assets")
+
+    def _versioned(filename: str) -> str:
+        path = os.path.join(assets_dir, filename)
+        mtime = int(os.path.getmtime(path)) if os.path.exists(path) else 0
+        return f"/plugins/hikari_plugin/assets/{filename}?v={mtime}"
+
+    register_admin_plugin_stylesheet(url=_versioned("admin.css"))
+    # Best-effort ECharts theming. If statistics.js bundled echarts as a
+    # private ES module, window.echarts won't exist and the script no-ops.
+    register_admin_plugin_script(url=_versioned("admin-charts.js"))
 
     # Register Hikari analytics in the CTFd admin sidebar under "Plugins".
     register_admin_plugin_menu_bar(title="Análise científica", route="/admin/hikari/research")

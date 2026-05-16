@@ -480,3 +480,37 @@ pre {
     background-color: var(--hk-warning) !important;
     color: #06101f !important;
 }
+
+/* ---------------------------------------------------------------- stats redirect banner
+ * Inserted on /admin/statistics to route admins to the Hikari research
+ * dashboard, which is the polished analytics surface (KPIs, bars, ECharts-
+ * free CSS visualizations). The default CTFd statistics page keeps working
+ * for those who want the raw charts.
+ */
+.hikari-stats-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.2rem;
+    padding: 1rem 1.3rem;
+    margin: 0 0 1.6rem;
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.10), rgba(16, 185, 129, 0.02));
+    border: 1px solid rgba(16, 185, 129, 0.35);
+    border-left: 3px solid var(--hk-primary);
+    border-radius: var(--hk-radius);
+    color: var(--hk-text);
+    font-size: 0.92rem;
+    line-height: 1.5;
+}
+.hikari-stats-banner strong {
+    color: var(--hk-text);
+    font-weight: 700;
+}
+.hikari-stats-banner a {
+    color: var(--hk-primary);
+    text-decoration: underline;
+}
+.hikari-stats-banner .btn {
+    flex-shrink: 0;
+    white-space: nowrap;
+}
