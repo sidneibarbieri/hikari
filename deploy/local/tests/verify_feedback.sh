@@ -160,11 +160,19 @@ curl -sS -c "$admin_cookie_jar" -b "$admin_cookie_jar" \
 
 export_body=$(curl -sS -c "$admin_cookie_jar" -b "$admin_cookie_jar" \
   "$CTFD_URL/admin/hikari/research/feedback.jsonl")
-echo "$export_body" | python3 -c 'import json, sys; [json.loads(line) for line in sys.stdin if line.strip()]'
-echo "$export_body" | grep -q "\"user_id\": $player_id" \
+# Pipe-based 'echo | grep -q' fails under set -o pipefail: grep -q exits as
+# soon as it matches, which closes the pipe and SIGPIPEs echo. Spool to a
+# temp file and grep -F (fixed-string) to avoid the SIGPIPE entirely.
+export_tmp=$(mktemp)
+printf '%s' "$export_body" > "$export_tmp"
+python3 -c 'import json, sys
+with open(sys.argv[1]) as f:
+    [json.loads(line) for line in f if line.strip()]' "$export_tmp"
+grep -qF "\"user_id\": $player_id" "$export_tmp" \
   || { echo "feedback export missing user_id $player_id"; exit 1; }
-echo "$export_body" | grep -q "tlx_mental_demand" \
+grep -qF "tlx_mental_demand" "$export_tmp" \
   || { echo "feedback export missing workload fields"; exit 1; }
+rm -f "$export_tmp"
 echo "PASS: feedback export contains parseable records with research fields"
 
 echo
