@@ -22,16 +22,16 @@
     <div class="hikari-settings-layout">
       <aside class="hikari-settings-nav" aria-label="Seções de configuração">
         <div class="nav flex-column nav-pills hikari-settings-tabs" role="tablist">
-          <button
-              class="nav-link active" id="settings-profile-tab" data-bs-toggle="pill"
-              data-bs-target="#profile" role="tab"
+          <a
+              class="nav-link active" id="settings-profile-tab" data-settings-target="#profile"
+              href="#profile" role="tab" aria-controls="profile" aria-selected="true"
           >Perfil
-          </button>
-          <button
-              class="nav-link" id="settings-tokens-tab" data-bs-toggle="pill" data-bs-target="#tokens"
-              role="tab"
+          </a>
+          <a
+              class="nav-link" id="settings-tokens-tab" data-settings-target="#tokens"
+              href="#tokens" role="tab" aria-controls="tokens" aria-selected="false"
           >Tokens de API
-          </button>
+          </a>
         </div>
       </aside>
 
@@ -105,7 +105,7 @@
                       x-cloak="success" x-show="success"
                   >
                     <strong>Perfil atualizado.</strong>
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close">
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar">
                     </button>
                   </div>
 
@@ -116,7 +116,7 @@
                       <span x-text="msg"></span>
                       <button
                           type="button" class="btn-close" data-bs-dismiss="alert"
-                          aria-label="Close"
+                          aria-label="Fechar"
                       >
                       </button>
                     </div>
@@ -141,7 +141,7 @@
                         <h5 class="modal-title">Token gerado</h5>
                         <button
                             type="button" class="btn-close" data-bs-dismiss="modal"
-                            aria-label="Close"
+                            aria-label="Fechar"
                         ></button>
                       </div>
 
@@ -286,4 +286,44 @@
 
 {% block scripts %}
   {{ Assets.js("assets/js/settings.js") }}
+  <script>
+    (() => {
+      const settingsRoot = document.querySelector(".hikari-settings");
+      if (!settingsRoot) {
+        return;
+      }
+
+      const tabButtons = Array.from(settingsRoot.querySelectorAll("[data-settings-target]"));
+      const tabPanes = Array.from(settingsRoot.querySelectorAll(".tab-pane"));
+
+      const activateTab = (selectedTab) => {
+        const targetSelector = selectedTab.getAttribute("data-settings-target");
+        const selectedPane = settingsRoot.querySelector(targetSelector);
+
+        tabButtons.forEach((tabButton) => {
+          const isSelected = tabButton === selectedTab;
+          tabButton.classList.toggle("active", isSelected);
+          tabButton.setAttribute("aria-selected", isSelected ? "true" : "false");
+        });
+
+        tabPanes.forEach((tabPane) => {
+          const isSelected = tabPane === selectedPane;
+          tabPane.classList.toggle("active", isSelected);
+          tabPane.classList.toggle("show", isSelected);
+        });
+      };
+
+      tabButtons.forEach((tabButton) => {
+        tabButton.addEventListener("click", (event) => {
+          event.preventDefault();
+          activateTab(tabButton);
+        });
+      });
+
+      const initialTab = tabButtons.find((tabButton) => tabButton.classList.contains("active")) || tabButtons[0];
+      if (initialTab) {
+        activateTab(initialTab);
+      }
+    })();
+  </script>
 {% endblock %}
