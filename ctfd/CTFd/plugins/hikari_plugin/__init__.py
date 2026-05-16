@@ -259,30 +259,10 @@ def load(app):
         return render_template('hikari-page.html', stats=stats)
     
     # Route: notification page
-    @hikariplugin.route('/admin/hikari-notify', methods=['GET', 'POST'])
-    @admins_only
-    def hikari_notify():
-        form = NotifyMultipleCompetitorsForm(request.form)
-        if request.method == 'POST' and form.validate():
-            message = form.message.data
-            team_ids    = form.team_selection.data
-            users = list()
+    # Notify admin route lives in hikari_notify.views.
+    from . import hikari_notify
+    hikari_notify.register(hikariplugin)
 
-            # Gather users from the specified team
-            for team_id in team_ids:
-                _users   = Users.query.filter_by(team_id=team_id).all()
-                users += _users
-
-            # Get emails belonging to the users
-            emails = [u.email for u in users]
-
-            # Send to `emails` list
-            for email in emails:
-                sendmail(email, message)
-            return redirect(url_for('hikariplugin.hikari_main'))
-        else:
-            teams = Teams.query.all()
-            return render_template('hikari-notify.html', teams=teams, form=form)
 
 
     
@@ -298,24 +278,10 @@ def load(app):
     ##############################################################################
     # import instance logic
 
-    @hikariplugin.route('/admin/import-hikari-ctf', methods=['GET', 'POST'])
-    @admins_only
-    def hikari_import_ctf():
-        form = ImportHikariCTFdForm()
-        
-        if form.validate_on_submit():
-                file = form.file_import.data
-                if file:
-                    filename = secure_filename(file.filename)
-                    upload_path = os.path.join("/tmp", filename)
-                    file.save(upload_path)
+    # Backup-import admin route lives in hikari_import_admin.views.
+    from . import hikari_import_admin
+    hikari_import_admin.register(hikariplugin)
 
-                importer = hikari_importer.HikariImporter(upload_path)
-                importer.import_all()
-
-                return redirect(url_for('hikariplugin.hikari_main'))
-        else:
-            return render_template('hikari-import.html', form=form)
     
     hikari_research.register(hikariplugin)
     hikari_feedback.register(hikariplugin)

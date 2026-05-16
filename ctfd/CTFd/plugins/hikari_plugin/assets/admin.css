@@ -282,10 +282,12 @@ body .dropdown-menu {
     z-index: 1050 !important;
     padding: 0.35rem 0;
 }
-/* Keep navbar menus above admin panels that create stacking contexts. */
-body .navbar .dropdown-menu.show {
-    position: fixed !important;
-}
+/* z-index alone (1050) keeps the navbar dropdown above admin content:
+ * Bootstrap 4's .fixed-top navbar (z 1030) creates a stacking context that
+ * the .dropdown-menu lives inside, so 1050 wins locally; page content lives
+ * at root context z=auto and the navbar context as a whole wins. Earlier
+ * iteration forced position:fixed here — that broke Popper's transform-
+ * based placement and the menu jumped to viewport (0,0). */
 body .dropdown-item {
     color: var(--hk-text) !important;
     padding: 0.5rem 1rem;
