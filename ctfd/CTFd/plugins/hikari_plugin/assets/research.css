@@ -39,12 +39,19 @@
     display: grid;
     grid-template-columns: minmax(13rem, 1.2fr) minmax(9rem, 0.8fr) minmax(9rem, 0.8fr) auto;
     gap: 0.75rem;
-    align-items: end;
+    /* align-items: start keeps EVENTO / ATOR / EQUIPE labels at the same top
+     * baseline regardless of small height drift between <select> and <input>.
+     * The action buttons cluster anchors to the bottom via align-self so it
+     * sits on the same baseline as the inputs. */
+    align-items: start;
     margin-bottom: 1rem;
     padding: 1rem;
     background-color: var(--hikari-surface);
     border: 1px solid var(--hikari-border);
     border-radius: var(--hikari-radius);
+}
+.research-filter-bar .research-filter-actions {
+    align-self: end;
 }
 
 .research-filter-bar label {

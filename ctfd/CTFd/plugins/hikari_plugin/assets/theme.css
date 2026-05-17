@@ -1323,6 +1323,30 @@ select option {
     display: none !important;
 }
 
+/* Bootstrap's .toast and .toast-header default to white backgrounds, which
+ * pop as a glaring white card on the dark Hikari surface. Repaint them to
+ * the same palette as alerts (semi-transparent surface + Hikari border)
+ * so notifications stay legible without competing with brand colors. */
+.toast {
+    background-color: var(--hikari-surface) !important;
+    color: var(--hikari-text);
+    border: 1px solid var(--hikari-border);
+    box-shadow: 0 10px 32px rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(6px);
+}
+.toast-header {
+    background-color: var(--hikari-surface-2);
+    color: var(--hikari-text);
+    border-bottom: 1px solid var(--hikari-border);
+}
+.toast-body {
+    color: var(--hikari-text);
+}
+.toast-header .btn-close,
+.toast .btn-close {
+    filter: invert(1) brightness(1.3);
+}
+
 /* Bootstrap normally zeros the bullet styling on navbar lists but a CSS
    reset is missing on anonymous pages where the bundle has not run. */
 .navbar-nav {

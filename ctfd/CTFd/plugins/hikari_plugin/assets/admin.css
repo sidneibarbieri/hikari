@@ -273,6 +273,29 @@ small.form-text,
     opacity: 1;
 }
 
+/* ---------------------------------------------------------------- toasts
+ * Bootstrap's .toast defaults to white; on the dark admin surface the
+ * resulting card glares and obscures content underneath. Match the
+ * Hikari modal palette so notifications stay readable. */
+.toast {
+    background-color: var(--hk-surface) !important;
+    color: var(--hk-text);
+    border: 1px solid var(--hk-border);
+    box-shadow: 0 10px 32px rgba(0, 0, 0, 0.55);
+}
+.toast-header {
+    background-color: var(--hk-surface-2);
+    color: var(--hk-text);
+    border-bottom: 1px solid var(--hk-border);
+}
+.toast-body {
+    color: var(--hk-text);
+}
+.toast .btn-close,
+.toast-header .btn-close {
+    filter: invert(1) brightness(1.3);
+}
+
 /* ---------------------------------------------------------------- dropdowns */
 body .dropdown-menu {
     background-color: var(--hk-surface) !important;
