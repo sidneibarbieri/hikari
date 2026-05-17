@@ -32,6 +32,7 @@ steps=(
   "tests/verify_kibana_classifier.sh|Kibana proxy extracts forensic facts (kind, indices, filters, time range)"
   "tests/verify_feedback.sh|local feedback captured and exported"
   "tests/verify_notifications.sh|admin notifications round-trip via REST and reach competitors"
+  "tests/verify_isolation.sh|anonymous and non-admin actors are blocked from admin and research surfaces"
   "tests/verify_player_flow.sh|lone-wolf competitor: register, login, own one-person team, challenges"
   "tests/verify_team_flow.sh|team competitors: captain creates team, second member joins with team password"
   "tests/verify_challenge_flow.sh|admin creates challenge, player solves it, solve and activity recorded"

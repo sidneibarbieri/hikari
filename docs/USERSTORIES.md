@@ -329,6 +329,7 @@ Os critérios de aceite são os checks automatizados em `deploy/local/run_accept
 | US-18 Export JSONL | `verify_research.sh` | ✅ |
 | US-19 Feedback | `verify_feedback.sh` | ✅ |
 | US-20 LGPD | `verify_artifact_hygiene.sh` + docs | ✅ |
+| Cross-cutting: autorização e isolamento | `verify_isolation.sh` | ✅ |
 
 **18 de 20 histórias com verificação automatizada (90%).**  
 As duas restantes (US-04 recuperação de senha, US-07 gerenciamento de equipe) dependem de SMTP real e UI interativa, e são verificadas por inspeção visual durante a auditoria de release.
