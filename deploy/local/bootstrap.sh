@@ -10,8 +10,8 @@
 #   1. Detects the OS (Linux distros / macOS) so messages are accurate.
 #   2. Verifies system resources (RAM, disk, free ports).
 #   3. Checks Docker + docker compose v2; if missing, prints the exact
-#      install command for the detected platform (does not auto-install
-#      — root-level package installs are an operator decision).
+#      install command for the detected platform. Root-level package
+#      installs stay under operator control.
 #   4. Copies .env.example -> .env on first run.
 #   5. Builds the stack (docker compose up -d --build).
 #   6. Runs run_acceptance.sh and surfaces the green/red summary.

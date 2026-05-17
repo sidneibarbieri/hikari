@@ -6,21 +6,25 @@ from CTFd.forms.fields import SubmitField
 
 
 class NotificationForm(BaseForm):
-    title = StringField("Title", description="Notification title")
+    title = StringField("Título", description="Título exibido aos usuários")
     content = TextAreaField(
-        "Content",
-        description="Notification contents. Can consist of HTML and/or Markdown.",
+        "Conteúdo",
+        description="Mensagem da notificação. Aceita HTML e Markdown.",
     )
     type = RadioField(
-        "Notification Type",
-        choices=[("toast", "Toast"), ("alert", "Alert"), ("background", "Background")],
+        "Tipo de notificação",
+        choices=[
+            ("toast", "Toast"),
+            ("alert", "Alerta"),
+            ("background", "Segundo plano"),
+        ],
         default="toast",
-        description="What type of notification users receive",
+        description="Forma de entrega da notificação aos usuários",
         validators=[InputRequired()],
     )
     sound = BooleanField(
-        "Play Sound",
+        "Tocar som",
         default=True,
-        description="Play sound for users when they receive the notification",
+        description="Toca um som quando o usuário recebe a notificação",
     )
-    submit = SubmitField("Submit")
+    submit = SubmitField("Enviar")

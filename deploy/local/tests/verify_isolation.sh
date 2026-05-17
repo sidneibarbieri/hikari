@@ -170,7 +170,7 @@ for forbidden in '"password"' '"email"' '"secret"' '"hash"'; do
     fi
 done
 rm -f "$scoreboard_json"
-echo "PASS: scoreboard JSON does not expose password / email / secret / hash"
+echo "PASS: scoreboard JSON keeps private account fields out of public output"
 
 
 echo
