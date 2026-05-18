@@ -196,7 +196,7 @@ docker compose exec -T db \
 |---|---|
 | Login admin | http://localhost:8000/login |
 | Painel admin (CTFd) | http://localhost:8000/admin |
-| Análise científica (KPIs + bar lists) | http://localhost:8000/admin/hikari/research |
+| Análise científica (atividade + feedback) | http://localhost:8000/admin/hikari/research |
 | Export atividades (JSONL) | http://localhost:8000/admin/hikari/research/export.jsonl |
 | Export feedback (JSONL) | http://localhost:8000/admin/hikari/research/feedback.jsonl |
 | Placar ao vivo | http://localhost:8000/hikari/live |
@@ -233,11 +233,19 @@ curl -sS -b "$(mktemp -t cookies)" \
     -o hikari-atividades-$(date +%Y%m%d).jsonl \
     "http://localhost:8000/admin/hikari/research/export.jsonl"
 
+# Export do feedback da competição atual
+curl -sS -b "$(mktemp -t cookies)" \
+    -o hikari-feedback-$(date +%Y%m%d).jsonl \
+    "http://localhost:8000/admin/hikari/research/feedback.jsonl?competition_key=local"
+
 # Snapshot dos índices Kibana (para reprodução offline)
 docker compose exec elasticsearch \
     curl -s "http://localhost:9200/competition1/_search?size=0&track_total_hits=true" \
     | python3 -m json.tool > hikari-stats-$(date +%Y%m%d).json
 ```
 
-Guarde estes três arquivos junto com o `data_backup.zip` — são as
-evidências que sustentam qualquer análise científica posterior.
+Antes de encerrar, abra `http://localhost:8000/admin/hikari/research` e
+confira o bloco **Panorama do feedback**. Ele mostra taxa de resposta,
+equipes pendentes, última resposta recebida e médias de usabilidade,
+carga e recomendação. Guarde os arquivos junto com o `data_backup.zip`;
+eles sustentam a análise científica posterior.

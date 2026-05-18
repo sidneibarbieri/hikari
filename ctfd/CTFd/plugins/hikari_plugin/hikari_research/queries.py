@@ -5,21 +5,25 @@ The view layer composes them; this module is independent from HTTP.
 """
 
 import json
+import os
 import statistics
 from collections import defaultdict
 from typing import List, Optional
 
-from sqlalchemy import case, func
+from sqlalchemy import case, func, or_
 
-from CTFd.models import Challenges, Fails, Solves, Submissions, Teams, db
+from CTFd.models import Challenges, Fails, Solves, Submissions, Teams, Users, db
 from CTFd.plugins.hikari_plugin.hikari_activity.models import HikariActivity
 from CTFd.plugins.hikari_plugin.hikari_feedback.models import FeedbackResponse
 
 from .dto import (
     EventCount,
+    FeedbackCoverage,
     FeedbackCount,
     FeedbackMetric,
+    FeedbackOpenAnswer,
     FeedbackSummary,
+    FeedbackTeamCoverage,
     HuntingDepth,
     RecentEvent,
     ResearchFilters,
@@ -39,6 +43,34 @@ FEEDBACK_METRICS = (
     ("Recomendação", "nps_recommend"),
 )
 
+SUS_FIELDS = (
+    ("sus_would_use_frequently", True),
+    ("sus_unnecessarily_complex", False),
+    ("sus_easy_to_use", True),
+    ("sus_needed_support", False),
+    ("sus_functions_well_integrated", True),
+    ("sus_too_much_inconsistency", False),
+    ("sus_quick_to_learn", True),
+    ("sus_cumbersome", False),
+    ("sus_felt_confident", True),
+    ("sus_needed_to_learn_a_lot", False),
+)
+
+TLX_FIELDS = (
+    "tlx_mental_demand",
+    "tlx_temporal_demand",
+    "tlx_performance",
+    "tlx_effort",
+    "tlx_frustration",
+)
+
+OPEN_ANSWER_FIELDS = (
+    ("most_valuable_technique", "Técnica ou metodologia útil"),
+    ("biggest_learning_blocker", "Obstáculo de aprendizagem"),
+    ("suggested_scenarios", "Cenários sugeridos"),
+    ("other_comments", "Comentário adicional"),
+)
+
 ROLE_LABELS = {
     "student": "Estudante",
     "soc_analyst_t1": "Analista SOC, nível 1",
@@ -50,6 +82,39 @@ ROLE_LABELS = {
     "researcher": "Pesquisador",
     "other": "Outro",
 }
+
+
+def _current_competition_key() -> str:
+    return os.environ.get("HIKARI_COMPETITION_KEY", "local")
+
+
+def _active_users_query():
+    return (
+        Users.query.filter(Users.type == "user")
+        .filter(or_(Users.hidden.is_(False), Users.hidden.is_(None)))
+        .filter(or_(Users.banned.is_(False), Users.banned.is_(None)))
+    )
+
+
+def _active_teams_query():
+    return (
+        Teams.query.filter(or_(Teams.hidden.is_(False), Teams.hidden.is_(None)))
+        .filter(or_(Teams.banned.is_(False), Teams.banned.is_(None)))
+    )
+
+
+def available_feedback_competition_keys() -> List[str]:
+    rows = (
+        db.session.query(FeedbackResponse.competition_key)
+        .group_by(FeedbackResponse.competition_key)
+        .order_by(FeedbackResponse.competition_key.asc())
+        .all()
+    )
+    keys = [competition_key for (competition_key,) in rows]
+    current_key = _current_competition_key()
+    if current_key not in keys:
+        keys.insert(0, current_key)
+    return keys
 
 
 def _filtered_activity_query(filters: Optional[ResearchFilters] = None):
@@ -117,13 +182,18 @@ def event_counts_by_team(
     ]
 
 
-def feedback_summary() -> FeedbackSummary:
+def feedback_summary(competition_key: Optional[str] = None) -> FeedbackSummary:
     """Aggregate questionnaire fields used in the admin dashboard."""
+    selected_key = competition_key or _current_competition_key()
+    query = FeedbackResponse.query.filter(FeedbackResponse.competition_key == selected_key)
     role_counts = {}
     metric_values = {field_name: [] for _, field_name in FEEDBACK_METRICS}
+    nps_values = []
+    sus_values = []
+    tlx_values = []
     total_responses = 0
 
-    for record in FeedbackResponse.query.order_by(FeedbackResponse.id.asc()).yield_per(500):
+    for record in query.order_by(FeedbackResponse.id.asc()).yield_per(500):
         total_responses += 1
         payload = json.loads(record.payload)
         role = payload.get("primary_role") or "sem função informada"
@@ -132,6 +202,15 @@ def feedback_summary() -> FeedbackSummary:
             value = payload.get(field_name)
             if isinstance(value, (int, float)):
                 metric_values[field_name].append(float(value))
+        nps = payload.get("nps_recommend")
+        if isinstance(nps, (int, float)):
+            nps_values.append(float(nps))
+        sus_score = _sus_score(payload)
+        if sus_score is not None:
+            sus_values.append(sus_score)
+        tlx_score = _tlx_score(payload)
+        if tlx_score is not None:
+            tlx_values.append(tlx_score)
 
     roles = [
         FeedbackCount(label=ROLE_LABELS.get(role, role), count=count)
@@ -142,7 +221,172 @@ def feedback_summary() -> FeedbackSummary:
         for label, field_name in FEEDBACK_METRICS
         if metric_values[field_name]
     ]
-    return FeedbackSummary(total_responses=total_responses, roles=roles, metrics=metrics)
+    return FeedbackSummary(
+        total_responses=total_responses,
+        competition_keys=available_feedback_competition_keys(),
+        coverage=_feedback_coverage(selected_key),
+        roles=roles,
+        metrics=metrics,
+        team_coverage=_feedback_team_coverage(selected_key),
+        open_answers=_feedback_open_answers(selected_key),
+        nps_average=_average(nps_values) if nps_values else None,
+        sus_average=_average(sus_values) if sus_values else None,
+        tlx_average=_average(tlx_values) if tlx_values else None,
+    )
+
+
+def _feedback_coverage(competition_key: str) -> FeedbackCoverage:
+    query = FeedbackResponse.query.filter(FeedbackResponse.competition_key == competition_key)
+    eligible_users = _active_users_query().count()
+    respondents = (
+        query.with_entities(FeedbackResponse.user_id)
+        .filter(FeedbackResponse.user_id.isnot(None))
+        .distinct()
+        .count()
+    )
+    total_teams = _active_teams_query().count()
+    teams_with_feedback = (
+        query.with_entities(FeedbackResponse.team_id)
+        .filter(FeedbackResponse.team_id.isnot(None))
+        .distinct()
+        .count()
+    )
+    latest = query.with_entities(func.max(FeedbackResponse.submitted_at)).scalar()
+    return FeedbackCoverage(
+        competition_key=competition_key,
+        eligible_users=eligible_users,
+        respondents=respondents,
+        pending_users=max(eligible_users - respondents, 0),
+        response_rate=_percentage(respondents, eligible_users),
+        total_teams=total_teams,
+        teams_with_feedback=teams_with_feedback,
+        pending_teams=max(total_teams - teams_with_feedback, 0),
+        team_response_rate=_percentage(teams_with_feedback, total_teams),
+        latest_submitted_at=latest,
+    )
+
+
+def _feedback_team_coverage(competition_key: str, limit: int = 20) -> List[FeedbackTeamCoverage]:
+    member_counts = {
+        team_id: int(count)
+        for team_id, count in (
+            _active_users_query()
+            .with_entities(Users.team_id, func.count(Users.id))
+            .group_by(Users.team_id)
+            .all()
+        )
+    }
+    response_counts = {
+        team_id: int(count)
+        for team_id, count in (
+            db.session.query(
+                FeedbackResponse.team_id,
+                func.count(func.distinct(FeedbackResponse.user_id)),
+            )
+            .filter(FeedbackResponse.competition_key == competition_key)
+            .group_by(FeedbackResponse.team_id)
+            .all()
+        )
+    }
+
+    rows = []
+    for team in _active_teams_query().order_by(Teams.name.asc()).all():
+        members = member_counts.get(team.id, 0)
+        responses = response_counts.get(team.id, 0)
+        rows.append(
+            FeedbackTeamCoverage(
+                team_id=team.id,
+                team_name=team.name or f"equipe #{team.id}",
+                member_count=members,
+                response_count=responses,
+                pending_count=max(members - responses, 0),
+                response_rate=_percentage(responses, members),
+            )
+        )
+
+    no_team_members = member_counts.get(None, 0)
+    no_team_responses = response_counts.get(None, 0)
+    if no_team_members or no_team_responses:
+        rows.append(
+            FeedbackTeamCoverage(
+                team_id=None,
+                team_name="sem equipe",
+                member_count=no_team_members,
+                response_count=no_team_responses,
+                pending_count=max(no_team_members - no_team_responses, 0),
+                response_rate=_percentage(no_team_responses, no_team_members),
+            )
+        )
+
+    rows.sort(key=lambda item: (-item.pending_count, item.team_name.lower()))
+    return rows[:limit]
+
+
+def _feedback_open_answers(competition_key: str, limit: int = 8) -> List[FeedbackOpenAnswer]:
+    out = []
+    rows = (
+        FeedbackResponse.query.filter(FeedbackResponse.competition_key == competition_key)
+        .outerjoin(Teams, Teams.id == FeedbackResponse.team_id)
+        .with_entities(
+            FeedbackResponse.submitted_at,
+            FeedbackResponse.user_id,
+            Teams.name,
+            FeedbackResponse.payload,
+        )
+        .order_by(FeedbackResponse.submitted_at.desc())
+        .yield_per(100)
+    )
+    for submitted_at, user_id, team_name, payload_json in rows:
+        payload = json.loads(payload_json)
+        for field_name, label in OPEN_ANSWER_FIELDS:
+            text = str(payload.get(field_name) or "").strip()
+            if not text:
+                continue
+            out.append(
+                FeedbackOpenAnswer(
+                    submitted_at=submitted_at,
+                    user_id=user_id,
+                    team_name=team_name,
+                    label=label,
+                    text=_clip_text(text),
+                )
+            )
+            if len(out) >= limit:
+                return out
+    return out
+
+
+def _sus_score(payload: dict) -> Optional[float]:
+    values = []
+    for field_name, positive in SUS_FIELDS:
+        value = payload.get(field_name)
+        if not isinstance(value, (int, float)):
+            return None
+        values.append((float(value) - 1) if positive else (5 - float(value)))
+    return round(sum(values) * 2.5, 2)
+
+
+def _tlx_score(payload: dict) -> Optional[float]:
+    values = [
+        float(payload[field_name])
+        for field_name in TLX_FIELDS
+        if isinstance(payload.get(field_name), (int, float))
+    ]
+    if not values:
+        return None
+    return _average(values)
+
+
+def _percentage(part: int, total: int) -> float:
+    if total <= 0:
+        return 0.0
+    return round(part * 100 / total, 1)
+
+
+def _clip_text(text: str, limit: int = 260) -> str:
+    if len(text) <= limit:
+        return text
+    return text[: limit - 3].rstrip() + "..."
 
 
 def recent_events(

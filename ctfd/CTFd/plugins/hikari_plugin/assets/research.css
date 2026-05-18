@@ -193,6 +193,201 @@
     line-height: 1.35;
 }
 
+.feedback-report {
+    margin-bottom: 1.4rem;
+    scroll-margin-top: 5.5rem;
+}
+
+.feedback-report-header {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 1rem;
+    align-items: start;
+    margin-bottom: 1rem;
+}
+
+.feedback-key-form {
+    display: flex;
+    align-items: end;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+}
+
+.feedback-key-form label {
+    display: grid;
+    gap: 0.35rem;
+    margin: 0;
+}
+
+.feedback-key-form label span {
+    color: var(--hikari-text-muted);
+    font-size: 0.74rem;
+    font-weight: 700;
+    line-height: 1.05rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.feedback-key-form select {
+    min-width: 12rem;
+    min-height: 2.65rem;
+    border: 1px solid var(--hikari-border);
+    border-radius: 6px;
+    background-color: var(--hikari-surface-2);
+    color: var(--hikari-text);
+    padding: 0.55rem 0.7rem;
+}
+
+.feedback-overview-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.9rem;
+    margin-bottom: 1rem;
+}
+
+.feedback-overview-card,
+.feedback-panel {
+    background-color: rgba(12, 18, 27, 0.78);
+    border: 1px solid var(--hikari-border);
+    border-radius: var(--hikari-radius);
+    padding: 1rem;
+}
+
+.feedback-overview-card {
+    min-height: 9rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+}
+
+.feedback-overview-card > span {
+    color: var(--hikari-text-muted);
+    font-size: 0.74rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.feedback-overview-card strong {
+    color: var(--hikari-text);
+    font-size: 2rem;
+    line-height: 1.05;
+    font-variant-numeric: tabular-nums;
+}
+
+.feedback-overview-card small,
+.feedback-team-list span,
+.feedback-open-list small,
+.feedback-stat-list dt {
+    color: var(--hikari-text-muted);
+    font-size: 0.8rem;
+    line-height: 1.35;
+}
+
+.feedback-progress {
+    width: 100%;
+    height: 0.45rem;
+    border-radius: 999px;
+    overflow: hidden;
+    background-color: var(--hikari-surface-2);
+}
+
+.feedback-progress span {
+    display: block;
+    height: 100%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, var(--hikari-primary), var(--hikari-accent, #d4a35a));
+}
+
+.feedback-detail-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.35fr) minmax(16rem, 0.65fr);
+    gap: 1rem;
+}
+
+.feedback-panel h3 {
+    margin: 0 0 0.8rem;
+    color: var(--hikari-text);
+    font-size: 1rem;
+}
+
+.feedback-team-list,
+.feedback-open-list {
+    display: grid;
+    gap: 0.75rem;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.feedback-team-list li {
+    display: grid;
+    grid-template-columns: minmax(12rem, 1fr) minmax(10rem, 0.75fr);
+    gap: 0.75rem;
+    align-items: center;
+}
+
+.feedback-team-list strong {
+    display: block;
+    color: var(--hikari-text);
+    line-height: 1.25;
+}
+
+.feedback-stat-list {
+    display: grid;
+    gap: 0.7rem;
+    margin: 0;
+}
+
+.feedback-stat-list div {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    border-bottom: 1px solid var(--hikari-border);
+    padding-bottom: 0.6rem;
+}
+
+.feedback-stat-list div:last-child {
+    border-bottom: 0;
+    padding-bottom: 0;
+}
+
+.feedback-stat-list dd {
+    margin: 0;
+    color: var(--hikari-text);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+}
+
+.feedback-panel--open {
+    margin-top: 1rem;
+}
+
+.feedback-open-list li {
+    border-top: 1px solid var(--hikari-border);
+    padding-top: 0.75rem;
+}
+
+.feedback-open-list li:first-child {
+    border-top: 0;
+    padding-top: 0;
+}
+
+.feedback-open-list span {
+    color: var(--hikari-primary);
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.feedback-open-list p {
+    margin: 0.2rem 0;
+    color: var(--hikari-text);
+    line-height: 1.45;
+}
+
 /* --------------------------------------------------------------- bar lists
  * Replace dense tables for "count + label" data with a 3-column grid:
  * label | proportional bar | value. The bar gives instant visual ranking
@@ -321,6 +516,12 @@
     .research-kpis {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
+    .feedback-overview-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .feedback-detail-grid {
+        grid-template-columns: 1fr;
+    }
     .research-grid--two {
         grid-template-columns: 1fr;
     }
@@ -328,6 +529,14 @@
 @media (max-width: 860px) {
     .research-kpis {
         grid-template-columns: 1fr;
+    }
+    .feedback-report-header,
+    .feedback-overview-grid,
+    .feedback-team-list {
+        grid-template-columns: 1fr;
+    }
+    .feedback-key-form {
+        justify-content: flex-start;
     }
     .bar-row {
         grid-template-columns: minmax(6rem, 9rem) 1fr 2.5rem;

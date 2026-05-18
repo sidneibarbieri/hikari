@@ -296,9 +296,12 @@
       const tabButtons = Array.from(settingsRoot.querySelectorAll("[data-settings-target]"));
       const tabPanes = Array.from(settingsRoot.querySelectorAll(".tab-pane"));
 
-      const activateTab = (selectedTab) => {
+      const activateTab = (selectedTab, options = {}) => {
         const targetSelector = selectedTab.getAttribute("data-settings-target");
         const selectedPane = settingsRoot.querySelector(targetSelector);
+        if (!selectedPane) {
+          return;
+        }
 
         tabButtons.forEach((tabButton) => {
           const isSelected = tabButton === selectedTab;
@@ -311,19 +314,44 @@
           tabPane.classList.toggle("active", isSelected);
           tabPane.classList.toggle("show", isSelected);
         });
+
+        if (options.updateHash) {
+          window.history.replaceState(null, "", targetSelector);
+        }
       };
 
       tabButtons.forEach((tabButton) => {
         tabButton.addEventListener("click", (event) => {
           event.preventDefault();
-          activateTab(tabButton);
+          activateTab(tabButton, { updateHash: true });
         });
       });
 
-      const initialTab = tabButtons.find((tabButton) => tabButton.classList.contains("active")) || tabButtons[0];
-      if (initialTab) {
-        activateTab(initialTab);
-      }
+      const tabForHash = () => {
+        if (!window.location.hash) {
+          return null;
+        }
+        return tabButtons.find((tabButton) => {
+          return tabButton.getAttribute("data-settings-target") === window.location.hash;
+        });
+      };
+
+      const activateInitialTab = () => {
+        const activeTab = tabButtons.find((tabButton) => tabButton.classList.contains("active"));
+        const initialTab = tabForHash() || activeTab || tabButtons[0];
+        if (initialTab) {
+          activateTab(initialTab);
+        }
+      };
+
+      window.addEventListener("hashchange", () => {
+        const selectedTab = tabForHash();
+        if (selectedTab) {
+          activateTab(selectedTab);
+        }
+      });
+
+      activateInitialTab();
     })();
   </script>
 {% endblock %}

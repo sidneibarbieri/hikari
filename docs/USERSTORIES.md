@@ -1,6 +1,6 @@
 # Histórias de Usuário — Hikari Platform
 
-Versão 2.0 · Maio 2026
+Maio 2026
 
 Este documento reúne as histórias de usuário e casos de uso da plataforma Hikari.
 Cada história segue o formato padrão ágil: *Como [ator], quero [ação] para [objetivo].*
@@ -278,11 +278,11 @@ Os critérios de aceite são os checks automatizados em `deploy/local/run_accept
 ### US-19 — Questionário de feedback (competidor)
 **Como** competidor,  
 **quero** responder um questionário de feedback sobre a plataforma ao final da competição,  
-**para** contribuir com a pesquisa acadêmica que a gerou.
+**para** registrar minha experiência e apoiar a análise científica da execução.
 
 **Critérios de aceite:**
 - O formulário coleta métricas NASA-TLX, SUS e NPS.
-- Cada competidor pode responder uma vez.
+- Cada competidor mantém uma resposta por competição; novo envio atualiza a resposta anterior.
 - As respostas ficam disponíveis para administradores em `/admin/hikari/research`.
 - O export JSONL fica disponível em `/admin/hikari/research/feedback.jsonl`.
 
@@ -290,9 +290,24 @@ Os critérios de aceite são os checks automatizados em `deploy/local/run_accept
 
 ---
 
+### US-20 — Panorama pós-competição do feedback (admin/pesquisador)
+**Como** administrador ou pesquisador,
+**quero** ver cobertura, pendências e síntese do feedback por competição,
+**para** confirmar o recebimento das respostas e preparar relatórios internos.
+
+**Critérios de aceite:**
+- O painel `/admin/hikari/research` mostra a competição selecionada, total de respondentes, pendentes e taxa de resposta.
+- O painel mostra cobertura por equipe, última resposta recebida, médias SUS/NPS/TLX e observações qualitativas recentes.
+- O export `/admin/hikari/research/feedback.jsonl?competition_key=<id>` entrega somente o feedback da competição selecionada.
+- A página é acessível apenas a administradores.
+
+**Verificação automatizada:** `verify_research.sh`.
+
+---
+
 ## 6. Privacidade e Segurança
 
-### US-20 — Dados pessoais protegidos (LGPD)
+### US-21 — Dados pessoais protegidos (LGPD)
 **Como** competidor,  
 **quero** que meus dados sejam tratados conforme a LGPD,  
 **para** participar com segurança.
@@ -328,8 +343,9 @@ Os critérios de aceite são os checks automatizados em `deploy/local/run_accept
 | US-17 Filtros | `verify_research.sh` | ✅ |
 | US-18 Export JSONL | `verify_research.sh` | ✅ |
 | US-19 Feedback | `verify_feedback.sh` | ✅ |
-| US-20 LGPD | `verify_artifact_hygiene.sh` + docs | ✅ |
+| US-20 Panorama do feedback | `verify_research.sh` | ✅ |
+| US-21 LGPD | `verify_artifact_hygiene.sh` + docs | ✅ |
 | Cross-cutting: autorização e isolamento | `verify_isolation.sh` | ✅ |
 
-**18 de 20 histórias com verificação automatizada (90%).**  
+**19 de 21 histórias com verificação automatizada (90%).**
 As duas restantes (US-04 recuperação de senha, US-07 gerenciamento de equipe) dependem de SMTP real e UI interativa, e são verificadas por inspeção visual durante a auditoria de release.

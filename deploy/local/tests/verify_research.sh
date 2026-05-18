@@ -48,6 +48,14 @@ grep -q "Respostas do questionário" "$dashboard" \
   || { echo "FAIL: dashboard missing feedback summary"; exit 1; }
 grep -q "Médias do questionário" "$dashboard" \
   || { echo "FAIL: dashboard missing feedback metrics section"; exit 1; }
+grep -q "Panorama do feedback" "$dashboard" \
+  || { echo "FAIL: dashboard missing feedback overview"; exit 1; }
+grep -q "Cobertura de respondentes" "$dashboard" \
+  || { echo "FAIL: dashboard missing feedback coverage"; exit 1; }
+grep -q "Status por equipe" "$dashboard" \
+  || { echo "FAIL: dashboard missing team feedback status"; exit 1; }
+grep -q "Exportar feedback desta competição" "$dashboard" \
+  || { echo "FAIL: dashboard missing competition feedback export"; exit 1; }
 grep -q "Padrão de submissões" "$dashboard" \
   || { echo "FAIL: dashboard missing submission-pattern section"; exit 1; }
 grep -q "Postura de submissão por equipe" "$dashboard" \
@@ -76,6 +84,20 @@ fi
 head -1 "$export_file" | jq -e '.event_type and .occurred_at' >/dev/null \
   || { echo "FAIL: first export line is not a valid activity record"; head -3 "$export_file"; exit 1; }
 echo "PASS: JSONL export has $line_count parseable records (sample line valid)"
+
+feedback_file=/tmp/hikari-research-feedback.jsonl
+code=$(curl -sS -c "$cookie_jar" -b "$cookie_jar" -o "$feedback_file" \
+  -w '%{http_code}' "$CTFD_URL/admin/hikari/research/feedback.jsonl?competition_key=local")
+[[ "$code" == "200" ]] \
+  || { echo "FAIL: feedback export returned $code"; exit 1; }
+feedback_lines=$(wc -l < "$feedback_file" | tr -d '[:space:]')
+if [[ "$feedback_lines" -lt 1 ]]; then
+  echo "FAIL: filtered feedback export contained 0 lines"
+  exit 1
+fi
+head -1 "$feedback_file" | jq -e '.competition_key == "local" and .payload' >/dev/null \
+  || { echo "FAIL: filtered feedback export has wrong shape"; head -3 "$feedback_file"; exit 1; }
+echo "PASS: competition feedback export has $feedback_lines parseable records"
 
 filtered_file=/tmp/hikari-research-export-filtered.jsonl
 code=$(curl -sS -c "$cookie_jar" -b "$cookie_jar" -o "$filtered_file" \

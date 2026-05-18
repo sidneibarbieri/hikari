@@ -33,10 +33,47 @@ class FeedbackMetric(BaseModel):
     count: int
 
 
+class FeedbackCoverage(BaseModel):
+    competition_key: str
+    eligible_users: int
+    respondents: int
+    pending_users: int
+    response_rate: float
+    total_teams: int
+    teams_with_feedback: int
+    pending_teams: int
+    team_response_rate: float
+    latest_submitted_at: Optional[datetime]
+
+
+class FeedbackTeamCoverage(BaseModel):
+    team_id: Optional[int]
+    team_name: str
+    member_count: int
+    response_count: int
+    pending_count: int
+    response_rate: float
+
+
+class FeedbackOpenAnswer(BaseModel):
+    submitted_at: datetime
+    user_id: Optional[int]
+    team_name: Optional[str]
+    label: str
+    text: str
+
+
 class FeedbackSummary(BaseModel):
     total_responses: int
+    competition_keys: List[str]
+    coverage: FeedbackCoverage
     roles: List[FeedbackCount]
     metrics: List[FeedbackMetric]
+    team_coverage: List[FeedbackTeamCoverage]
+    open_answers: List[FeedbackOpenAnswer]
+    nps_average: Optional[float] = None
+    sus_average: Optional[float] = None
+    tlx_average: Optional[float] = None
 
 
 class RecentEvent(BaseModel):

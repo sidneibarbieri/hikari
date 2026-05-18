@@ -1,5 +1,6 @@
 import json
 import os
+from datetime import datetime
 
 from flask import Response, flash, redirect, render_template, request, stream_with_context, url_for
 from pydantic import ValidationError
@@ -29,15 +30,22 @@ def feedback():
     if request.method == "POST" and form.validate_on_submit():
         payload = payload_from_form(form)
         user = get_current_user()
-        response = FeedbackResponse(
+        competition_key = current_competition_key()
+        response = FeedbackResponse.query.filter_by(
             user_id=user.id,
-            team_id=user.team_id,
-            competition_key=current_competition_key(),
-            payload=payload.json(),
-            request_ip=get_ip(),
-            user_agent=request.headers.get("User-Agent"),
-        )
-        db.session.add(response)
+            competition_key=competition_key,
+        ).first()
+        if response is None:
+            response = FeedbackResponse(
+                user_id=user.id,
+                competition_key=competition_key,
+            )
+            db.session.add(response)
+        response.team_id = user.team_id
+        response.payload = payload.json()
+        response.request_ip = get_ip()
+        response.user_agent = request.headers.get("User-Agent")
+        response.submitted_at = datetime.utcnow()
         db.session.commit()
         flash("Feedback registrado.", "success")
         return redirect(url_for("hikariplugin.feedback"))
@@ -51,10 +59,16 @@ def feedback():
 
 @admins_only
 def feedback_export_jsonl():
+    competition_key = request.args.get("competition_key", "").strip() or None
+    filename = (
+        f"hikari-feedback-{competition_key}.jsonl"
+        if competition_key
+        else "hikari-feedback.jsonl"
+    )
     return Response(
-        stream_with_context(feedback_jsonl_lines()),
+        stream_with_context(feedback_jsonl_lines(competition_key)),
         mimetype="application/x-ndjson",
-        headers={"Content-Disposition": "attachment; filename=hikari-feedback.jsonl"},
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
     )
 
 
@@ -124,8 +138,10 @@ def _normalise(value: object) -> object:
     return value
 
 
-def feedback_jsonl_lines():
+def feedback_jsonl_lines(competition_key: str | None = None):
     query = FeedbackResponse.query.order_by(FeedbackResponse.submitted_at.asc())
+    if competition_key:
+        query = query.filter(FeedbackResponse.competition_key == competition_key)
     for record in query.yield_per(100):
         yield json.dumps(record_to_dict(record), sort_keys=True) + "\n"
 

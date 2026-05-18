@@ -19,7 +19,7 @@
 		</h2>
 		{% endif %}
 		{% for notification in notifications %}
-		<div class="card bg-body-tertiary mb-4">
+		<div class="card mb-4">
 			<div class="card-body">
 				<h3 class="card-title">{{ notification.title }}</h3>
 				<blockquote class="blockquote mb-0">
@@ -35,4 +35,3 @@
 {% block scripts %}
   {{ Assets.js("assets/js/notifications.js") }}
 {% endblock %}
-

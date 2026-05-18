@@ -24,7 +24,7 @@ training review and research analysis.
 - **Local feedback questionnaire** stored in MariaDB, replacing the external
   form used in previous competitions.
 - **Research dashboard** with aggregations, filters by event, actor and team,
-  plus JSONL export.
+  feedback coverage by competition, sponsor-ready summary and JSONL export.
 - **Local stack** as one `docker-compose` (CTFd, MariaDB, Redis, Kafka,
   Elasticsearch, Kibana, Logstash, fake SMTP).
 
@@ -54,7 +54,7 @@ DB and Elasticsearch, competitor SIEM access with query attribution, Kibana
 proxy forensic classification, local feedback capture and export, lone-wolf
 and team competitor flows, admin challenge creation and player submission,
 progressive log activation after solve, the live competition board, and the
-research dashboard plus JSONL export.
+research dashboard with feedback coverage and JSONL export.
 
 ## Documentation map
 

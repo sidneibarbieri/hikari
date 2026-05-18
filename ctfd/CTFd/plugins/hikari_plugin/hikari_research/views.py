@@ -34,6 +34,7 @@ def _filters_from_request() -> ResearchFilters:
 @admins_only
 def dashboard():
     filters = _filters_from_request()
+    competition_key = request.args.get("competition_key", "").strip() or None
     summary = ResearchSummary(
         filters=filters,
         total_events=queries.total_events(filters),
@@ -42,7 +43,7 @@ def dashboard():
         submission_patterns=queries.submission_patterns(),
         team_postures=queries.team_submission_posture(),
         hunting_depth=queries.hunting_depth_by_actor(),
-        feedback=queries.feedback_summary(),
+        feedback=queries.feedback_summary(competition_key),
         available_event_types=queries.available_event_types(),
         recent=queries.recent_events(filters),
     )

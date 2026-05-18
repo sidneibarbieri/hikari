@@ -392,10 +392,28 @@ select option {
     border-color: rgba(245, 158, 11, 0.4);
     color: #fde68a;
 }
+.alert-info,
+.alert-primary,
+.alert-secondary,
+.alert-light {
+    background-color: rgba(18, 27, 39, 0.92);
+    border-color: var(--hikari-border);
+    color: var(--hikari-text);
+}
 .alert-danger {
     background-color: rgba(239, 68, 68, 0.12);
     border-color: rgba(239, 68, 68, 0.4);
     color: #fecaca;
+}
+.alert .btn-close {
+    filter: invert(1) brightness(1.35);
+}
+.bg-body,
+.bg-body-tertiary,
+.card.bg-body,
+.card.bg-body-tertiary {
+    background-color: var(--hikari-surface) !important;
+    color: var(--hikari-text) !important;
 }
 
 .table,

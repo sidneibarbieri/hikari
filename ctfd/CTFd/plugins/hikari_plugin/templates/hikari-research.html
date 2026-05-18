@@ -8,6 +8,7 @@
 
 {% block content %}
 <div class="hikari-research">
+  {% set feedback_key = summary.feedback.coverage.competition_key %}
 
   <header class="research-header">
     <h1>Análise científica</h1>
@@ -16,7 +17,7 @@
       <a class="btn btn-outline-primary" href="/admin/hikari/research/export.jsonl{% if request.query_string %}?{{ request.query_string.decode() }}{% endif %}">
         Exportar atividades (JSONL)
       </a>
-      <a class="btn btn-outline-primary" href="/admin/hikari/research/feedback.jsonl{% if request.query_string %}?{{ request.query_string.decode() }}{% endif %}">
+      <a class="btn btn-outline-primary" href="/admin/hikari/research/feedback.jsonl?competition_key={{ feedback_key|urlencode }}">
         Exportar feedback (JSONL)
       </a>
     </div>
@@ -78,6 +79,112 @@
       <div class="kpi-value">{{ summary.feedback.total_responses }}</div>
       <div class="kpi-hint">questionário pós-competição</div>
     </article>
+  </section>
+
+  <section id="feedback-report" class="research-card research-card--wide feedback-report">
+    <header class="feedback-report-header">
+      <div>
+        <h2>Panorama do feedback</h2>
+        <p class="research-card-help">
+          Status da coleta pós-competição, cobertura por equipe e síntese para relatório interno ou patrocinadores.
+        </p>
+      </div>
+      <form class="feedback-key-form" method="get" action="/admin/hikari/research#feedback-report">
+        {% if summary.filters.event_type %}<input type="hidden" name="event_type" value="{{ summary.filters.event_type }}">{% endif %}
+        {% if summary.filters.actor_id %}<input type="hidden" name="actor_id" value="{{ summary.filters.actor_id }}">{% endif %}
+        {% if summary.filters.team_id %}<input type="hidden" name="team_id" value="{{ summary.filters.team_id }}">{% endif %}
+        <label>
+          <span>Competição</span>
+          <select name="competition_key">
+            {% for key in summary.feedback.competition_keys %}
+            <option value="{{ key }}" {% if key == feedback_key %}selected{% endif %}>{{ key }}</option>
+            {% endfor %}
+          </select>
+        </label>
+        <button class="btn btn-primary" type="submit">Atualizar</button>
+        <a class="btn btn-outline-primary" href="/admin/hikari/research/feedback.jsonl?competition_key={{ feedback_key|urlencode }}">
+          Exportar feedback desta competição
+        </a>
+      </form>
+    </header>
+
+    <div class="feedback-overview-grid">
+      <article class="feedback-overview-card">
+        <span>Cobertura de respondentes</span>
+        <strong>{{ summary.feedback.coverage.respondents }}/{{ summary.feedback.coverage.eligible_users }}</strong>
+        <div class="feedback-progress"><span style="width: {{ summary.feedback.coverage.response_rate }}%"></span></div>
+        <small>{{ "%.1f"|format(summary.feedback.coverage.response_rate) }}% responderam; {{ summary.feedback.coverage.pending_users }} pendentes.</small>
+      </article>
+      <article class="feedback-overview-card">
+        <span>Equipes com resposta</span>
+        <strong>{{ summary.feedback.coverage.teams_with_feedback }}/{{ summary.feedback.coverage.total_teams }}</strong>
+        <div class="feedback-progress"><span style="width: {{ summary.feedback.coverage.team_response_rate }}%"></span></div>
+        <small>{{ "%.1f"|format(summary.feedback.coverage.team_response_rate) }}% das equipes têm pelo menos uma resposta.</small>
+      </article>
+      <article class="feedback-overview-card">
+        <span>Usabilidade SUS</span>
+        <strong>{% if summary.feedback.sus_average is not none %}{{ "%.1f"|format(summary.feedback.sus_average) }}{% else %}—{% endif %}</strong>
+        <small>Escala 0-100 calculada quando os 10 itens SUS foram respondidos.</small>
+      </article>
+      <article class="feedback-overview-card">
+        <span>Última resposta</span>
+        <strong>
+          {% if summary.feedback.coverage.latest_submitted_at %}
+          {{ summary.feedback.coverage.latest_submitted_at.strftime("%d/%m/%Y %H:%M") }}
+          {% else %}—{% endif %}
+        </strong>
+        <small>Confirma que o feedback está sendo recebido no banco local.</small>
+      </article>
+    </div>
+
+    <div class="feedback-detail-grid">
+      <article class="feedback-panel">
+        <h3>Status por equipe</h3>
+        {% if summary.feedback.team_coverage %}
+        <ul class="feedback-team-list">
+          {% for row in summary.feedback.team_coverage[:10] %}
+          <li>
+            <div>
+              <strong>{{ row.team_name }}</strong>
+              <span>{{ row.response_count }}/{{ row.member_count }} respostas · {{ row.pending_count }} pendentes</span>
+            </div>
+            <div class="feedback-progress"><span style="width: {{ row.response_rate }}%"></span></div>
+          </li>
+          {% endfor %}
+        </ul>
+        {% else %}
+        <p class="research-empty">Ainda não há equipes elegíveis para acompanhamento.</p>
+        {% endif %}
+      </article>
+
+      <article class="feedback-panel">
+        <h3>Resumo numérico</h3>
+        <dl class="feedback-stat-list">
+          <div><dt>Respostas recebidas</dt><dd>{{ summary.feedback.total_responses }}</dd></div>
+          <div><dt>NPS médio</dt><dd>{% if summary.feedback.nps_average is not none %}{{ "%.1f"|format(summary.feedback.nps_average) }}{% else %}—{% endif %}</dd></div>
+          <div><dt>Carga média</dt><dd>{% if summary.feedback.tlx_average is not none %}{{ "%.1f"|format(summary.feedback.tlx_average) }} / 7{% else %}—{% endif %}</dd></div>
+          <div><dt>Competição</dt><dd><code>{{ feedback_key }}</code></dd></div>
+        </dl>
+      </article>
+    </div>
+
+    {% if summary.feedback.open_answers %}
+    <article class="feedback-panel feedback-panel--open">
+      <h3>Observações qualitativas recentes</h3>
+      <ul class="feedback-open-list">
+        {% for answer in summary.feedback.open_answers %}
+        <li>
+          <span>{{ answer.label }}</span>
+          <p>{{ answer.text }}</p>
+          <small>
+            {% if answer.team_name %}{{ answer.team_name }}{% elif answer.user_id %}usuário #{{ answer.user_id }}{% else %}respondente{% endif %}
+            · {{ answer.submitted_at.strftime("%d/%m/%Y %H:%M") }}
+          </small>
+        </li>
+        {% endfor %}
+      </ul>
+    </article>
+    {% endif %}
   </section>
 
   <section class="research-grid research-grid--two">
