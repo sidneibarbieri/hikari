@@ -72,7 +72,7 @@ initial_id=$(db_query "SELECT challenge_id FROM hikari_challenge_library_entries
 dependent_id=$(db_query "SELECT challenge_id FROM hikari_challenge_library_entries WHERE library_import_id=$library_id AND challenge_key='dependent-hunt';" | tr -d '[:space:]')
 requirements=$(db_query "SELECT requirements FROM challenges WHERE id=$dependent_id;" | tr -d '[:space:]')
 [[ "$requirements" == *"$initial_id"* ]] \
-  || { echo "FAIL: dependent challenge does not reference its prerequisite"; exit 1; }
+  || { echo "FAIL: dependent challenge is missing its prerequisite reference"; exit 1; }
 echo "PASS: package import persisted two challenges, flags, logs, and dependency metadata"
 
 page=$(mktemp)

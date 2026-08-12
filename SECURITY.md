@@ -1,71 +1,80 @@
-# Security notes
+# Notas de segurança
 
-This document collects security-relevant decisions and known
-*intentional* tradeoffs in the Hikari stack so that operators and
-reviewers do not need to read the full source to find them.
+Este documento reúne as decisões de segurança e as escolhas *intencionais* da
+stack Hikari, para que operadores e revisores não precisem ler todo o código
+para encontrá-las.
 
-## Local development defaults
+## Padrões do ambiente local
 
-The `deploy/local/` Docker Compose stack ships with a fixed admin
-password (`hikari_comp@2026`) baked in as the default of
-`ADMIN_PASSWORD` in `scripts/setup_ctfd.sh`, `scripts/ensure_admin.sh`
-and the other helper scripts. This is deliberate: it gives a one-shot
-clone the same first-login experience for every contributor and lets
-the acceptance suite (`run_acceptance.sh`) authenticate without
-human input.
+A stack `deploy/local/` usa uma senha administrativa fixa
+(`hikari_comp@2026`) como valor padrão de `ADMIN_PASSWORD` em
+`scripts/setup_ctfd.sh`, `scripts/ensure_admin.sh` e nos demais scripts
+auxiliares. A escolha é deliberada: dá a mesma experiência de primeiro acesso
+para qualquer pessoa que clone o repositório e permite que a suíte de
+verificação autentique sem intervenção humana.
 
-**This default is not a secret.** The local stack listens only on
-`127.0.0.1` and is intended to be reachable only from the operator's
-own machine. Do not expose any port from `deploy/local/` to the
-public internet.
+Duas contas administrativas são semeadas com essa senha:
 
-To override the default locally:
+| Conta | E-mail | Uso |
+| --- | --- | --- |
+| `admin` | `admin@hikari.local` | Automação e verificação |
+| `sidneibarbieri` | `sidneibarbieri@gmail.com` | Responsável pela plataforma; entra pelo Google, com senha como via de recuperação |
+
+**Esse padrão não é um segredo.** A stack local escuta apenas em `127.0.0.1` e
+deve ser alcançável somente a partir da máquina do operador. Não exponha
+nenhuma porta de `deploy/local/` à internet.
+
+Para trocar as credenciais localmente:
 
 ```bash
-export ADMIN_PASSWORD='your-own-password'
-bash deploy/local/scripts/ensure_admin.sh   # picks up env var
+ADMIN_PASSWORD='sua-senha' OWNER_PASSWORD='outra-senha' \
+  bash deploy/local/scripts/ensure_admin.sh
 ```
 
-## Production deployment
+> Como as duas contas têm senha documentada, **troque as duas antes de expor a
+> instalação em qualquer rede compartilhada**. Uma conta que entra por Google
+> continua aceitando a senha local enquanto ela existir.
 
-`deploy/production/` is the path that goes onto a server. It refuses
-to start with the local defaults — `.env.production.example` carries
-placeholder values for `ADMIN_PASSWORD`, `SECRET_KEY`,
-`KIBANA_ENCRYPTION_KEY` and `ES_ENCRYPTION_KEY` that the operator
-**must** replace before `setup_production.sh` is run. The script
-checks for the placeholder values and aborts.
+## Implantação em produção
 
-Generate strong secrets:
+`deploy/production/` é o caminho que vai para um servidor. Ele se recusa a
+iniciar com os padrões locais: o `.env.production.example` traz valores de
+preenchimento para `ADMIN_PASSWORD`, `SECRET_KEY`, `KIBANA_ENCRYPTION_KEY` e
+`ES_ENCRYPTION_KEY` que o operador **precisa** substituir antes de executar o
+`setup_production.sh`. O script verifica esses valores e interrompe a execução
+se encontrá-los.
+
+Gere segredos fortes:
 
 ```bash
-# 32-char hex secrets for Flask / Kibana / Elasticsearch
+# Segredos hexadecimais de 32 caracteres para Flask, Kibana e Elasticsearch
 python3 -c "import secrets; print(secrets.token_hex(32))"
 
-# Random admin password (printable, 20 chars)
+# Senha administrativa aleatória (imprimível, 20 caracteres)
 openssl rand -base64 18 | tr -d '/+=' | head -c 20
 ```
 
-See `deploy/production/README.md` for the full production checklist
-(firewall ports, TLS, OAuth, index retention).
+Consulte `deploy/production/README.md` para o checklist completo de produção
+(portas de firewall, TLS, OAuth, retenção de índices).
 
-## What does not ship in the repository
+## O que não é versionado
 
-The `.gitignore` excludes the runtime state files that *would* be
-sensitive if committed:
+O `.gitignore` exclui os arquivos de estado de execução que seriam sensíveis
+se fossem versionados:
 
-- `deploy/local/.env` and `deploy/production/.env.production` —
-  the populated environment files
+- `deploy/local/.env` e `deploy/production/.env.production` — os arquivos de
+  ambiente já preenchidos
 - `*.local.env`
-- All `*.pem`, `*.key`, `*.pfx`, `*.p12`, `*.crt` (no certificates
-  are tracked anywhere in the tree)
+- Todos os `*.pem`, `*.key`, `*.pfx`, `*.p12`, `*.crt` (nenhum certificado é
+  versionado em qualquer ponto da árvore)
 
-A pre-publish secret scan (`grep` for AWS keys, OAuth client secrets,
-private key headers, `.env` patterns) is part of the artifact's
-hygiene check (`tests/verify_artifact_hygiene.sh`).
+Uma varredura de segredos antes da publicação (busca por chaves AWS, segredos
+de cliente OAuth, cabeçalhos de chave privada e padrões de `.env`) faz parte da
+verificação de higiene do artefato (`tests/verify_artifact_hygiene.sh`).
 
-## Reporting a vulnerability
+## Comunicar uma vulnerabilidade
 
-Please open a private security advisory at
-<https://github.com/sidneibarbieri/hikari/security/advisories/new>
-or e-mail the maintainer listed in the website footer. Avoid filing
-a public issue for security defects.
+Abra um aviso de segurança privado em
+<https://github.com/sidneibarbieri/hikari/security/advisories/new> ou escreva
+para o mantenedor indicado no rodapé do site. Evite registrar uma issue pública
+para falhas de segurança.

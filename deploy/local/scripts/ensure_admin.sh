@@ -1,21 +1,38 @@
 #!/usr/bin/env bash
-# Creates or updates the local automation admin without touching competition data.
+# Creates or updates the administrator accounts without touching competition data.
+#
+# Two accounts are seeded:
+#   - the automation administrator used by the acceptance suite;
+#   - the platform owner, who signs in through Google and keeps password
+#     access as the recovery path.
+#
+# Both are idempotent upserts: run as many times as needed.
 
 set -euo pipefail
 
 ADMIN_NAME=${ADMIN_NAME:-admin}
 ADMIN_EMAIL=${ADMIN_EMAIL:-admin@hikari.local}
 ADMIN_PASSWORD=${ADMIN_PASSWORD:-hikari_comp@2026}
+
+OWNER_NAME=${OWNER_NAME:-sidneibarbieri}
+OWNER_EMAIL=${OWNER_EMAIL:-sidneibarbieri@gmail.com}
+OWNER_PASSWORD=${OWNER_PASSWORD:-$ADMIN_PASSWORD}
+
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 LOCAL_DIR=$(cd "$SCRIPT_DIR/.." && pwd)
 source "$LOCAL_DIR/lib/compose.sh"
 COMPOSE_FILE=${COMPOSE_FILE:-"$LOCAL_DIR/docker-compose.yml"}
 
-hikari_compose -f "$COMPOSE_FILE" exec -T ctfd env \
-  ADMIN_NAME="$ADMIN_NAME" \
-  ADMIN_EMAIL="$ADMIN_EMAIL" \
-  ADMIN_PASSWORD="$ADMIN_PASSWORD" \
-  python - <<'PY'
+upsert_admin() {
+  local account_name=$1
+  local account_email=$2
+  local account_password=$3
+
+  hikari_compose -f "$COMPOSE_FILE" exec -T ctfd env \
+    ACCOUNT_NAME="$account_name" \
+    ACCOUNT_EMAIL="$account_email" \
+    ACCOUNT_PASSWORD="$account_password" \
+    python - <<'PY'
 import os
 import sys
 
@@ -23,48 +40,51 @@ from CTFd import create_app
 from CTFd.models import Users, db
 
 
-admin_name = os.environ["ADMIN_NAME"]
-admin_email = os.environ["ADMIN_EMAIL"]
-admin_password = os.environ["ADMIN_PASSWORD"]
+account_name = os.environ["ACCOUNT_NAME"]
+account_email = os.environ["ACCOUNT_EMAIL"]
+account_password = os.environ["ACCOUNT_PASSWORD"]
 
 app = create_app()
 with app.app_context():
-    # Resolve the canonical admin: prefer the lowest-id user with this name
-    # (CTFd username login returns filter_by(name=...).first() which is
-    # ordered by primary key, so the lowest id wins).
+    # Username login resolves filter_by(name=...).first(), which returns the
+    # lowest id. Claim that row so the credential always reaches this account.
     canonical = (
         Users.query
-        .filter_by(name=admin_name)
+        .filter_by(name=account_name)
         .order_by(Users.id.asc())
         .first()
     )
     if canonical is None:
-        canonical = Users.query.filter_by(email=admin_email).first()
+        canonical = Users.query.filter(Users.email.ilike(account_email)).first()
     if canonical is None:
-        canonical = Users(name=admin_name, email=admin_email, type="admin")
+        canonical = Users(name=account_name, email=account_email, type="admin")
         db.session.add(canonical)
         db.session.flush()
         action = "created"
     else:
         action = "updated"
 
-    # Remove duplicate admins with the same name before touching email to
-    # avoid unique-constraint violations on flush.
+    # Drop same-name duplicates before writing the email, so the unique
+    # constraint on email cannot fail during flush.
     duplicates = (
         Users.query
-        .filter(Users.name == admin_name, Users.id != canonical.id)
+        .filter(Users.name == account_name, Users.id != canonical.id)
         .all()
     )
-    for dup in duplicates:
-        db.session.delete(dup)
-    db.session.flush()  # delete duplicates first so email is now free
+    for duplicate in duplicates:
+        db.session.delete(duplicate)
+    db.session.flush()
 
-    canonical.name = admin_name
-    canonical.email = admin_email
-    canonical.password = admin_password
+    canonical.name = account_name
+    canonical.email = account_email
+    canonical.password = account_password
     canonical.type = "admin"
     canonical.verified = True
     canonical.hidden = True
     db.session.commit()
-    sys.stdout.write(f"automation admin {action}: {admin_email} (id={canonical.id})\n")
+    sys.stdout.write(f"admin {action}: {account_name} <{account_email}> (id={canonical.id})\n")
 PY
+}
+
+upsert_admin "$ADMIN_NAME" "$ADMIN_EMAIL" "$ADMIN_PASSWORD"
+upsert_admin "$OWNER_NAME" "$OWNER_EMAIL" "$OWNER_PASSWORD"
