@@ -66,6 +66,7 @@ steps=(
   "tests/verify_progressive_unlock.sh|solving one Hikari challenge activates dependent log data"
   "tests/verify_live_board.sh|live competition board renders standings and recent solves"
   "tests/verify_research.sh|researcher dashboard renders, JSONL export streams parseable records"
+  "tests/verify_competition_control.sh|admin completes the isolated execution lifecycle"
 )
 
 passed=()

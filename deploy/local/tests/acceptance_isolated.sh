@@ -9,9 +9,21 @@ source "$LOCAL_DIR/lib/compose.sh"
 
 stamp=$(date +%s)
 PROJECT=${HIKARI_ACCEPTANCE_PROJECT:-"hikariaccept${stamp}"}
-CTFD_PORT=${HIKARI_ACCEPTANCE_PORT:-18000}
-MAIL_UI_PORT=${HIKARI_ACCEPTANCE_MAIL_UI_PORT:-11080}
-MAIL_SMTP_PORT=${HIKARI_ACCEPTANCE_MAIL_SMTP_PORT:-11025}
+
+available_port() {
+  python3 - <<'PY'
+import socket
+import sys
+
+with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as listener:
+    listener.bind(("127.0.0.1", 0))
+    sys.stdout.write(str(listener.getsockname()[1]))
+PY
+}
+
+CTFD_PORT=${HIKARI_ACCEPTANCE_PORT:-$(available_port)}
+MAIL_UI_PORT=${HIKARI_ACCEPTANCE_MAIL_UI_PORT:-$(available_port)}
+MAIL_SMTP_PORT=${HIKARI_ACCEPTANCE_MAIL_SMTP_PORT:-$(available_port)}
 COMPOSE_FILE="$LOCAL_DIR/docker-compose.yml"
 CTFD_URL="http://localhost:${CTFD_PORT}"
 

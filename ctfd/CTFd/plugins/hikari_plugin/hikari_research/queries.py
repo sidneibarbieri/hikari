@@ -5,7 +5,6 @@ The view layer composes them; this module is independent from HTTP.
 """
 
 import json
-import os
 import statistics
 from collections import defaultdict
 from typing import List, Optional
@@ -15,6 +14,7 @@ from sqlalchemy import case, func, or_
 from CTFd.models import Challenges, Fails, Solves, Submissions, Teams, Users, db
 from CTFd.plugins.hikari_plugin.hikari_activity.models import HikariActivity
 from CTFd.plugins.hikari_plugin.hikari_feedback.models import FeedbackResponse
+from CTFd.plugins.hikari_plugin.hikari_competitions.context import current_competition_key
 
 from .dto import (
     EventCount,
@@ -84,10 +84,6 @@ ROLE_LABELS = {
 }
 
 
-def _current_competition_key() -> str:
-    return os.environ.get("HIKARI_COMPETITION_KEY", "local")
-
-
 def _active_users_query():
     return (
         Users.query.filter(Users.type == "user")
@@ -111,16 +107,31 @@ def available_feedback_competition_keys() -> List[str]:
         .all()
     )
     keys = [competition_key for (competition_key,) in rows]
-    current_key = _current_competition_key()
+    current_key = current_competition_key()
     if current_key not in keys:
         keys.insert(0, current_key)
     return keys
+
+
+def available_competition_keys() -> List[str]:
+    """Return execution keys present in activity or feedback records."""
+    activity_rows = db.session.query(HikariActivity.competition_key).group_by(
+        HikariActivity.competition_key
+    )
+    feedback_rows = db.session.query(FeedbackResponse.competition_key).group_by(
+        FeedbackResponse.competition_key
+    )
+    keys = {key for (key,) in activity_rows.union(feedback_rows).all()}
+    keys.add(current_competition_key())
+    return sorted(keys)
 
 
 def _filtered_activity_query(filters: Optional[ResearchFilters] = None):
     query = HikariActivity.query
     if filters is None:
         return query
+    if filters.competition_key:
+        query = query.filter(HikariActivity.competition_key == filters.competition_key)
     if filters.event_type:
         query = query.filter(HikariActivity.event_type == filters.event_type)
     if filters.actor_id is not None:
@@ -134,9 +145,11 @@ def total_events(filters: Optional[ResearchFilters] = None) -> int:
     return _filtered_activity_query(filters).count()
 
 
-def available_event_types() -> List[str]:
+def available_event_types(competition_key: Optional[str] = None) -> List[str]:
+    filters = ResearchFilters(competition_key=competition_key)
     rows = (
-        db.session.query(HikariActivity.event_type)
+        _filtered_activity_query(filters)
+        .with_entities(HikariActivity.event_type)
         .group_by(HikariActivity.event_type)
         .order_by(HikariActivity.event_type.asc())
         .all()
@@ -184,7 +197,7 @@ def event_counts_by_team(
 
 def feedback_summary(competition_key: Optional[str] = None) -> FeedbackSummary:
     """Aggregate questionnaire fields used in the admin dashboard."""
-    selected_key = competition_key or _current_competition_key()
+    selected_key = competition_key or current_competition_key()
     query = FeedbackResponse.query.filter(FeedbackResponse.competition_key == selected_key)
     role_counts = {}
     metric_values = {field_name: [] for _, field_name in FEEDBACK_METRICS}
@@ -237,14 +250,16 @@ def feedback_summary(competition_key: Optional[str] = None) -> FeedbackSummary:
 
 def _feedback_coverage(competition_key: str) -> FeedbackCoverage:
     query = FeedbackResponse.query.filter(FeedbackResponse.competition_key == competition_key)
-    eligible_users = _active_users_query().count()
+    eligible_user_ids = _execution_participant_ids(competition_key)
+    eligible_users = len(eligible_user_ids)
     respondents = (
         query.with_entities(FeedbackResponse.user_id)
         .filter(FeedbackResponse.user_id.isnot(None))
         .distinct()
         .count()
     )
-    total_teams = _active_teams_query().count()
+    observed_team_ids = _execution_team_ids(competition_key)
+    total_teams = len(observed_team_ids)
     teams_with_feedback = (
         query.with_entities(FeedbackResponse.team_id)
         .filter(FeedbackResponse.team_id.isnot(None))
@@ -267,15 +282,7 @@ def _feedback_coverage(competition_key: str) -> FeedbackCoverage:
 
 
 def _feedback_team_coverage(competition_key: str, limit: int = 20) -> List[FeedbackTeamCoverage]:
-    member_counts = {
-        team_id: int(count)
-        for team_id, count in (
-            _active_users_query()
-            .with_entities(Users.team_id, func.count(Users.id))
-            .group_by(Users.team_id)
-            .all()
-        )
-    }
+    member_counts = _execution_member_counts(competition_key)
     response_counts = {
         team_id: int(count)
         for team_id, count in (
@@ -289,14 +296,24 @@ def _feedback_team_coverage(competition_key: str, limit: int = 20) -> List[Feedb
         )
     }
 
+    team_ids = {
+        team_id for team_id in member_counts if team_id is not None
+    } | {
+        team_id for team_id in response_counts if team_id is not None
+    }
+    team_names = {
+        team.id: team.name
+        for team in _active_teams_query().filter(Teams.id.in_(team_ids)).all()
+    }
+
     rows = []
-    for team in _active_teams_query().order_by(Teams.name.asc()).all():
-        members = member_counts.get(team.id, 0)
-        responses = response_counts.get(team.id, 0)
+    for team_id in sorted(team_ids, key=lambda item: (team_names.get(item) or "").lower()):
+        members = member_counts.get(team_id, 0)
+        responses = response_counts.get(team_id, 0)
         rows.append(
             FeedbackTeamCoverage(
-                team_id=team.id,
-                team_name=team.name or f"equipe #{team.id}",
+                team_id=team_id,
+                team_name=team_names.get(team_id) or f"equipe #{team_id}",
                 member_count=members,
                 response_count=responses,
                 pending_count=max(members - responses, 0),
@@ -320,6 +337,93 @@ def _feedback_team_coverage(competition_key: str, limit: int = 20) -> List[Feedb
 
     rows.sort(key=lambda item: (-item.pending_count, item.team_name.lower()))
     return rows[:limit]
+
+
+def _execution_participant_ids(competition_key: str) -> set[int]:
+    """Return users observed in one execution, including feedback respondents."""
+    activity_ids = {
+        actor_id
+        for (actor_id,) in (
+            HikariActivity.query.filter(HikariActivity.competition_key == competition_key)
+            .filter(HikariActivity.actor_role == "user")
+            .filter(HikariActivity.actor_id.isnot(None))
+            .with_entities(HikariActivity.actor_id)
+            .distinct()
+            .all()
+        )
+    }
+    feedback_ids = {
+        user_id
+        for (user_id,) in (
+            FeedbackResponse.query.filter(FeedbackResponse.competition_key == competition_key)
+            .filter(FeedbackResponse.user_id.isnot(None))
+            .with_entities(FeedbackResponse.user_id)
+            .distinct()
+            .all()
+        )
+    }
+    return activity_ids | feedback_ids
+
+
+def _execution_team_ids(competition_key: str) -> set[int]:
+    """Return teams observed in activity or feedback for one execution."""
+    activity_ids = {
+        team_id
+        for (team_id,) in (
+            HikariActivity.query.filter(HikariActivity.competition_key == competition_key)
+            .filter(HikariActivity.team_id.isnot(None))
+            .with_entities(HikariActivity.team_id)
+            .distinct()
+            .all()
+        )
+    }
+    feedback_ids = {
+        team_id
+        for (team_id,) in (
+            FeedbackResponse.query.filter(FeedbackResponse.competition_key == competition_key)
+            .filter(FeedbackResponse.team_id.isnot(None))
+            .with_entities(FeedbackResponse.team_id)
+            .distinct()
+            .all()
+        )
+    }
+    return activity_ids | feedback_ids
+
+
+def _execution_member_counts(competition_key: str) -> dict[Optional[int], int]:
+    """Count each participant once, using the latest recorded team membership."""
+    memberships: dict[int, Optional[int]] = {}
+    activity_rows = (
+        HikariActivity.query.filter(HikariActivity.competition_key == competition_key)
+        .filter(HikariActivity.actor_role == "user")
+        .filter(HikariActivity.actor_id.isnot(None))
+        .with_entities(
+            HikariActivity.actor_id,
+            HikariActivity.team_id,
+            HikariActivity.occurred_at,
+            HikariActivity.id,
+        )
+        .order_by(HikariActivity.occurred_at, HikariActivity.id)
+        .yield_per(500)
+    )
+    for user_id, team_id, _, _ in activity_rows:
+        if team_id is not None or user_id not in memberships:
+            memberships[user_id] = team_id
+
+    feedback_rows = (
+        FeedbackResponse.query.filter(FeedbackResponse.competition_key == competition_key)
+        .filter(FeedbackResponse.user_id.isnot(None))
+        .with_entities(FeedbackResponse.user_id, FeedbackResponse.team_id)
+        .yield_per(500)
+    )
+    for user_id, team_id in feedback_rows:
+        if team_id is not None or user_id not in memberships:
+            memberships[user_id] = team_id
+
+    counts: dict[Optional[int], int] = defaultdict(int)
+    for team_id in memberships.values():
+        counts[team_id] += 1
+    return dict(counts)
 
 
 def _feedback_open_answers(competition_key: str, limit: int = 8) -> List[FeedbackOpenAnswer]:
@@ -402,6 +506,7 @@ def recent_events(
     return [
         RecentEvent(
             id=row.id,
+            competition_key=row.competition_key,
             event_type=row.event_type,
             actor_id=row.actor_id,
             actor_role=row.actor_role,
@@ -430,6 +535,7 @@ def iter_all_events(filters: Optional[ResearchFilters] = None):
     for row in query:
         yield RecentEvent(
             id=row.id,
+            competition_key=row.competition_key,
             event_type=row.event_type,
             actor_id=row.actor_id,
             actor_role=row.actor_role,
@@ -447,20 +553,14 @@ def _average(values: List[float]) -> float:
 
 
 def _bucket(attempts: int) -> str:
-    """Map the attempt count of a (user, challenge) solve to a label.
-
-    Buckets are chosen to match the analyst-facing narrative the paper
-    cares about: an attempt of 1 means the solver knew the answer or
-    found it organically in the data; 2–5 is reasonable iteration;
-    6–20 looks like exhaustive search; anything past 20 is grinding.
-    """
+    """Map a solve to a deterministic count-of-attempts bucket."""
     if attempts <= 1:
-        return "organic"
+        return "one_attempt"
     if attempts <= 5:
-        return "exploratory"
+        return "two_to_five_attempts"
     if attempts <= 20:
-        return "brute_force"
-    return "grinding"
+        return "six_to_twenty_attempts"
+    return "twenty_one_or_more_attempts"
 
 
 def _accumulate_submission_attempts(
@@ -507,27 +607,67 @@ def _group_by_challenge(
     return by_chal, attempts_per_chal
 
 
-def submission_patterns(limit: int = 50) -> List[SubmissionPattern]:
-    """For every challenge with at least one solve, classify each solve
-    by how many attempts the same (user, challenge) racked up before
-    succeeding. The output lets an admin see, at a glance, which
-    challenges teams "got" vs. which they had to grind through.
-    """
-    # Collect every submission ordered so failure counts are cheap.
-    # With ~10k submissions this is fast and avoids per-(user,challenge)
-    # SQL roundtrips.
-    rows = (
-        db.session.query(
-            Submissions.challenge_id,
-            Submissions.user_id,
-            Submissions.type,
-            Submissions.date,
+def _activity_attempt_rows(competition_key: str):
+    """Return recorded attempts for one execution in chronological order."""
+    return (
+        HikariActivity.query.filter(HikariActivity.competition_key == competition_key)
+        .filter(HikariActivity.event_type == "challenge.attempt")
+        .filter(HikariActivity.actor_id.isnot(None))
+        .filter(HikariActivity.target_id.isnot(None))
+        .with_entities(
+            HikariActivity.target_id,
+            HikariActivity.actor_id,
+            HikariActivity.team_id,
+            HikariActivity.occurred_at,
+            HikariActivity.payload,
         )
-        .order_by(Submissions.challenge_id.asc(), Submissions.user_id.asc(), Submissions.date.asc())
-        .all()
+        .order_by(HikariActivity.target_id, HikariActivity.actor_id, HikariActivity.occurred_at)
+        .yield_per(500)
     )
 
-    per_pair, failures_per_challenge = _accumulate_submission_attempts(rows)
+
+def _activity_submission_attempts(competition_key: str) -> tuple[defaultdict, defaultdict]:
+    """Accumulate correct and incorrect attempts recorded for one execution."""
+    per_pair: defaultdict = defaultdict(lambda: {"attempts_before_solve": 0, "solved": False})
+    failures_per_challenge: defaultdict[int, int] = defaultdict(int)
+    for challenge_id, actor_id, _, _, payload in _activity_attempt_rows(competition_key):
+        result = ((payload or {}).get("attempt") or {}).get("result")
+        if result not in {"correct", "incorrect"}:
+            continue
+        state = per_pair[(challenge_id, actor_id)]
+        if state["solved"]:
+            continue
+        if result == "correct":
+            state["solved"] = True
+            continue
+        state["attempts_before_solve"] += 1
+        failures_per_challenge[challenge_id] += 1
+    return per_pair, failures_per_challenge
+
+
+def submission_patterns(
+    competition_key: Optional[str] = None,
+    limit: int = 50,
+) -> List[SubmissionPattern]:
+    """Aggregate attempts before each correct submission by challenge."""
+    if competition_key:
+        per_pair, failures_per_challenge = _activity_submission_attempts(competition_key)
+    else:
+        rows = (
+            db.session.query(
+                Submissions.challenge_id,
+                Submissions.user_id,
+                Submissions.type,
+                Submissions.date,
+            )
+            .order_by(
+                Submissions.challenge_id.asc(),
+                Submissions.user_id.asc(),
+                Submissions.date.asc(),
+            )
+            .all()
+        )
+        per_pair, failures_per_challenge = _accumulate_submission_attempts(rows)
     by_chal, attempts_per_chal = _group_by_challenge(per_pair)
 
     challenge_meta = {
@@ -547,10 +687,10 @@ def submission_patterns(limit: int = 50) -> List[SubmissionPattern]:
                 challenge_name=meta.name,
                 category=meta.category,
                 solvers=buckets["solvers"],
-                organic=buckets["organic"],
-                exploratory=buckets["exploratory"],
-                brute_force=buckets["brute_force"],
-                grinding=buckets["grinding"],
+                one_attempt=buckets["one_attempt"],
+                two_to_five_attempts=buckets["two_to_five_attempts"],
+                six_to_twenty_attempts=buckets["six_to_twenty_attempts"],
+                twenty_one_or_more_attempts=buckets["twenty_one_or_more_attempts"],
                 median_attempts=int(statistics.median(attempts_list)),
                 total_failures=failures_per_challenge.get(chal_id, 0),
             )
@@ -559,13 +699,54 @@ def submission_patterns(limit: int = 50) -> List[SubmissionPattern]:
     return patterns[:limit]
 
 
-def team_submission_posture(limit: int = 50) -> List[TeamSubmissionPosture]:
-    """Per-team solves, failures and median seconds between attempts.
+def _activity_team_submission_posture(
+    competition_key: str,
+    limit: int,
+) -> List[TeamSubmissionPosture]:
+    """Aggregate submission behavior from attempts attributed to one execution."""
+    team_attempts: defaultdict[Optional[int], list] = defaultdict(list)
+    for _, _, team_id, occurred_at, payload in _activity_attempt_rows(competition_key):
+        result = ((payload or {}).get("attempt") or {}).get("result")
+        if result in {"correct", "incorrect"}:
+            team_attempts[team_id].append((occurred_at, result))
 
-    The ``brute_force_ratio`` is failures per solve. A disciplined team
-    reads the data and the ratio stays low (≤2); a brute-forcing team
-    sees the ratio climb into the double digits.
-    """
+    team_ids = {team_id for team_id in team_attempts if team_id is not None}
+    team_names = {
+        team.id: team.name
+        for team in Teams.query.filter(Teams.id.in_(team_ids)).all()
+    }
+    posture = []
+    for team_id, attempts in team_attempts.items():
+        solves = sum(result == "correct" for _, result in attempts)
+        failures = sum(result == "incorrect" for _, result in attempts)
+        intervals = [
+            int((current - previous).total_seconds())
+            for (previous, _), (current, _) in zip(attempts, attempts[1:])
+        ]
+        posture.append(
+            TeamSubmissionPosture(
+                team_id=team_id,
+                team_name=team_names.get(team_id) if team_id is not None else "sem equipe",
+                solves=solves,
+                failures=failures,
+                failures_per_solve=round(failures / solves, 2) if solves else float(failures),
+                median_seconds_between_attempts=(
+                    int(statistics.median(intervals)) if intervals else None
+                ),
+            )
+        )
+    posture.sort(key=lambda item: (-(item.solves + item.failures), item.team_name or ""))
+    return posture[:limit]
+
+
+def team_submission_posture(
+    competition_key: Optional[str] = None,
+    limit: int = 50,
+) -> List[TeamSubmissionPosture]:
+    """Return per-team solves, failures and timing between submissions."""
+
+    if competition_key:
+        return _activity_team_submission_posture(competition_key, limit)
 
     rows = (
         db.session.query(
@@ -614,14 +795,17 @@ def team_submission_posture(limit: int = 50) -> List[TeamSubmissionPosture]:
                 team_name=team_name,
                 solves=solves_count,
                 failures=failures_count,
-                brute_force_ratio=ratio,
+                failures_per_solve=ratio,
                 median_seconds_between_attempts=median_seconds,
             )
         )
     return out
 
 
-def hunting_depth_by_actor(limit: int = 50) -> List[HuntingDepth]:
+def hunting_depth_by_actor(
+    competition_key: Optional[str] = None,
+    limit: int = 50,
+) -> List[HuntingDepth]:
     """Aggregate Kibana classification facts per actor.
 
     Reads the payload the gateway recorded (``kibana.kind``,
@@ -629,7 +813,7 @@ def hunting_depth_by_actor(limit: int = 50) -> List[HuntingDepth]:
     can see who actually explored the data.
     """
 
-    rows = (
+    query = (
         db.session.query(
             HikariActivity.actor_id,
             HikariActivity.actor_role,
@@ -638,8 +822,10 @@ def hunting_depth_by_actor(limit: int = 50) -> List[HuntingDepth]:
             HikariActivity.event_type,
         )
         .filter(HikariActivity.event_type.like("kibana%"))
-        .yield_per(500)
     )
+    if competition_key:
+        query = query.filter(HikariActivity.competition_key == competition_key)
+    rows = query.yield_per(500)
 
     by_actor: defaultdict[Optional[int], dict] = defaultdict(
         lambda: {

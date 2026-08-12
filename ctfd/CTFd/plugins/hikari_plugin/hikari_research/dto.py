@@ -78,6 +78,7 @@ class FeedbackSummary(BaseModel):
 
 class RecentEvent(BaseModel):
     id: int
+    competition_key: str
     event_type: str
     actor_id: Optional[int]
     actor_role: Optional[str]
@@ -90,46 +91,35 @@ class RecentEvent(BaseModel):
 
 
 class ResearchFilters(BaseModel):
+    competition_key: Optional[str] = None
     event_type: Optional[str] = None
     actor_id: Optional[int] = None
     team_id: Optional[int] = None
 
 
 class SubmissionPattern(BaseModel):
-    """Per-challenge aggregate of how solvers reached the answer.
-
-    The four buckets discriminate the two extremes the artifact paper
-    cares about: organic discovery (1 attempt → solve) vs. brute-force
-    grinding (many failures before solve). Bucket boundaries are chosen
-    to match a defender's reasoning: 1 is "knew it"; 2–5 is reasonable
-    iteration; 6–20 is exhaustive search; 20+ is grinding.
-    """
+    """Per-challenge distribution of attempts before a correct submission."""
 
     challenge_id: int
     challenge_name: str
     category: Optional[str]
     solvers: int
-    organic: int       # solve on first try
-    exploratory: int   # 2–5 attempts before solve
-    brute_force: int   # 6–20 attempts before solve
-    grinding: int      # 21+ attempts before solve
+    one_attempt: int
+    two_to_five_attempts: int
+    six_to_twenty_attempts: int
+    twenty_one_or_more_attempts: int
     median_attempts: int
     total_failures: int
 
 
 class TeamSubmissionPosture(BaseModel):
-    """How does each team interact with the scoreboard?
-
-    ``brute_force_ratio`` is failures per solve — a team with many
-    failures and few solves shows brute-force discipline; a team with
-    one failure per solve is reading the data and thinking.
-    """
+    """Observed submission counts and timing for one team."""
 
     team_id: Optional[int]
     team_name: Optional[str]
     solves: int
     failures: int
-    brute_force_ratio: float
+    failures_per_solve: float
     median_seconds_between_attempts: Optional[int]
 
 
@@ -160,5 +150,6 @@ class ResearchSummary(BaseModel):
     team_postures: List[TeamSubmissionPosture]
     hunting_depth: List[HuntingDepth]
     feedback: FeedbackSummary
+    available_competition_keys: List[str]
     available_event_types: List[str]
     recent: List[RecentEvent]

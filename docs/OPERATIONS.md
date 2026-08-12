@@ -4,9 +4,9 @@ Runbook para o técnico responsável durante uma competição Hikari. Cobre
 os incidentes mais prováveis e dá o comando exato para resolver cada um.
 Mantenha esta página aberta em outra aba durante o evento.
 
-> **Princípio:** todo comando aqui é reversível ou seguro de repetir. Se
-> tiver dúvida, prefira reiniciar o serviço a editar configuração no
-> meio do evento.
+> **Princípio:** os comandos de diagnóstico e reinício são seguros de repetir.
+> Os comandos marcados como destrutivos substituem ou removem dados. Se tiver
+> dúvida, prefira reiniciar o serviço a editar configuração no meio do evento.
 
 ---
 
@@ -74,6 +74,9 @@ docker image prune -a -f
 
 Para liberar espaço em índices Elasticsearch antigos (se ILM não estiver
 configurado):
+
+Remoção de índices de uma competição anterior (destrutivo: elimina os dados
+correspondentes do Elasticsearch):
 
 ```bash
 docker-compose exec elasticsearch \
@@ -189,6 +192,34 @@ Restaurar um checkpoint de produção (destrutivo):
 ```bash
 bash deploy/production/restore.sh /opt/hikari/backups/hikari-YYYYMMDDTHHMMSSZ.zip --yes
 ```
+
+### Execuções independentes
+
+O controle em `/admin/hikari/competitions` agenda uma execução dentro da
+instalação atual. Ele não separa as tabelas globais de usuários, equipes,
+desafios e pontuação do CTFd. Para iniciar uma competição sem relação com uma
+edição que será retomada depois, mantenha as execuções em projetos Compose
+distintos:
+
+```bash
+cd deploy/local
+COMPOSE_PROJECT_NAME=hikari-edicao-b \
+CTFD_PORT=8100 MAIL_UI_PORT=1180 MAIL_SMTP_PORT=1125 \
+docker-compose up -d --build
+```
+
+Use portas livres para cada projeto. Cada nome de projeto cria volumes e rede
+próprios. Para retomar uma edição pausada, suba o projeto original e restaure
+o checkpoint correspondente; a restauração substitui os dados daquela
+instalação.
+
+### Controle de uma execução
+
+Em `/admin/hikari/competitions`, crie uma execução, selecione a modalidade e
+inicie. Uma execução em andamento pode receber `+2 h` ou `+4 h`. Ao pausar,
+o tempo restante fica registrado; ao retomar, esse saldo volta a contar. Ao
+encerrar, gere um checkpoint e exporte as atividades e os feedbacks antes de
+reutilizar a instalação.
 
 ---
 

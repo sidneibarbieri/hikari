@@ -11,7 +11,7 @@
       <h2>Entrar na competição</h2>
       <p>
         Para participar dos desafios, entre em uma equipe existente ou crie uma
-        nova equipe para competir com seus integrantes.
+        nova. Uma equipe pode ter somente você ou incluir outros competidores.
       </p>
 
       {% if integrations.mlc() %}
@@ -23,7 +23,7 @@
       {% else %}
         <div class="team-join-actions">
           <a class="btn btn-primary" href="{{ url_for('teams.join') }}">Entrar em equipe</a>
-          <a class="btn btn-primary" href="{{ url_for('teams.new') }}">Criar equipe</a>
+          <a class="btn btn-primary" href="{{ url_for('teams.new') }}">Criar equipe, inclusive individual</a>
         </div>
       {% endif %}
     </div>

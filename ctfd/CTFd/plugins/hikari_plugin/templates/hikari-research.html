@@ -25,6 +25,14 @@
 
   <form class="research-filter-bar" method="get" action="/admin/hikari/research">
     <label>
+      <span>Execução</span>
+      <select name="competition_key">
+        {% for key in summary.available_competition_keys %}
+        <option value="{{ key }}" {% if summary.filters.competition_key == key %}selected{% endif %}>{{ key }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>
       <span>Evento</span>
       <select name="event_type">
         <option value="">Todos</option>
@@ -90,17 +98,10 @@
         </p>
       </div>
       <form class="feedback-key-form" method="get" action="/admin/hikari/research#feedback-report">
+        {% if summary.filters.competition_key %}<input type="hidden" name="competition_key" value="{{ summary.filters.competition_key }}">{% endif %}
         {% if summary.filters.event_type %}<input type="hidden" name="event_type" value="{{ summary.filters.event_type }}">{% endif %}
         {% if summary.filters.actor_id %}<input type="hidden" name="actor_id" value="{{ summary.filters.actor_id }}">{% endif %}
         {% if summary.filters.team_id %}<input type="hidden" name="team_id" value="{{ summary.filters.team_id }}">{% endif %}
-        <label>
-          <span>Competição</span>
-          <select name="competition_key">
-            {% for key in summary.feedback.competition_keys %}
-            <option value="{{ key }}" {% if key == feedback_key %}selected{% endif %}>{{ key }}</option>
-            {% endfor %}
-          </select>
-        </label>
         <button class="btn btn-primary" type="submit">Atualizar</button>
         <a class="btn btn-outline-primary" href="/admin/hikari/research/feedback.jsonl?competition_key={{ feedback_key|urlencode }}">
           Exportar feedback desta competição
@@ -110,16 +111,16 @@
 
     <div class="feedback-overview-grid">
       <article class="feedback-overview-card">
-        <span>Cobertura de respondentes</span>
+        <span>Participantes com resposta</span>
         <strong>{{ summary.feedback.coverage.respondents }}/{{ summary.feedback.coverage.eligible_users }}</strong>
         <div class="feedback-progress"><span style="width: {{ summary.feedback.coverage.response_rate }}%"></span></div>
-        <small>{{ "%.1f"|format(summary.feedback.coverage.response_rate) }}% responderam; {{ summary.feedback.coverage.pending_users }} pendentes.</small>
+        <small>Participantes com atividade ou feedback nesta execução: {{ "%.1f"|format(summary.feedback.coverage.response_rate) }}% responderam; {{ summary.feedback.coverage.pending_users }} pendentes.</small>
       </article>
       <article class="feedback-overview-card">
         <span>Equipes com resposta</span>
         <strong>{{ summary.feedback.coverage.teams_with_feedback }}/{{ summary.feedback.coverage.total_teams }}</strong>
         <div class="feedback-progress"><span style="width: {{ summary.feedback.coverage.team_response_rate }}%"></span></div>
-        <small>{{ "%.1f"|format(summary.feedback.coverage.team_response_rate) }}% das equipes têm pelo menos uma resposta.</small>
+        <small>{{ "%.1f"|format(summary.feedback.coverage.team_response_rate) }}% das equipes observadas têm pelo menos uma resposta.</small>
       </article>
       <article class="feedback-overview-card">
         <span>Usabilidade SUS</span>
@@ -258,10 +259,8 @@
     <h2>Padrão de submissões por desafio</h2>
     <p class="research-card-help">
       Classifica cada solução pela quantidade de tentativas antes do acerto.
-      <strong>Orgânico</strong> = 1 tentativa (encontrou nos dados).
-      <strong>Exploratório</strong> = 2–5.
-      <strong>Força bruta</strong> = 6–20.
-      <strong>Grinding</strong> = 21+ (busca exaustiva).
+      As faixas descrevem contagens registradas; não identificam a intenção do participante.
+      <strong>1</strong>, <strong>2–5</strong>, <strong>6–20</strong> e <strong>21+</strong> tentativas.
     </p>
     {% if summary.submission_patterns %}
     <table class="table table-sm">
@@ -270,10 +269,10 @@
           <th>Desafio</th>
           <th>Categoria</th>
           <th class="text-right">Solvers</th>
-          <th class="text-right" title="Solve em 1 tentativa">Orgânico</th>
-          <th class="text-right" title="2 a 5 tentativas">Explor.</th>
-          <th class="text-right" title="6 a 20 tentativas">Força bruta</th>
-          <th class="text-right" title="21 ou mais tentativas">Grinding</th>
+          <th class="text-right" title="Solve em 1 tentativa">1</th>
+          <th class="text-right" title="2 a 5 tentativas">2–5</th>
+          <th class="text-right" title="6 a 20 tentativas">6–20</th>
+          <th class="text-right" title="21 ou mais tentativas">21+</th>
           <th class="text-right" title="Mediana de tentativas até o solve">Mediana</th>
           <th class="text-right" title="Total de submissões incorretas no desafio">Falhas</th>
         </tr>
@@ -284,10 +283,10 @@
           <td>{{ row.challenge_name }}</td>
           <td>{{ row.category or "—" }}</td>
           <td class="text-right">{{ row.solvers }}</td>
-          <td class="text-right">{{ row.organic }}</td>
-          <td class="text-right">{{ row.exploratory }}</td>
-          <td class="text-right">{{ row.brute_force }}</td>
-          <td class="text-right">{{ row.grinding }}</td>
+          <td class="text-right">{{ row.one_attempt }}</td>
+          <td class="text-right">{{ row.two_to_five_attempts }}</td>
+          <td class="text-right">{{ row.six_to_twenty_attempts }}</td>
+          <td class="text-right">{{ row.twenty_one_or_more_attempts }}</td>
           <td class="text-right">{{ row.median_attempts }}</td>
           <td class="text-right">{{ row.total_failures }}</td>
         </tr>
@@ -303,8 +302,8 @@
     <article class="research-card">
       <h2>Postura de submissão por equipe</h2>
       <p class="research-card-help">
-        Razão de força bruta = falhas por solve. Valores baixos (≤ 2) sugerem
-        análise prévia; valores altos sugerem brute force.
+        Razão de falhas por solução. A métrica descreve submissões registradas;
+        ela não determina a estratégia empregada pela equipe.
       </p>
       {% if summary.team_postures %}
       <table class="table table-sm">
@@ -323,7 +322,7 @@
             <td>{{ row.team_name or "—" }}</td>
             <td class="text-right">{{ row.solves }}</td>
             <td class="text-right">{{ row.failures }}</td>
-            <td class="text-right">{{ "%.2f"|format(row.brute_force_ratio) }}</td>
+            <td class="text-right">{{ "%.2f"|format(row.failures_per_solve) }}</td>
             <td class="text-right">{{ row.median_seconds_between_attempts if row.median_seconds_between_attempts is not none else "—" }}</td>
           </tr>
           {% endfor %}

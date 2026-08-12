@@ -163,7 +163,7 @@ echo "PASS: challenge.view event captured for player on challenge $challenge_id"
 incorrect_attempts=$(db_query "SELECT COUNT(*) FROM hikari_activity WHERE event_type='challenge.attempt' AND actor_id=$player_id AND target_id=$challenge_id AND JSON_UNQUOTE(JSON_EXTRACT(payload, '$.attempt.result'))='incorrect';" | tr -d '[:space:]')
 [[ "$incorrect_attempts" -ge 2 ]] \
   || { echo "FAIL: expected 2 incorrect attempt payloads, found $incorrect_attempts"; exit 1; }
-echo "PASS: incorrect flag attempts are classified for brute-force analysis"
+echo "PASS: correct and incorrect flag attempts are recorded for analysis"
 
 correct_attempts=$(db_query "SELECT COUNT(*) FROM hikari_activity WHERE event_type='challenge.attempt' AND actor_id=$player_id AND target_id=$challenge_id AND JSON_UNQUOTE(JSON_EXTRACT(payload, '$.attempt.result'))='correct';" | tr -d '[:space:]')
 [[ "$correct_attempts" -ge 1 ]] \

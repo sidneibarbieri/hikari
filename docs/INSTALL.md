@@ -36,13 +36,13 @@ container images, MariaDB, Elasticsearch indices and Kafka topics.
 
 `bootstrap.sh` first runs the acceptance suite in a disposable Compose
 project and then starts the local operator stack. This sequencing avoids
-competing Elasticsearch instances on an 8 GB host. A clean run finishes at
-`passed: 26` with no failures. Every step prints its own assertion output and
+competing Elasticsearch instances on an 8 GB host. A clean run finishes with
+all checks passing. Every step prints its own assertion output and
 the orchestrator prints a final summary.
 
-The default admin credentials created by `setup_ctfd.sh` are
-`admin@hikari.local` / `hikari_comp@2026`. Change the password through
-`Configurações` after the first login.
+The default administrator created by `setup_ctfd.sh` accepts `admin` or
+`admin@hikari.local` as the login name. The initial password is
+`hikari_comp@2026`. Change it through `Configurações` after the first login.
 
 ## Surfaces
 
@@ -56,6 +56,7 @@ After a green acceptance run, the local stack exposes:
 | `http://localhost:8000/hikari/live` | Anyone | Live competition board |
 | `http://localhost:8000/hikari/feedback` | Authenticated competitor | Research questionnaire |
 | `http://localhost:8000/admin/hikari` | Administrator | Hikari plugin admin |
+| `http://localhost:8000/admin/hikari/competitions` | Administrator | Timed execution control |
 | `http://localhost:8000/admin/hikari/research` | Administrator | Research dashboard and exports |
 
 The Kibana port is not exposed on the host. Competitors reach Kibana only
@@ -88,6 +89,27 @@ with `docker compose`.
 Adding `-v` removes the named volumes, including the MariaDB database, the
 Elasticsearch indices and the CTFd uploads directory. Use this when you
 want a clean run.
+
+## Running a competition
+
+Open `http://localhost:8000/admin/hikari/competitions` as an administrator.
+Create a draft with a descriptive key, choose the scoring mode, and start the
+execution. The initial duration may be extended by two or four hours while
+the execution is running. Pausing preserves the remaining time; resuming
+restores that remaining time.
+
+Choose the scoring mode before participants submit flags:
+
+- **Equipes** supports collaborative teams and one-person teams. A one-person
+  team is the supported solo mode when team scoring is selected.
+- **Competidores individuais** mantém a pontuação por conta e desativa as
+  equipes durante essa execução.
+
+CTFd stores identities, scores and challenges globally in a database. One
+installation therefore runs one competition at a time. To hold an unrelated
+competition while preserving another for later continuation, start a second
+Compose project with its own `.env`, project name, ports and volumes. The
+checkpoint and recovery procedure is in [OPERATIONS.md](OPERATIONS.md).
 
 ## Importing a legacy competition
 

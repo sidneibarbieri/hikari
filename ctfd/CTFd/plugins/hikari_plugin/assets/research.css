@@ -37,7 +37,7 @@
 
 .research-filter-bar {
     display: grid;
-    grid-template-columns: minmax(13rem, 1.2fr) minmax(9rem, 0.8fr) minmax(9rem, 0.8fr) auto;
+    grid-template-columns: minmax(10rem, 0.9fr) minmax(13rem, 1.2fr) minmax(9rem, 0.8fr) minmax(9rem, 0.8fr) auto;
     gap: 0.75rem;
     align-items: start;
     margin-bottom: 1rem;
@@ -59,7 +59,7 @@
 
 .research-filter-bar span {
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     color: var(--hikari-text-muted);
     font-size: 0.74rem;
     font-weight: 700;

@@ -25,13 +25,16 @@ training review and research analysis.
   form used in previous competitions.
 - **Research dashboard** with aggregations, filters by event, actor and team,
   feedback coverage by competition, sponsor-ready summary and JSONL export.
+- **Execution control** for creating a timed run, selecting team or individual
+  scoring before it starts, extending a running schedule, pausing, resuming
+  and closing the run.
 - **Local stack** as one `docker-compose` (CTFd, MariaDB, Redis, Kafka,
   Elasticsearch, Kibana, Logstash, fake SMTP).
 
 ## Repository layout
 
     ctfd/         CTFd fork with the Hikari plugin, challenge type, and theme
-    deploy/local/ docker-compose stack and acceptance scripts
+  deploy/local/ docker-compose stack, operator scripts and acceptance checks
     docs/         Documentation
 
 ## Quick start
@@ -57,7 +60,8 @@ DB and Elasticsearch, competitor SIEM access with query attribution, Kibana
 proxy forensic classification, local feedback capture and export, lone-wolf
 and team competitor flows, admin challenge creation and player submission,
 progressive log activation after solve, the live competition board, and the
-research dashboard with feedback coverage and JSONL export.
+research dashboard with feedback coverage and JSONL export. It also verifies
+that an administrator can create, start and extend a timed execution.
 
 ## Documentation map
 
@@ -71,6 +75,7 @@ research dashboard with feedback coverage and JSONL export.
 | `docs/ARTIFACT.md` | Reviewer | Execution evidence, badge mapping and operational scope |
 | `docs/AUTH.md` | Operator | Authentication options and MajorLeagueCyber integration |
 | `docs/PRIVACY.md` | Operator or DPO | Data-handling checklist and participant rights |
+| `docs/OPERATIONS.md` | Event operator | Execution control, checkpoint and recovery procedures |
 
 ## Compatibility
 

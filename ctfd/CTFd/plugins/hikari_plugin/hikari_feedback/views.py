@@ -1,5 +1,4 @@
 import json
-import os
 from datetime import datetime
 
 from flask import Response, flash, redirect, render_template, request, stream_with_context, url_for
@@ -12,6 +11,8 @@ from CTFd.utils.user import get_current_user, get_ip
 from .dto import FeedbackPayload
 from .forms import FeedbackForm, iter_groups
 from .models import FeedbackResponse
+from CTFd.plugins.hikari_plugin.hikari_competitions.context import current_competition_key
+
 
 
 def register(blueprint):
@@ -157,7 +158,3 @@ def record_to_dict(record: FeedbackResponse) -> dict:
         "request_ip": record.request_ip,
         "user_agent": record.user_agent,
     }
-
-
-def current_competition_key():
-    return os.environ.get("HIKARI_COMPETITION_KEY", "local")

@@ -29,6 +29,13 @@ dependent logs can be streamed into Elasticsearch through Kafka. The hunting
 dataset changes during the competition, so time to solve affects how much
 noise later competitors must inspect.
 
+An administrator creates a named execution before it starts. Its key is
+stored with Hikari activity and feedback records, its schedule is applied to
+CTFd, and its timed state can be extended, paused, resumed or closed from the
+administrative interface. CTFd's identities, scoring and challenges are
+global tables, so one deployment hosts one active competition. Independent
+concurrent competitions require separate Compose projects and volumes.
+
 ## Research flow
 
 The plugin records observed CTFd and Kibana actions in `hikari_activity`.

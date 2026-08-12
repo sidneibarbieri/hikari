@@ -13,6 +13,7 @@ class HikariActivity(db.Model):
     __tablename__ = "hikari_activity"
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    competition_key = db.Column(db.String(64), nullable=False, index=True, default="local")
     event_type = db.Column(db.String(64), nullable=False, index=True)
     actor_id = db.Column(db.Integer, nullable=True, index=True)
     actor_role = db.Column(db.String(16), nullable=True)

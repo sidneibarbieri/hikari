@@ -111,6 +111,7 @@ hr {
     font-size: 0.9rem;
     font-weight: 600;
     line-height: 1.2;
+    white-space: nowrap;
 }
 
 .jumbotron {
@@ -966,6 +967,7 @@ select option {
     border-radius: var(--hikari-radius);
 }
 .hikari-team-form .hikari-field {
+    grid-template-columns: minmax(12rem, 15rem) minmax(0, 1fr);
     margin-bottom: 1rem;
 }
 .hikari-team-form .hikari-settings-actions .btn {
@@ -1277,6 +1279,10 @@ select option {
     }
 }
 
+.navbar hr {
+    display: none !important;
+}
+
 @media (max-width: 767.98px) {
     .navbar {
         min-height: 6.5rem;
@@ -1313,9 +1319,6 @@ select option {
     .navbar-nav.ms-md-auto {
         margin-left: 0 !important;
     }
-    .navbar hr {
-        display: none !important;
-    }
     .navbar .nav-link {
         padding: 0.25rem 0 !important;
         font-size: 0.86rem;
@@ -1325,6 +1328,35 @@ select option {
     }
     .navbar .d-none.d-md-inline.d-lg-none {
         display: none !important;
+    }
+}
+
+@media (min-width: 768px) and (max-width: 84rem) {
+    .navbar-expand-md > .container,
+    .navbar-expand-md > .container-fluid,
+    .navbar-expand-md > .container-md,
+    .navbar-expand-md > .container-lg,
+    .navbar-expand-md > .container-xl {
+        flex-wrap: wrap;
+    }
+    .navbar-expand-md .navbar-collapse {
+        width: 100%;
+        flex-basis: 100%;
+    }
+    .navbar-expand-md .navbar-nav {
+        min-width: 0;
+    }
+    .navbar-expand-md .navbar-nav .nav-link {
+        padding-right: 0.5rem;
+        padding-left: 0.5rem;
+        font-size: 0.84rem;
+    }
+}
+
+@media (max-width: 43rem) {
+    .hikari-team-form .hikari-field {
+        grid-template-columns: 1fr;
+        gap: 0.4rem;
     }
 }
 

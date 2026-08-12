@@ -158,7 +158,7 @@ cat <<EOF
 Hikari is up.
   CTFd:  http://localhost:${ctfd_port}
   SIEM:  http://localhost:${ctfd_port}/hikari/siem
-  Login: admin@hikari.local / hikari_comp@2026
+  Login: admin ou admin@hikari.local / hikari_comp@2026
 
 Change the administrator password before exposing the service. See SECURITY.md.
 EOF

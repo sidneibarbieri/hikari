@@ -67,11 +67,11 @@
 
                 <div class="hikari-field">
                   <label class="form-label" for="{{ form.confirm.id }}">Senha atual</label>
-                  {{ form.confirm(class="form-control") }}
+                  {{ form.confirm(class="form-control", autocomplete="current-password") }}
                 </div>
                 <div class="hikari-field">
                   <label class="form-label" for="{{ form.password.id }}">Nova senha</label>
-                  {{ form.password(class="form-control") }}
+                  {{ form.password(class="form-control", autocomplete="new-password") }}
                 </div>
 
                 <header class="hikari-settings-section">

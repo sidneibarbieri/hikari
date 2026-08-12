@@ -17,6 +17,7 @@ from CTFd.utils.user import get_current_user, get_ip
 
 from CTFd.plugins.hikari_plugin.hikari_activity.dto import ActivityRecord
 from CTFd.plugins.hikari_plugin.hikari_activity import recorder
+from CTFd.plugins.hikari_plugin.hikari_competitions.context import current_competition_key
 
 from .classifier import KibanaQueryFacts, classify
 
@@ -74,6 +75,7 @@ def record_kibana_activity(path: str, method: str, body: bytes, status_code: int
     }
     record = ActivityRecord(
         event_type=event_type,
+        competition_key=current_competition_key(),
         actor_id=user.id if user else None,
         actor_role="admin" if user and user.type == "admin" else "user",
         team_id=user.team_id if user else None,

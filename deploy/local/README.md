@@ -7,7 +7,7 @@ Elasticsearch.
 ## Requirements
 
 - Docker Engine with either the Compose plugin or `docker-compose`.
-- About 6 GB of RAM free for the local stack. Elasticsearch uses a 1 GB heap
+- About 6 GB of RAM free for the local stack. Elasticsearch uses a 512 MB heap
   by default. Run the isolated acceptance stack with the local stack stopped
   on workstations with limited memory. Override its `HIKARI_ACCEPTANCE_*`
   variables only when the host has sufficient memory.

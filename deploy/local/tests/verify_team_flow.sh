@@ -46,7 +46,7 @@ register() {
 }
 
 login() {
-  local jar=$1 email=$2 password=$3 page nonce code
+  local jar=$1 username=$2 password=$3 page nonce code
   : > "$jar"  # fresh session to exercise login
   page=$(mktemp)
   curl -sS -c "$jar" -b "$jar" -o "$page" "$CTFD_URL/login"
@@ -54,10 +54,10 @@ login() {
   rm -f "$page"
   code=$(curl -sS -c "$jar" -b "$jar" -o /dev/null -w '%{http_code}' \
     -X POST "$CTFD_URL/login" \
-    --data-urlencode "name=$email" \
+    --data-urlencode "name=$username" \
     --data-urlencode "password=$password" \
     --data-urlencode "nonce=$nonce")
-  [[ "$code" == "302" ]] || { echo "login $email returned $code"; return 1; }
+  [[ "$code" == "302" ]] || { echo "login $username returned $code"; return 1; }
 }
 
 captain_jar=$(mktemp)
@@ -69,7 +69,7 @@ register "$captain_jar" "$CAPTAIN_NAME" "$CAPTAIN_EMAIL" "$CAPTAIN_PASSWORD"
 echo "PASS: captain registered"
 
 echo "== captain creates team =="
-login "$captain_jar" "$CAPTAIN_EMAIL" "$CAPTAIN_PASSWORD"
+login "$captain_jar" "$CAPTAIN_NAME" "$CAPTAIN_PASSWORD"
 page=$(mktemp)
 curl -sS -c "$captain_jar" -b "$captain_jar" -o "$page" "$CTFD_URL/teams/new"
 grep -q 'class="hikari-team-form"' "$page" \
@@ -87,7 +87,7 @@ echo "PASS: team $TEAM_NAME created"
 
 echo "== register member and join the team =="
 register "$member_jar" "$MEMBER_NAME" "$MEMBER_EMAIL" "$MEMBER_PASSWORD"
-login "$member_jar" "$MEMBER_EMAIL" "$MEMBER_PASSWORD"
+login "$member_jar" "$MEMBER_NAME" "$MEMBER_PASSWORD"
 page=$(mktemp)
 curl -sS -c "$member_jar" -b "$member_jar" -o "$page" "$CTFD_URL/teams/join"
 grep -q 'class="hikari-team-form"' "$page" \

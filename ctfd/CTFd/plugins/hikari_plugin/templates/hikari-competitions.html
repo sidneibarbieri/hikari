@@ -1,0 +1,100 @@
+{% extends "admin/base.html" %}
+
+{% block stylesheets %}
+{{ super() }}
+<link rel="stylesheet" href="/plugins/hikari_plugin/assets/theme.css">
+{% endblock %}
+
+{% block content %}
+{% set status_labels = {
+  "draft": "Rascunho",
+  "scheduled": "Agendada",
+  "running": "Em andamento",
+  "paused": "Pausada",
+  "finished": "Encerrada"
+} %}
+<main class="hikari-competition-admin">
+  <header class="hikari-admin-header">
+    <div>
+      <h1>Execuções de competição</h1>
+      <p>Controle o prazo e a modalidade da execução instalada neste ambiente.</p>
+    </div>
+    {% if active_run %}
+    <div class="hikari-status-chip hikari-status-chip--{{ active_run.status }}">
+      {{ status_labels.get(active_run.status, active_run.status) }} · {{ active_run.key }}
+    </div>
+    {% endif %}
+  </header>
+
+  <section class="hikari-admin-card">
+    <h2>Nova execução</h2>
+    <p class="hikari-admin-help">Uma instalação executa uma competição por vez. Para realizar outra em paralelo, use uma instalação com banco, volumes e portas próprios.</p>
+    <form class="hikari-admin-form" method="post">
+      <input name="nonce" type="hidden" value="{{ csrf_nonce }}">
+      <label>Chave da execução
+        <input class="form-control" name="key" required pattern="[a-z0-9][a-z0-9-]{2,63}" placeholder="edicao-2026">
+      </label>
+      <label>Nome exibido
+        <input class="form-control" name="name" required maxlength="128" placeholder="Competição de defesa cibernética">
+      </label>
+      <label>Modalidade de pontuação
+        <select class="form-select" name="scoring_mode" required>
+          <option value="teams">Equipes, inclusive equipes individuais</option>
+          <option value="users">Competidores individuais</option>
+        </select>
+      </label>
+      <label>Duração inicial
+        <select class="form-select" name="duration_minutes" required>
+          <option value="240">4 horas</option>
+          <option value="120">2 horas</option>
+          <option value="360">6 horas</option>
+          <option value="480">8 horas</option>
+        </select>
+      </label>
+      <button class="btn btn-primary" type="submit">Criar execução</button>
+    </form>
+  </section>
+
+  <section class="hikari-admin-card">
+    <h2>Histórico</h2>
+    {% if runs %}
+    <div class="table-responsive"><table class="table">
+      <thead><tr><th>Execução</th><th>Modalidade</th><th>Estado</th><th>Início</th><th>Término</th><th>Ações</th></tr></thead>
+      <tbody>
+      {% for run in runs %}
+      <tr>
+        <td><strong>{{ run.name }}</strong><br><code>{{ run.key }}</code></td>
+        <td>{{ "Equipes" if run.scoring_mode == "teams" else "Individual" }}</td>
+        <td><span class="hikari-status-chip hikari-status-chip--{{ run.status }}">{{ status_labels.get(run.status, run.status) }}</span></td>
+        <td>{{ run.starts_at.strftime("%d/%m/%Y %H:%M") if run.starts_at else "—" }}</td>
+        <td>{{ run.ends_at.strftime("%d/%m/%Y %H:%M") if run.ends_at else "—" }}</td>
+        <td>
+          <div class="hikari-admin-actions">
+          {% if run.status in ["draft", "scheduled"] %}
+          <form method="post" action="/admin/hikari/competitions/{{ run.id }}/start"><input name="nonce" type="hidden" value="{{ csrf_nonce }}"><button class="btn btn-primary" type="submit">Iniciar</button></form>
+          {% elif run.status == "running" %}
+          <form method="post" action="/admin/hikari/competitions/{{ run.id }}/extend"><input name="nonce" type="hidden" value="{{ csrf_nonce }}"><input name="hours" type="hidden" value="2"><button class="btn btn-outline-primary" type="submit">+2 h</button></form>
+          <form method="post" action="/admin/hikari/competitions/{{ run.id }}/extend"><input name="nonce" type="hidden" value="{{ csrf_nonce }}"><input name="hours" type="hidden" value="4"><button class="btn btn-outline-primary" type="submit">+4 h</button></form>
+          <form method="post" action="/admin/hikari/competitions/{{ run.id }}/pause"><input name="nonce" type="hidden" value="{{ csrf_nonce }}"><button class="btn btn-secondary" type="submit">Pausar</button></form>
+          <form method="post" action="/admin/hikari/competitions/{{ run.id }}/finish"><input name="nonce" type="hidden" value="{{ csrf_nonce }}"><button class="btn btn-danger" type="submit">Encerrar</button></form>
+          {% elif run.status == "paused" %}
+          <form method="post" action="/admin/hikari/competitions/{{ run.id }}/resume"><input name="nonce" type="hidden" value="{{ csrf_nonce }}"><button class="btn btn-primary" type="submit">Retomar</button></form>
+          <form method="post" action="/admin/hikari/competitions/{{ run.id }}/finish"><input name="nonce" type="hidden" value="{{ csrf_nonce }}"><button class="btn btn-danger" type="submit">Encerrar</button></form>
+          {% endif %}
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table></div>
+    {% else %}
+    <p class="hikari-admin-help">Ainda não há execução registrada.</p>
+    {% endif %}
+  </section>
+
+  <section class="hikari-admin-note">
+    <h2>Preservação e retomada</h2>
+    <p>Pausar preserva o tempo restante. Retomar restaura esse tempo. Para adicionar tempo, use +2 h ou +4 h durante a execução. Ao encerrar, gere um checkpoint pelo procedimento de operações. Restaurar um checkpoint substitui os dados desta instalação; para manter uma edição disponível enquanto outra ocorre, inicie outra instalação isolada.</p>
+  </section>
+</main>
+{% endblock %}

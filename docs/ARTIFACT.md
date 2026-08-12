@@ -109,7 +109,7 @@ Mapping to evidence in this repository:
 | Badge | Evidence |
 | --- | --- |
 | Available | Public Git repository with source code, environment examples, installation documentation, and Docker image dependencies declared in Compose files. |
-| Functional | `make review` executes 26 isolated checks covering registration, login, team flow, challenge solve, progressive log unlock, SIEM, live board, research export, and feedback. |
+| Functional | `make review` executes 27 isolated checks covering registration, login, team flow, timed execution control, challenge solve, progressive log unlock, SIEM, live board, research export, and feedback. |
 | Reproducible | `make review` creates a disposable Compose project. `tests/verify_backup_import.sh` proves that a legacy backup restores into a separate project and reconstructs the active challenge log dataset. |
 | Sustainable | Documented module boundaries, pinned infrastructure images, reproducible migration scripts, and checks that reject repository debris. |
 

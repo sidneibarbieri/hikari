@@ -12,6 +12,7 @@ from typing import Any, Dict, Optional
 from flask import Request, Response
 
 from .dto import ActivityRecord
+from CTFd.plugins.hikari_plugin.hikari_competitions.context import current_competition_key
 from .event_map import ObservedEvent
 
 
@@ -114,6 +115,7 @@ def build_record(
 
     return ActivityRecord(
         event_type=event.event_type,
+        competition_key=current_competition_key(),
         actor_id=actor_id,
         actor_role=_actor_role(user_type),
         team_id=user_team_id,

@@ -76,7 +76,7 @@ nonce=$(extract_nonce "$page")
 code=$(curl -sS -c "$cookie_jar" -b "$cookie_jar" \
   -o /dev/null -w '%{http_code}' \
   -X POST "$CTFD_URL/login" \
-  --data-urlencode "name=$PLAYER_EMAIL" \
+  --data-urlencode "name=$PLAYER_NAME" \
   --data-urlencode "password=$PLAYER_PASSWORD" \
   --data-urlencode "nonce=$nonce")
 assert_status 302 "$code" "POST /login"

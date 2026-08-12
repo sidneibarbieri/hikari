@@ -17,6 +17,7 @@ class ActivityRecord(BaseModel):
     """A single observed action performed against the platform."""
 
     event_type: str
+    competition_key: str
     actor_id: Optional[int] = None
     actor_role: Optional[str] = None
     team_id: Optional[int] = None

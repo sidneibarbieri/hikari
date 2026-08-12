@@ -9,6 +9,15 @@ set -euo pipefail
 CTFD_URL=${CTFD_URL:-http://localhost:8000}
 ADMIN_EMAIL=${ADMIN_EMAIL:-admin@hikari.local}
 ADMIN_PASSWORD=${ADMIN_PASSWORD:-hikari_comp@2026}
+SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+LOCAL_DIR=$(cd "$SCRIPT_DIR/.." && pwd)
+COMPOSE_FILE=${COMPOSE_FILE:-"$LOCAL_DIR/docker-compose.yml"}
+
+current_competition_key() {
+  docker-compose -f "$COMPOSE_FILE" exec -T db mariadb -N -uctfd -pctfd ctfd \
+    -e "SELECT value FROM config WHERE \`key\` = 'hikari_competition_key';" \
+    | tr -d '\r\n'
+}
 
 cookie_jar=$(mktemp)
 trap 'rm -f "$cookie_jar" /tmp/hikari-research-*' EXIT
@@ -50,7 +59,7 @@ grep -q "Médias do questionário" "$dashboard" \
   || { echo "FAIL: dashboard missing feedback metrics section"; exit 1; }
 grep -q "Panorama do feedback" "$dashboard" \
   || { echo "FAIL: dashboard missing feedback overview"; exit 1; }
-grep -q "Cobertura de respondentes" "$dashboard" \
+grep -q "Participantes com resposta" "$dashboard" \
   || { echo "FAIL: dashboard missing feedback coverage"; exit 1; }
 grep -q "Status por equipe" "$dashboard" \
   || { echo "FAIL: dashboard missing team feedback status"; exit 1; }
@@ -86,8 +95,10 @@ head -1 "$export_file" | jq -e '.event_type and .occurred_at' >/dev/null \
 echo "PASS: JSONL export has $line_count parseable records (sample line valid)"
 
 feedback_file=/tmp/hikari-research-feedback.jsonl
+competition_key=$(current_competition_key)
+competition_key=${competition_key:-local}
 code=$(curl -sS -c "$cookie_jar" -b "$cookie_jar" -o "$feedback_file" \
-  -w '%{http_code}' "$CTFD_URL/admin/hikari/research/feedback.jsonl?competition_key=local")
+  -w '%{http_code}' "$CTFD_URL/admin/hikari/research/feedback.jsonl?competition_key=$competition_key")
 [[ "$code" == "200" ]] \
   || { echo "FAIL: feedback export returned $code"; exit 1; }
 feedback_lines=$(wc -l < "$feedback_file" | tr -d '[:space:]')
@@ -95,7 +106,7 @@ if [[ "$feedback_lines" -lt 1 ]]; then
   echo "FAIL: filtered feedback export contained 0 lines"
   exit 1
 fi
-head -1 "$feedback_file" | jq -e '.competition_key == "local" and .payload' >/dev/null \
+head -1 "$feedback_file" | jq -e --arg key "$competition_key" '.competition_key == $key and .payload' >/dev/null \
   || { echo "FAIL: filtered feedback export has wrong shape"; head -3 "$feedback_file"; exit 1; }
 echo "PASS: competition feedback export has $feedback_lines parseable records"
 
