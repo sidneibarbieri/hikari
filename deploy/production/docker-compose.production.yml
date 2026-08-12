@@ -6,8 +6,6 @@
 # Uso: docker compose -f docker-compose.production.yml --env-file .compose.env up -d
 # =============================================================================
 
-version: "3.9"
-
 # Reutiliza o compose base de desenvolvimento como âncora
 # (define os serviços, imagens, redes e volumes base)
 include:
@@ -18,16 +16,24 @@ services:
   ctfd:
     restart: unless-stopped
     # Em produção, o CTFd escuta apenas em localhost (Nginx faz o proxy SSL)
-    ports:
+    ports: !override
       - "127.0.0.1:${CTFD_PORT:-8000}:8000"
     environment:
       SECRET_KEY: "${SECRET_KEY}"
-      DATABASE_URL: "mysql+pymysql://ctfd:${DATABASE_PASSWORD:-ctfd}@db/ctfd"
+      DATABASE_URL: "mysql+pymysql://ctfd:${DATABASE_PASSWORD:?DATABASE_PASSWORD is required}@db/ctfd"
       REDIS_URL: "redis://cache:6379"
       SERVER_PUBLICBASEURL: "https://${HIKARI_DOMAIN}/hikari/kibana"
       HIKARI_GOOGLE_CLIENT_ID: "${HIKARI_GOOGLE_CLIENT_ID:-}"
       HIKARI_GOOGLE_CLIENT_SECRET: "${HIKARI_GOOGLE_CLIENT_SECRET:-}"
       HIKARI_OAUTH_REDIRECT_BASE: "https://${HIKARI_DOMAIN}"
+      MAILFROM_ADDR: "${MAILFROM_ADDR:-noreply@localhost}"
+      MAIL_SERVER: "${MAIL_SERVER:-}"
+      MAIL_PORT: "${MAIL_PORT:-}"
+      MAIL_USEAUTH: "${MAIL_USEAUTH:-false}"
+      MAIL_USERNAME: "${MAIL_USERNAME:-}"
+      MAIL_PASSWORD: "${MAIL_PASSWORD:-}"
+      MAIL_TLS: "${MAIL_TLS:-false}"
+      MAIL_SSL: "${MAIL_SSL:-false}"
       WORKERS: "4"
 
   db:
@@ -35,8 +41,10 @@ services:
     # MariaDB nunca exposto publicamente em produção
     ports: []
     environment:
-      MYSQL_ROOT_PASSWORD: "${DATABASE_PASSWORD:-ctfd}"
-      MYSQL_PASSWORD: "${DATABASE_PASSWORD:-ctfd}"
+      MARIADB_ROOT_PASSWORD: "${DATABASE_PASSWORD:?DATABASE_PASSWORD is required}"
+      MARIADB_USER: ctfd
+      MARIADB_PASSWORD: "${DATABASE_PASSWORD:?DATABASE_PASSWORD is required}"
+      MARIADB_DATABASE: ctfd
 
   cache:
     restart: unless-stopped
@@ -51,6 +59,9 @@ services:
     environment:
       KIBANA_ENCRYPTION_KEY: "${KIBANA_ENCRYPTION_KEY}"
       ES_ENCRYPTION_KEY: "${ES_ENCRYPTION_KEY}"
+      path.repo: /usr/share/elasticsearch/snapshots
+    volumes:
+      - "${HIKARI_BACKUP_DIR:-/opt/hikari/backups}/elasticsearch:/usr/share/elasticsearch/snapshots"
     ulimits:
       memlock:
         soft: -1
@@ -64,3 +75,7 @@ services:
 
   logstash:
     restart: unless-stopped
+
+  mailcatcher:
+    profiles: [development]
+    ports: []

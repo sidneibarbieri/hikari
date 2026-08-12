@@ -6,9 +6,10 @@ set -euo pipefail
 
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 LOCAL_DIR=$(cd "$SCRIPT_DIR/.." && pwd)
-cd "$SCRIPT_DIR"
+source "$LOCAL_DIR/lib/compose.sh"
+cd "$LOCAL_DIR"
 
-default_zip="$SCRIPT_DIR/../../../data_backup.zip"
+default_zip="$LOCAL_DIR/../../../data_backup.zip"
 ZIP=${1:-$default_zip}
 [[ -f "$ZIP" ]] || { echo "usage: $0 <path-to-backup.zip>"; exit 2; }
 
@@ -19,17 +20,19 @@ MAIL_UI_PORT=${HIKARI_IMPORT_MAIL_UI_PORT:-1081}
 MAIL_SMTP_PORT=${HIKARI_IMPORT_MAIL_SMTP_PORT:-1026}
 CTFD_URL=${CTFD_URL:-http://localhost:${CTFD_PORT}}
 COMPOSE_FILE=${COMPOSE_FILE:-$LOCAL_DIR/docker-compose.yml}
-COMPOSE=(docker-compose -f "$COMPOSE_FILE" -p "$PROJECT")
+compose() {
+  hikari_compose -f "$COMPOSE_FILE" -p "$PROJECT" "$@"
+}
 
 cleanup() {
   if [[ "${KEEP_IMPORT_STACK:-0}" != "1" ]]; then
-    "${COMPOSE[@]}" down -v --remove-orphans >/dev/null 2>&1 || true
+    compose down -v --remove-orphans >/dev/null 2>&1 || true
   fi
 }
 trap cleanup EXIT
 
 query_db() {
-  "${COMPOSE[@]}" exec -T db \
+  compose exec -T db \
     mariadb -uctfd -pctfd ctfd -N -B -e "$1" | tr -d '[:space:]'
 }
 
@@ -46,19 +49,19 @@ export COMPOSE_PROJECT_NAME="$PROJECT"
 export CTFD_PORT MAIL_UI_PORT MAIL_SMTP_PORT CTFD_URL
 
 echo "==> starting isolated stack: $PROJECT"
-"${COMPOSE[@]}" up -d --build
+compose up -d --build
 
 echo "==> waiting for isolated stack"
-COMPOSE_PROJECT_NAME="$PROJECT" CTFD_URL="$CTFD_URL" bash smoke.sh --wait
+COMPOSE_PROJECT_NAME="$PROJECT" CTFD_URL="$CTFD_URL" bash "$SCRIPT_DIR/smoke.sh" --wait
 
 echo "==> importing backup"
-COMPOSE_PROJECT_NAME="$PROJECT" CTFD_URL="$CTFD_URL" bash import_backup.sh "$ZIP" --yes
+COMPOSE_PROJECT_NAME="$PROJECT" CTFD_URL="$CTFD_URL" bash "$LOCAL_DIR/scripts/import_backup.sh" "$ZIP" --yes
 
 echo "==> reapplying current automation admin and theme"
-COMPOSE_PROJECT_NAME="$PROJECT" CTFD_URL="$CTFD_URL" bash ensure_admin.sh
-COMPOSE_PROJECT_NAME="$PROJECT" CTFD_URL="$CTFD_URL" bash apply_theme.sh
-COMPOSE_PROJECT_NAME="$PROJECT" CTFD_URL="$CTFD_URL" bash apply_branding.sh
-COMPOSE_PROJECT_NAME="$PROJECT" CTFD_URL="$CTFD_URL" bash verify_plugin.sh
+COMPOSE_PROJECT_NAME="$PROJECT" CTFD_URL="$CTFD_URL" bash "$LOCAL_DIR/scripts/ensure_admin.sh"
+COMPOSE_PROJECT_NAME="$PROJECT" CTFD_URL="$CTFD_URL" bash "$LOCAL_DIR/scripts/apply_theme.sh"
+COMPOSE_PROJECT_NAME="$PROJECT" CTFD_URL="$CTFD_URL" bash "$LOCAL_DIR/scripts/apply_branding.sh"
+COMPOSE_PROJECT_NAME="$PROJECT" CTFD_URL="$CTFD_URL" bash "$SCRIPT_DIR/verify_plugin.sh"
 
 users=$(query_db "SELECT COUNT(*) FROM users;")
 teams=$(query_db "SELECT COUNT(*) FROM teams;")
@@ -68,6 +71,9 @@ hikari_challenges=$(query_db "SELECT COUNT(*) FROM challenges WHERE type='hikari
 activity_table=$(query_db "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='ctfd' AND table_name='hikari_activity';")
 upload_files=$(docker run --rm -v "${PROJECT}_ctfd-uploads":/uploads:ro alpine \
   sh -c "find /uploads -type f | wc -l" | tr -d '[:space:]')
+competition_events=$(compose exec -T elasticsearch \
+  curl -fsS http://localhost:9200/competition1/_count \
+  | jq -r '.count')
 
 require_positive "users" "$users"
 require_positive "teams" "$teams"
@@ -75,6 +81,7 @@ require_positive "challenges" "$challenges"
 require_positive "solves" "$solves"
 require_positive "hikari challenges" "$hikari_challenges"
 require_positive "upload files" "$upload_files"
+require_positive "competition events rebuilt from active challenge logs" "$competition_events"
 [[ "$activity_table" == "1" ]] || { echo "FAIL: hikari_activity table missing"; exit 1; }
 echo "PASS: hikari_activity table present"
 

@@ -14,8 +14,11 @@ Mantenha esta página aberta em outra aba durante o evento.
 
 ```bash
 cd <pasta-do-hikari>/deploy/local
-docker compose ps
+docker-compose ps
 ```
+
+Use `docker compose` in place of `docker-compose` on hosts that provide only
+the Compose plugin.
 
 Todos os serviços devem aparecer com `Status: Up` e `(healthy)`. Se algum
 estiver `restarting` ou `unhealthy`, vá direto para a seção 1.
@@ -24,7 +27,7 @@ Verificação por URL (esperado: HTTP 200 ou 302):
 
 ```bash
 curl -sLo /dev/null -w "CTFd:    %{http_code}\n"   http://localhost:8000
-curl -sLo /dev/null -w "Kibana:  %{http_code}\n"   http://localhost:5601/hikari/kibana
+curl -sLo /dev/null -w "SIEM:    %{http_code}\n"   http://localhost:8000/hikari/siem
 curl -sLo /dev/null -w "ES:      %{http_code}\n"   http://localhost:9200
 ```
 
@@ -33,16 +36,16 @@ curl -sLo /dev/null -w "ES:      %{http_code}\n"   http://localhost:9200
 ## 1. Um serviço caiu ou não responde
 
 ```bash
-docker compose ps                       # qual serviço está down?
-docker compose logs --tail=80 ctfd      # ou: kibana, elasticsearch, db, kafka
-docker compose restart ctfd             # reinicia só o serviço afetado
+docker-compose ps                       # qual serviço está down?
+docker-compose logs --tail=80 ctfd      # ou: kibana, elasticsearch, db, kafka
+docker-compose restart ctfd             # reinicia só o serviço afetado
 ```
 
 Se reiniciar não resolveu em 60 segundos:
 
 ```bash
-docker compose down                     # para o stack inteiro
-docker compose up -d                    # sobe de novo (NÃO usa --build aqui)
+docker-compose down                     # para o stack inteiro
+docker-compose up -d                    # sobe de novo (NÃO usa --build aqui)
 ```
 
 Não use `--build` durante o evento — isso reconstrói imagens e adiciona
@@ -73,7 +76,7 @@ Para liberar espaço em índices Elasticsearch antigos (se ILM não estiver
 configurado):
 
 ```bash
-docker compose exec elasticsearch \
+docker-compose exec elasticsearch \
     curl -s -X DELETE "http://localhost:9200/competition1-2024*"
 ```
 
@@ -85,15 +88,15 @@ docker compose exec elasticsearch \
    numa aba anônima. Cache antigo é a causa mais comum.
 2. **Olhe os logs do CTFd**:
    ```bash
-   docker compose logs --tail=120 ctfd | grep -iE 'error|exception'
+   docker-compose logs --tail=120 ctfd | grep -iE 'error|exception'
    ```
 3. **Reinicie só o CTFd** (não afeta dados):
    ```bash
-   docker compose restart ctfd
+   docker-compose restart ctfd
    ```
 4. **Se persistir para vários**: reinicie cache também:
    ```bash
-   docker compose restart cache ctfd
+   docker-compose restart cache ctfd
    ```
 
 ---
@@ -137,7 +140,7 @@ Idempotente — pode rodar várias vezes.
    ```
 4. **Se o índice não existir**, importe o backup novamente:
    ```bash
-   bash import_backup.sh /caminho/para/data_backup.zip --yes
+   bash scripts/import_backup.sh /caminho/para/data_backup.zip --yes
    ```
 
 ---
@@ -146,18 +149,18 @@ Idempotente — pode rodar várias vezes.
 
 ```bash
 # Verifique a fila de Kafka
-docker compose exec kafka \
+docker-compose exec kafka \
     /opt/kafka/bin/kafka-consumer-groups.sh \
     --bootstrap-server kafka:9092 --list
 
 # Veja se logstash está consumindo
-docker compose logs --tail=80 logstash | grep -iE 'error|warn'
+docker-compose logs --tail=80 logstash | grep -iE 'error|warn'
 ```
 
 Se logstash estiver com erro, reinicie a cadeia de ingestão:
 
 ```bash
-docker compose restart logstash
+docker-compose restart logstash
 ```
 
 Submissões são persistidas no MariaDB **antes** do Kafka — o competidor
@@ -172,20 +175,19 @@ Faça backup periodicamente (15-30 min) durante competições longas. Não
 interrompe o serviço:
 
 ```bash
-# Produção (script dedicado)
+# Produção (checkpoint transacional do banco, uploads e snapshot dos índices)
 bash deploy/production/backup.sh
 
 # Local (manual, exporta DB)
-docker compose exec -T db \
+docker-compose exec -T db \
     mariadb-dump -uctfd -pctfd --single-transaction ctfd \
     > /tmp/hikari-backup-$(date +%H%M).sql
 ```
 
-Restaurar de backup (DESTRUTIVO — apaga dados atuais):
+Restaurar um checkpoint de produção (destrutivo):
 
 ```bash
-docker compose exec -T db \
-    mariadb -uctfd -pctfd ctfd < /tmp/hikari-backup-HHMM.sql
+bash deploy/production/restore.sh /opt/hikari/backups/hikari-YYYYMMDDTHHMMSSZ.zip --yes
 ```
 
 ---
@@ -200,7 +202,7 @@ docker compose exec -T db \
 | Export atividades (JSONL) | http://localhost:8000/admin/hikari/research/export.jsonl |
 | Export feedback (JSONL) | http://localhost:8000/admin/hikari/research/feedback.jsonl |
 | Placar ao vivo | http://localhost:8000/hikari/live |
-| SIEM Kibana | http://localhost:8000/hikari/kibana |
+| SIEM Kibana | http://localhost:8000/hikari/siem |
 | Notificações para competidores | http://localhost:8000/admin/notifications |
 
 ---
@@ -228,24 +230,18 @@ Antes de derrubar a infra, capture o estado final:
 # Backup completo
 bash deploy/production/backup.sh
 
-# Export dos dados de pesquisa em JSONL
-curl -sS -b "$(mktemp -t cookies)" \
-    -o hikari-atividades-$(date +%Y%m%d).jsonl \
-    "http://localhost:8000/admin/hikari/research/export.jsonl"
-
-# Export do feedback da competição atual
-curl -sS -b "$(mktemp -t cookies)" \
-    -o hikari-feedback-$(date +%Y%m%d).jsonl \
-    "http://localhost:8000/admin/hikari/research/feedback.jsonl?competition_key=local"
-
 # Snapshot dos índices Kibana (para reprodução offline)
-docker compose exec elasticsearch \
+docker-compose exec elasticsearch \
     curl -s "http://localhost:9200/competition1/_search?size=0&track_total_hits=true" \
     | python3 -m json.tool > hikari-stats-$(date +%Y%m%d).json
 ```
 
-Antes de encerrar, abra `http://localhost:8000/admin/hikari/research` e
-confira o bloco **Panorama do feedback**. Ele mostra taxa de resposta,
-equipes pendentes, última resposta recebida e médias de usabilidade,
-carga e recomendação. Guarde os arquivos junto com o `data_backup.zip`;
-eles sustentam a análise científica posterior.
+Abra `http://localhost:8000/admin/hikari/research` como administrador e
+use **Exportar atividades (JSONL)** e **Exportar feedback (JSONL)**. O
+controle de acesso da aplicação protege esses endpoints; chamadas sem uma
+sessão autenticada não produzem um export válido.
+
+Antes de encerrar, confira o bloco **Panorama do feedback**. Ele mostra a
+taxa de resposta, as equipes pendentes, a última resposta recebida e as
+médias de usabilidade, carga e recomendação. Guarde os exports junto com o
+checkpoint de produção; eles sustentam a análise posterior.

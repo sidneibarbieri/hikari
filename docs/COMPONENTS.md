@@ -18,7 +18,7 @@ Upgrade one component at a time. After each change, rebuild the stack and run:
 
 ```bash
 cd deploy/local
-bash run_acceptance.sh
+make acceptance
 ```
 
 Keep the pinned version when the suite fails. Record the failure, fix the

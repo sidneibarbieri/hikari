@@ -1,10 +1,10 @@
 # Histórias de Usuário — Hikari Platform
 
-Maio 2026
-
 Este documento reúne as histórias de usuário e casos de uso da plataforma Hikari.
 Cada história segue o formato padrão ágil: *Como [ator], quero [ação] para [objetivo].*
-Os critérios de aceite são os checks automatizados em `deploy/local/run_acceptance.sh`.
+Os critérios de aceite descrevem o comportamento esperado. A matriz de
+rastreabilidade identifica o que a suíte automatizada verifica e o que exige
+uma checagem operacional ou credenciais externas.
 
 ---
 
@@ -45,11 +45,12 @@ Os critérios de aceite são os checks automatizados em `deploy/local/run_accept
 - Quando `HIKARI_GOOGLE_CLIENT_ID` está configurado, um botão "Entrar com Google" aparece em login e cadastro.
 - O botão está ausente quando as variáveis não estão definidas.
 - Clicar no botão redireciona para o fluxo OAuth do Google.
-- Após autorização, a conta é criada ou vinculada automaticamente pelo e-mail.
-- O e-mail deve estar verificado pelo Google; caso contrário, o acesso é negado com mensagem clara.
-- Nenhuma senha é exigida para contas criadas via Google.
+- O fluxo completo depende das credenciais OAuth e do domínio configurados pelo
+  operador. Ele deve ser validado no provedor antes da abertura da competição.
 
-**Verificação automatizada:** `verify_oauth.sh` → botão oculto sem credenciais; bounce com mensagem PT-BR quando credenciais ausentes.
+**Verificação automatizada:** `verify_oauth.sh` verifica a ausência do botão
+sem credenciais e a falha explícita de configuração. A autorização do Google
+exige credenciais de um operador e não é simulada pela suíte local.
 
 ---
 
@@ -100,7 +101,6 @@ Os critérios de aceite são os checks automatizados em `deploy/local/run_accept
 
 **Critérios de aceite:**
 - Senha incorreta exibe mensagem de erro.
-- Link de convite é de uso múltiplo e expira em 24 horas.
 - Um competidor só pode estar em uma equipe por vez.
 
 **Verificação automatizada:** `verify_team_flow.sh` → membro entra via senha.
@@ -114,7 +114,7 @@ Os critérios de aceite são os checks automatizados em `deploy/local/run_accept
 
 **Critérios de aceite:**
 - Somente o capitão vê os botões de edição, escolha de capitão e dissolução.
-- A transferência de capitania é imediata e irreversível sem nova ação do novo capitão.
+- A transferência de capitania exige confirmação no painel administrativo da equipe.
 - Dissolução remove a equipe e desvincula todos os membros.
 
 ---
@@ -142,7 +142,8 @@ Os critérios de aceite são os checks automatizados em `deploy/local/run_accept
 - A página `/hikari/siem` mostra contadores por severidade (Low / Medium / High / Critical) com valores reais do Elasticsearch.
 - KQL shortcuts pré-definidos estão visíveis e copiáveis com um clique.
 - O Kibana está acessível via proxy autenticado sem login separado.
-- O dashboard HIKARI SIEM abre com 14 painéis (tabelas, donut, heatmap, Discover).
+- O dashboard HIKARI SIEM abre com os painéis definidos no objeto salvo e
+  pode ser atualizado pelo script de reconstrução do dashboard.
 
 **Verificação automatizada:** `verify_siem_dashboard.sh` e `verify_siem_flow.sh`.
 
@@ -156,7 +157,9 @@ Os critérios de aceite são os checks automatizados em `deploy/local/run_accept
 **Critérios de aceite:**
 - Flag correta: pontuação adicionada imediatamente, desafio marcado como resolvido.
 - Flag incorreta: incrementa contador de tentativas, exibe mensagem de erro sem revelar a resposta.
-- Flags em texto puro nunca são armazenadas; somente o hash é persistido.
+- O Hikari activity log registra o resultado e indicadores da tentativa, sem
+  duplicar o texto enviado como flag. O CTFd mantém a submissão conforme seu
+  modelo de dados para auditoria da competição.
 - A submissão gera um evento `challenge.attempt` no log de atividades.
 
 **Verificação automatizada:** `verify_challenge_flow.sh` → 2 erros + 1 acerto verificados.
@@ -216,7 +219,8 @@ Os critérios de aceite são os checks automatizados em `deploy/local/run_accept
 
 **Critérios de aceite:**
 - "Iniciar Competição" indexa todos os logs dos desafios visíveis com pré-requisitos já cumpridos.
-- "Resetar Competição" limpa pontuações, submissões e o índice Elasticsearch sem apagar os desafios.
+- O procedimento de nova rodada preserva os desafios e deve ser executado pelo
+  operador conforme o runbook da competição.
 - O status (Iniciada / Não iniciada) é exibido no painel `/admin/hikari`.
 
 ---
@@ -240,9 +244,8 @@ Os critérios de aceite são os checks automatizados em `deploy/local/run_accept
 **para** entender o comportamento durante a competição.
 
 **Critérios de aceite:**
-- O painel mostra: total de eventos, distribuição por tipo, atividade por equipe, eventos recentes.
-- A seção "Padrões de submissão" classifica cada (competidor, desafio) como: orgânico / exploratório / força bruta / grinding.
-- A seção "Profundidade de hunting" mostra por ator: total de requisições Kibana, índices distintos acessados, consultas KQL únicas, Discover queries, Saved Object views.
+- O painel mostra total de eventos, distribuição por tipo, atividade por equipe,
+  eventos recentes e indicadores de submissão e feedback.
 
 **Verificação automatizada:** `verify_research.sh`.
 
@@ -314,7 +317,9 @@ Os critérios de aceite são os checks automatizados em `deploy/local/run_accept
 
 **Critérios de aceite:**
 - Flags submetidas nunca são armazenadas em texto puro.
-- Logs do Elasticsearch contêm apenas dados operacionais anonimizados (sem PII de rede externa).
+- Dados de atividade permanecem atribuídos durante a operação. A exportação e
+  a publicação devem seguir o procedimento de minimização e anonimização
+  descrito em `docs/PRIVACY.md`.
 - O documento `docs/PRIVACY.md` descreve a base legal, dados coletados e direitos do titular.
 - A plataforma não transmite dados a terceiros sem consentimento explícito.
 
@@ -325,27 +330,29 @@ Os critérios de aceite são os checks automatizados em `deploy/local/run_accept
 | História | Verificação Automatizada | Status |
 |---|---|---|
 | US-01 Cadastro e-mail | `verify_player_flow.sh` | ✅ |
-| US-02 Google OAuth | `verify_oauth.sh` | ✅ |
+| US-02 Google OAuth | `verify_oauth.sh` (configuração ausente); validação no provedor | parcial |
 | US-03 Login | `verify_player_flow.sh` | ✅ |
-| US-04 Recuperação senha | manual | — |
+| US-04 Recuperação senha | checagem operacional com SMTP configurado | manual |
 | US-05 Criar equipe | `verify_team_flow.sh` | ✅ |
 | US-06 Entrar equipe | `verify_team_flow.sh` | ✅ |
-| US-07 Gerenciar equipe | manual | — |
+| US-07 Gerenciar equipe | checagem operacional do capitão | manual |
 | US-08 Ver desafios | `verify_challenge_flow.sh` | ✅ |
 | US-09 Investigar SIEM | `verify_siem_flow.sh` + `verify_siem_dashboard.sh` | ✅ |
 | US-10 Submeter flag | `verify_challenge_flow.sh` | ✅ |
 | US-11 Desbloqueio progressivo | `verify_progressive_unlock.sh` | ✅ |
 | US-12 Placar ao vivo | `verify_live_board.sh` | ✅ |
 | US-13 Criar desafio | `verify_plugin.sh` | ✅ |
-| US-14 Iniciar competição | `verify_progressive_unlock.sh` | ✅ |
+| US-14 Iniciar competição | `verify_progressive_unlock.sh` (indexação e desbloqueio); nova rodada operacional | parcial |
 | US-15 Notificações | `verify_notifications.sh` | ✅ |
 | US-16 Dashboard analytics | `verify_research.sh` | ✅ |
 | US-17 Filtros | `verify_research.sh` | ✅ |
 | US-18 Export JSONL | `verify_research.sh` | ✅ |
 | US-19 Feedback | `verify_feedback.sh` | ✅ |
 | US-20 Panorama do feedback | `verify_research.sh` | ✅ |
-| US-21 LGPD | `verify_artifact_hygiene.sh` + docs | ✅ |
+| US-21 LGPD | documentação e revisão operacional | manual |
 | Cross-cutting: autorização e isolamento | `verify_isolation.sh` | ✅ |
 
-**19 de 21 histórias com verificação automatizada (90%).**
-As duas restantes (US-04 recuperação de senha, US-07 gerenciamento de equipe) dependem de SMTP real e UI interativa, e são verificadas por inspeção visual durante a auditoria de release.
+Os fluxos centrais de competição, ingestão, SIEM, atribuição de consultas,
+feedback e exportação são cobertos pela suíte isolada. Fluxos que dependem de
+um provedor externo, SMTP de produção ou decisão operacional permanecem
+explicitamente marcados para verificação do operador.

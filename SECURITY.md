@@ -46,7 +46,7 @@ openssl rand -base64 18 | tr -d '/+=' | head -c 20
 ```
 
 See `deploy/production/README.md` for the full production checklist
-(firewall ports, TLS, OAuth, ILM rotation).
+(firewall ports, TLS, OAuth, index retention).
 
 ## What does not ship in the repository
 

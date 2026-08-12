@@ -48,7 +48,7 @@ docker --version && docker compose version
 
 ```bash
 git clone https://github.com/sidneibarbieri/hikari.git /opt/hikari
-cd /opt/hikari/hikari-platform
+cd /opt/hikari
 ```
 
 ---
@@ -67,12 +67,16 @@ nano .env.production   # edite conforme as instruções abaixo
 # Domínio público (sem https://)
 HIKARI_DOMAIN=hikari.sua-instituicao.br
 
-# Senha do admin da plataforma (mude antes de iniciar)
+# Conta do administrador da plataforma
 ADMIN_EMAIL=admin@sua-instituicao.br
 ADMIN_PASSWORD=SenhaForteAqui123!
 
 # Chave secreta Flask (gere com: python3 -c "import secrets; print(secrets.token_hex(32))")
 SECRET_KEY=cole-aqui-uma-chave-de-64-caracteres-hexadecimais
+
+# Senha do banco de dados (gere outro valor aleatório com letras, números,
+# ponto, sublinhado, hífen ou til)
+DATABASE_PASSWORD=cole-aqui-uma-senha-aleatoria
 
 # Chave de criptografia do Kibana (exatamente 32 caracteres)
 KIBANA_ENCRYPTION_KEY=00112233445566778899aabbccddeeff
@@ -87,11 +91,27 @@ Se quiser que os competidores façam login com Google:
 
 ```bash
 HIKARI_GOOGLE_CLIENT_ID=seu-client-id.apps.googleusercontent.com
-HIKARI_GOOGLE_CLIENT_SECRET=GOCSPX-seu-secret
+HIKARI_GOOGLE_CLIENT_SECRET=valor-fornecido-pelo-google
 HIKARI_OAUTH_REDIRECT_BASE=https://hikari.sua-instituicao.br
 ```
 
 > Veja `docs/AUTH.md` para instruções de como criar as credenciais no Google Cloud Console.
+
+### Variáveis opcionais — e-mail transacional
+
+Defina um servidor SMTP real para habilitar recuperação de senha. A implantação
+de produção não publica o MailCatcher usado no ambiente local.
+
+```bash
+MAILFROM_ADDR=hikari@sua-instituicao.br
+MAIL_SERVER=smtp.sua-instituicao.br
+MAIL_PORT=587
+MAIL_USEAUTH=true
+MAIL_USERNAME=hikari@sua-instituicao.br
+MAIL_PASSWORD=senha-do-smtp
+MAIL_TLS=true
+MAIL_SSL=false
+```
 
 ---
 
@@ -121,34 +141,58 @@ O script abaixo:
 4. Configura renovação automática do certificado.
 
 ```bash
-cd /opt/hikari/hikari-platform/deploy/production
+cd /opt/hikari/deploy/production
 chmod +x setup_production.sh
 sudo ./setup_production.sh
 ```
 
 > O script verifica cada etapa e para com uma mensagem clara se algo der errado.
 
+## Endereços e portas
+
+O proxy Nginx recebe todo o tráfego público. Configure o firewall para expor
+somente TCP 80 e 443. Os serviços de dados permanecem na rede Docker interna.
+
+| Serviço | Endereço público | Porta pública |
+| --- | --- | --- |
+| Plataforma | `https://HIKARI_DOMAIN/` | 443 |
+| SIEM autenticado | `https://HIKARI_DOMAIN/hikari/siem` | 443 |
+| Placar | `https://HIKARI_DOMAIN/hikari/live` | 443 |
+| Redirecionamento HTTP para HTTPS | `http://HIKARI_DOMAIN/` | 80 |
+| CTFd, MariaDB, Redis, Kafka, Elasticsearch, Kibana e MailCatcher | Não expostos | Nenhuma |
+
+O CTFd escuta em `127.0.0.1:${CTFD_PORT:-8000}` apenas para o Nginx. Não
+publique Elasticsearch, Kibana, MariaDB, Redis ou Kafka em uma interface de
+rede do servidor.
+
 ---
 
 ## Passo 6 — Verificar a instalação
 
 ```bash
-cd /opt/hikari/hikari-platform/deploy/local
-CTFD_URL=https://hikari.sua-instituicao.br bash run_acceptance.sh
+curl -fsS https://hikari.sua-instituicao.br/healthcheck
+curl -fsS -o /dev/null -w '%{http_code}\n' https://hikari.sua-instituicao.br/
 ```
 
-Todos os 24 checks devem passar. Se algum falhar, o script indica exatamente qual serviço verificar.
+Essas verificações são somente leitura. A suíte de aceitação cria usuários,
+equipes e desafios sintéticos; execute-a apenas no ambiente isolado do
+artefato com `make acceptance`, nunca durante uma competição.
 
 ---
 
-## Passo 7 — Importar dados da competição (opcional)
+## Passo 7 — Restaurar uma competição anterior (opcional)
 
-Se tiver um backup de edição anterior:
+Use um checkpoint produzido por `backup.sh` para recuperar uma competição
+anterior no servidor. A restauração substitui os dados que estão em uso.
 
 ```bash
-cd /opt/hikari/hikari-platform/deploy/local
-bash import_backup.sh /caminho/para/data_backup.zip --yes
+/opt/hikari/deploy/production/restore.sh \
+  /opt/hikari/backups/hikari-YYYYMMDDTHHMMSSZ.zip --yes
 ```
+
+O importador de arquivos `data_backup.zip` legados é destinado ao ambiente
+local de migração e validação. Depois de validar o resultado, produza um
+checkpoint de produção para transferir o estado de forma recuperável.
 
 ---
 
@@ -156,25 +200,35 @@ bash import_backup.sh /caminho/para/data_backup.zip --yes
 
 ### Ver logs em tempo real
 ```bash
-docker compose -f /opt/hikari/hikari-platform/deploy/production/docker-compose.production.yml logs -f ctfd
+docker compose -f /opt/hikari/deploy/production/docker-compose.production.yml logs -f ctfd
 ```
 
 ### Reiniciar um serviço
 ```bash
-docker compose -f /opt/hikari/hikari-platform/deploy/production/docker-compose.production.yml restart ctfd
+docker compose -f /opt/hikari/deploy/production/docker-compose.production.yml restart ctfd
 ```
 
 ### Backup manual
 ```bash
-/opt/hikari/hikari-platform/deploy/production/backup.sh
-# Arquivo salvo em /opt/hikari/backups/hikari-YYYY-MM-DD.zip
+/opt/hikari/deploy/production/backup.sh
+# Arquivo salvo em /opt/hikari/backups/hikari-YYYYMMDDTHHMMSSZ.zip
 ```
+
+### Restaurar um checkpoint
+
+```bash
+/opt/hikari/deploy/production/restore.sh \
+  /opt/hikari/backups/hikari-YYYYMMDDTHHMMSSZ.zip --yes
+```
+
+O comando substitui a base da competição, os uploads e os índices de dados.
+Ele também limpa o cache de execução antes de reiniciar o CTFd.
 
 ### Atualizar a plataforma
 ```bash
 cd /opt/hikari
 git pull
-cd hikari-platform/deploy/production
+cd deploy/production
 docker compose -f docker-compose.production.yml up -d --build ctfd
 ```
 
@@ -186,7 +240,7 @@ docker compose -f docker-compose.production.yml up -d --build ctfd
 |---|---|---|
 | Página "502 Bad Gateway" | CTFd ainda iniciando | Aguardar 60s e recarregar |
 | "ERR_SSL_PROTOCOL_ERROR" | Certificado não emitido | Verificar DNS e rodar `certbot renew` |
-| Dashboard Kibana em branco | Elasticsearch não saudável | `docker compose logs elasticsearch` |
+| Dashboard Kibana em branco | Elasticsearch não saudável | Ver os logs do Elasticsearch pelo Compose |
 | "Internal Server Error" no Kibana | Chave de criptografia errada | Confirmar `KIBANA_ENCRYPTION_KEY` = 32 chars |
 | Porta 80 ocupada | Outro serviço usando a porta | `ss -tlnp | grep :80` e parar o serviço |
 
@@ -203,34 +257,16 @@ docker compose -f docker-compose.production.yml up -d --build ctfd
 
 ---
 
-## Gestão de índices Elasticsearch (ILM)
+## Gestão de índices Elasticsearch
 
 **Pergunta frequente:** preciso reindexar de tempos em tempos?
 
-**Resposta para competição (uso atual):** **não.** O fluxo importa o
-dataset uma vez (via `import_backup.sh`) e os dashboards lêem read-only
-durante o evento. O índice `competition1` não cresce, então não precisa
-de rotação nem reindexação. Os painéis lêem em tempo real do mesmo
-índice — zero impacto.
+**Para uma competição:** o índice `competition1` é criado antes da ingestão
+e cresce quando desafios liberam novos arquivos de log. O Kibana lê o mesmo
+índice e passa a enxergar os documentos após a atualização do Elasticsearch.
+Não há necessidade de recriar o índice a cada desbloqueio.
 
-**Para produção com ingestão Live contínua** (Logstash escrevendo a cada
-segundo), rode uma vez:
-
-```bash
-bash deploy/production/setup_ilm.sh
-```
-
-O script cria uma policy `hikari-events` com três fases:
-
-| Fase     | Quando         | O que faz                                  |
-|----------|----------------|---------------------------------------------|
-| `hot`    | Imediato       | Aceita escritas; rolaciona a 30GB ou 30 dias |
-| `warm`   | Após 30 dias   | Encolhe para 1 shard + force-merge          |
-| `delete` | Após 90 dias   | Remove o índice                             |
-
-Aponte o Logstash para o alias `hikari-events` (em vez de um índice fixo)
-e a rotação acontece sem nenhuma intervenção. Para inspecionar:
-
-```bash
-curl -s http://localhost:9200/hikari-events/_ilm/explain | jq .
-```
+Para retenção além de uma competição, defina uma política de ciclo de vida
+compatível com o volume, a finalidade da coleta e a política de retenção da
+organização. A implantação fornecida mantém o índice da competição até que o
+operador faça uma limpeza ou restaure um checkpoint.

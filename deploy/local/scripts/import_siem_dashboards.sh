@@ -3,6 +3,7 @@ set -euo pipefail
 
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 LOCAL_DIR=$(cd "$SCRIPT_DIR/.." && pwd)
+source "$LOCAL_DIR/lib/compose.sh"
 COMPOSE_FILE=${COMPOSE_FILE:-"$LOCAL_DIR/docker-compose.yml"}
 REBUILD_SCRIPT="$LOCAL_DIR/kibana/rebuild_siem_dashboard.py"
 DATA_VIEW_ID=${DATA_VIEW_ID:-competition1}
@@ -11,7 +12,7 @@ SIEM_DASHBOARD_ID=${SIEM_DASHBOARD_ID:-hikari-siem}
 KIBANA_INTERNAL_URL="http://kibana:5601/hikari/kibana"
 
 compose() {
-  docker-compose -f "$COMPOSE_FILE" "$@"
+  hikari_compose -f "$COMPOSE_FILE" "$@"
 }
 
 kibana() {

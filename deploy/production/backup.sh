@@ -1,64 +1,76 @@
 #!/usr/bin/env bash
-# Captures a point-in-time backup of the Hikari production data plane.
-# Output: /opt/hikari/backups/hikari-YYYY-MM-DD-HHMMSS.zip
-#
-# Contents of the archive:
-#   - mariadb dump (logical, includes all tables and grants)
-#   - elasticsearch indices (filesystem snapshot of the data volume)
-#   - CTFd uploads directory
-#   - .env.production (so the backup is self-contained for a restore)
-#
-# Idempotent and safe to schedule via cron. Exits non-zero on any failure so
-# cron's MAILTO captures the error.
+# Captures a recoverable production checkpoint without stopping the competition.
 
 set -euo pipefail
 
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
-COMPOSE_FILE="$SCRIPT_DIR/docker-compose.production.yml"
-ENV_FILE="$SCRIPT_DIR/.env.production"
-BACKUP_DIR=${BACKUP_DIR:-/opt/hikari/backups}
-RETENTION_DAYS=${RETENTION_DAYS:-14}
+source "$SCRIPT_DIR/../local/lib/compose.sh"
+COMPOSE_FILE=${HIKARI_COMPOSE_FILE:-"$SCRIPT_DIR/docker-compose.production.yml"}
+COMPOSE_ENV="$SCRIPT_DIR/.compose.env"
 
 [[ -f "$COMPOSE_FILE" ]] || { echo "compose file not found: $COMPOSE_FILE" >&2; exit 1; }
-[[ -f "$ENV_FILE" ]] || { echo "env file not found: $ENV_FILE" >&2; exit 1; }
+[[ -f "$COMPOSE_ENV" ]] || { echo "compose environment not found: $COMPOSE_ENV" >&2; exit 1; }
+
+set -a
+source "$COMPOSE_ENV"
+set +a
+
+BACKUP_DIR=${HIKARI_BACKUP_DIR:-/opt/hikari/backups}
+RETENTION_DAYS=${RETENTION_DAYS:-14}
 
 mkdir -p "$BACKUP_DIR"
-stamp=$(date +%Y-%m-%d-%H%M%S)
+stamp=$(date -u +%Y%m%dT%H%M%SZ)
+archive="$BACKUP_DIR/hikari-$stamp.zip"
+snapshot="hikari_$stamp"
+repository="hikari_checkpoint_$stamp"
 workdir=$(mktemp -d)
 trap 'rm -rf "$workdir"' EXIT
 
-archive="$BACKUP_DIR/hikari-$stamp.zip"
-echo "creating backup: $archive"
+compose() {
+  hikari_compose \
+    -p "${COMPOSE_PROJECT_NAME:-hikari}" \
+    -f "$COMPOSE_FILE" \
+    --env-file "$COMPOSE_ENV" \
+    "$@"
+}
 
-# 1. MariaDB logical dump (consistent snapshot via --single-transaction).
-echo "  - dumping mariadb"
-docker compose -f "$COMPOSE_FILE" exec -T db \
-  mariadb-dump -uctfd -pctfd --single-transaction --routines --triggers ctfd \
+echo "creating checkpoint: $archive"
+echo "  - dumping MariaDB"
+compose exec -T db mariadb-dump \
+  -uctfd -p"$DATABASE_PASSWORD" --single-transaction --routines --triggers ctfd \
   > "$workdir/ctfd.sql"
 
-# 2. CTFd uploads (small, copy as-is from the named volume).
-echo "  - copying ctfd uploads"
-docker compose -f "$COMPOSE_FILE" exec -T ctfd \
-  tar -C /var/uploads -cf - . > "$workdir/uploads.tar"
+echo "  - copying uploaded evidence"
+compose exec -T ctfd tar -C /var/uploads -cf - . > "$workdir/uploads.tar"
 
-# 3. Elasticsearch: trigger a flush so on-disk segments are consistent, then
-#    archive the data volume. Avoids running snapshots via the ES API to keep
-#    the script dependency-free.
-echo "  - flushing elasticsearch"
-docker compose -f "$COMPOSE_FILE" exec -T elasticsearch \
-  curl -s -X POST "http://localhost:9200/_flush?wait_if_ongoing=true" >/dev/null
-echo "  - archiving elasticsearch data volume"
-docker compose -f "$COMPOSE_FILE" exec -T elasticsearch \
-  tar -C /usr/share/elasticsearch/data -cf - . > "$workdir/elasticsearch.tar"
+echo "  - snapshotting Elasticsearch indices"
+compose exec -T elasticsearch curl -fsS -X PUT \
+  -H 'Content-Type: application/json' \
+  "http://localhost:9200/_snapshot/$repository" \
+  -d "{\"type\":\"fs\",\"settings\":{\"location\":\"checkpoints/$snapshot\"}}" >/dev/null
+compose exec -T elasticsearch curl -fsS -X PUT \
+  -H 'Content-Type: application/json' \
+  "http://localhost:9200/_snapshot/$repository/snapshot?wait_for_completion=true" \
+  -d '{"indices":"competition1,hikari_activity","include_global_state":false}' \
+  > "$workdir/elasticsearch-snapshot.json"
+tar -C "$BACKUP_DIR/elasticsearch/checkpoints/$snapshot" -cf \
+  "$workdir/elasticsearch-repository.tar" .
 
-# 4. Include env so restore is self-contained (chmod 600 on extract).
-cp "$ENV_FILE" "$workdir/.env.production"
+printf '%s\n' \
+  '{' \
+  "  \"created_at\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"," \
+  '  "database_dump": "ctfd.sql",' \
+  '  "uploads_archive": "uploads.tar",' \
+  '  "elasticsearch_repository_archive": "elasticsearch-repository.tar",' \
+  '  "elasticsearch_snapshot": "snapshot"' \
+  '}' > "$workdir/manifest.json"
 
-# 5. Pack everything (zip preserves cross-platform portability).
 (cd "$workdir" && zip -q -r "$archive" .)
-
-# 6. Rotate older backups beyond RETENTION_DAYS.
+compose exec -T elasticsearch curl -fsS -X DELETE \
+  "http://localhost:9200/_snapshot/$repository" >/dev/null
+rm -rf "$BACKUP_DIR/elasticsearch/checkpoints/$snapshot"
 find "$BACKUP_DIR" -maxdepth 1 -name 'hikari-*.zip' -mtime +"$RETENTION_DAYS" -delete
 
 size=$(du -h "$archive" | cut -f1)
-echo "backup complete: $archive ($size)"
+echo "checkpoint complete: $archive ($size)"
+echo "Elasticsearch snapshot included in checkpoint archive."

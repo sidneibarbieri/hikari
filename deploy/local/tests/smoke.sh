@@ -12,6 +12,11 @@ cd "$SCRIPT_DIR"
 WAIT=${1:-}
 CTFD_URL=${CTFD_URL:-http://localhost:8000}
 COMPOSE_FILE=${COMPOSE_FILE:-$LOCAL_DIR/docker-compose.yml}
+source "$LOCAL_DIR/lib/compose.sh"
+
+compose() {
+  hikari_compose -f "$COMPOSE_FILE" "$@"
+}
 
 fail() { echo "FAIL: $*" >&2; exit 1; }
 ok()   { echo "PASS: $*"; }
@@ -32,7 +37,7 @@ wait_kibana_status() {
   local timeout=${1:-360} body
   local deadline=$((SECONDS + timeout))
   while (( SECONDS < deadline )); do
-    body=$(internal_kibana_status || true)
+    body=$(internal_kibana_status 2>/dev/null || true)
     if echo "$body" | jq -e '.status.overall.level == "available"' >/dev/null 2>&1; then
       ok "Kibana reports overall status available"
       return 0
@@ -44,7 +49,7 @@ wait_kibana_status() {
 
 check_compose_state() {
   local unhealthy
-  unhealthy=$(docker-compose -f "$COMPOSE_FILE" ps --format json 2>/dev/null | \
+  unhealthy=$(compose ps --format json 2>/dev/null | \
     jq -r 'select(.State!="running" and .State!="exited") | .Name' 2>/dev/null || true)
   [[ -z "$unhealthy" ]] || fail "containers not running: $unhealthy"
   ok "all compose services are running"
@@ -76,14 +81,14 @@ check_elasticsearch() {
 }
 
 check_kafka_topics() {
-  docker-compose -f "$COMPOSE_FILE" exec -T kafka /opt/kafka/bin/kafka-topics.sh \
+  compose exec -T kafka /opt/kafka/bin/kafka-topics.sh \
     --bootstrap-server localhost:9092 --list >/dev/null \
     || fail "Kafka topic list command failed"
   ok "Kafka responded to topics listing"
 }
 
 internal_kibana_status() {
-  docker-compose -f "$COMPOSE_FILE" exec -T ctfd python - <<'PY'
+  compose exec -T ctfd python - <<'PY'
 import requests
 import sys
 
@@ -93,7 +98,7 @@ PY
 }
 
 internal_elasticsearch_health() {
-  docker-compose -f "$COMPOSE_FILE" exec -T elasticsearch \
+  compose exec -T elasticsearch \
     curl -fsS --max-time 5 http://localhost:9200/_cluster/health
 }
 

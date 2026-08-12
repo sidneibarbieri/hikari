@@ -6,16 +6,16 @@ Elasticsearch.
 
 ## Requirements
 
-- Docker Engine with `docker-compose`.
-- About 6 GB of RAM free for the containers. Elasticsearch alone is
-  configured for a 1 GB heap.
+- Docker Engine with either the Compose plugin or `docker-compose`.
+- About 6 GB of RAM free for the local stack. Elasticsearch uses a 1 GB heap
+  by default. Run the isolated acceptance stack with the local stack stopped
+  on workstations with limited memory. Override its `HIKARI_ACCEPTANCE_*`
+  variables only when the host has sufficient memory.
 
 ## Bring up
 
     cd deploy/local
-    cp .env.example .env       # use this file to override ports
-    docker-compose up -d --build
-    docker-compose ps          # services should be healthy or running
+    bash bootstrap.sh
 
 First boot builds the CTFd image and pulls the service images. Expect a few
 minutes the first time. Elasticsearch needs roughly 30 seconds to report
@@ -23,7 +23,7 @@ healthy.
 
 ## Validate
 
-    bash run_acceptance.sh
+    bash tests/acceptance_isolated.sh
 
 The acceptance suite verifies service health, CTFd setup, Hikari branding,
 the plugin, Kafka-to-Elasticsearch ingestion, SIEM data view and dashboard
@@ -33,12 +33,13 @@ competition board, local feedback, and the research export.
 
 ## Import a legacy backup
 
-    bash import_backup.sh /path/to/data_backup.zip --yes
-    bash run_acceptance.sh
+    bash scripts/import_backup.sh /path/to/data_backup.zip --yes
 
 The import script snapshots the current database, restores the backup's CTFd
-database and uploads, restarts CTFd, and leaves the snapshot under
-`deploy/local/artifacts/`.
+database and uploads, rebuilds `competition1` from the active Hikari challenge
+logs, restarts CTFd, and leaves the snapshot under `deploy/local/artifacts/`.
+Run `bash tests/verify_backup_import.sh /path/to/data_backup.zip` when you
+need to validate the migration in a separate disposable project.
 
 ## Where to access
 

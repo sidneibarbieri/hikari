@@ -40,12 +40,15 @@ The local stack is the supported path for development and artifact review.
 
     make review
 
-The same run can be executed step by step:
+To keep the installed competition free of synthetic acceptance entities, the
+review command runs in a disposable Compose project. Start an operator stack
+separately when needed:
 
-    cd deploy/local
-    cp .env.example .env
-    docker-compose up -d --build
-    bash run_acceptance.sh
+    make up
+
+Run the isolated verification explicitly:
+
+    make acceptance
 
 The acceptance script runs focused checks for artifact hygiene, stack health,
 CTFd setup, branding application and rendering, plugin loading,
@@ -67,12 +70,12 @@ research dashboard with feedback coverage and JSONL export.
 | `docs/DATA.md` | Researcher | Captured activity, Kibana facts and feedback schema |
 | `docs/ARTIFACT.md` | Reviewer | Execution evidence, badge mapping and operational scope |
 | `docs/AUTH.md` | Operator | Authentication options and MajorLeagueCyber integration |
-| `docs/PRIVACY.md` | Operator or DPO | LGPD declaration and participant rights |
+| `docs/PRIVACY.md` | Operator or DPO | Data-handling checklist and participant rights |
 
 ## Compatibility
 
 Past competition `.data` backups can be imported through
-`deploy/local/import_backup.sh`. The importer snapshots the current database,
+`deploy/local/scripts/import_backup.sh`. The importer snapshots the current database,
 extracts the backup into a sidecar MariaDB, restores portable SQL into the
 current stack, replaces uploaded files, clears runtime cache, and restarts
 CTFd so plugin tables are created.
@@ -80,11 +83,11 @@ CTFd so plugin tables are created.
 To validate a backup without touching the active local stack:
 
     cd deploy/local
-    bash verify_backup_import.sh /path/to/data_backup.zip
+    bash tests/verify_backup_import.sh /path/to/data_backup.zip
 
 The verification runs in an isolated Compose project and checks users, teams,
-challenges, solves, Hikari challenge type registration, uploads, and plugin
-access after the import.
+challenges, solves, Hikari challenge type registration, uploads, active
+challenge logs rebuilt into Elasticsearch, and plugin access after the import.
 
 ## License
 

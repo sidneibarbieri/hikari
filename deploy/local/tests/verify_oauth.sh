@@ -27,8 +27,9 @@ curl -sSL -o "$register_page" "$CTFD_URL/register"
 # default only applies when the environment carries no client ID at all.
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 LOCAL_DIR=$(cd "$SCRIPT_DIR/.." && pwd)
+source "$LOCAL_DIR/lib/compose.sh"
 COMPOSE_FILE=${COMPOSE_FILE:-"$LOCAL_DIR/docker-compose.yml"}
-ctfd_client_id=$(docker-compose -f "$COMPOSE_FILE" exec -T ctfd \
+ctfd_client_id=$(hikari_compose -f "$COMPOSE_FILE" exec -T ctfd \
   sh -c 'echo "${HIKARI_GOOGLE_CLIENT_ID:-}"' 2>/dev/null || true)
 
 if [[ -z "$ctfd_client_id" ]]; then

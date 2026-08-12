@@ -39,8 +39,6 @@
                 {{ field(class="hikari-checkboxes") }}
               {% elif field.type == 'SelectField' %}
                 {{ field(class="hikari-input hikari-input--select") }}
-              {% elif field.type == 'IntegerField' %}
-                {{ field(class="hikari-input hikari-input--integer", inputmode="numeric") }}
               {% else %}
                 {{ field(class="hikari-input") }}
               {% endif %}

@@ -32,9 +32,7 @@ From a clean checkout:
 
 ```bash
 cd deploy/local
-cp .env.example .env
-docker-compose up -d --build
-bash run_acceptance.sh
+make -C ../.. review
 ```
 
 The acceptance script is the main executable claim. It verifies service
@@ -46,12 +44,11 @@ export.
 
 ## Legacy data
 
-Past competition backups can be imported locally:
+Past competition backups can be imported locally into an operator stack:
 
 ```bash
 cd deploy/local
-bash import_backup.sh /path/to/data_backup.zip --yes
-bash run_acceptance.sh
+bash scripts/import_backup.sh /path/to/data_backup.zip --yes
 ```
 
 The import script writes a database snapshot before replacing the local CTFd
@@ -62,19 +59,21 @@ To test a backup without changing the active local stack:
 
 ```bash
 cd deploy/local
-bash verify_backup_import.sh /path/to/data_backup.zip
+bash tests/verify_backup_import.sh /path/to/data_backup.zip
 ```
 
 The isolated verification starts a separate Compose project, imports the
 backup, reapplies the current admin account and theme, verifies the Hikari
 plugin, and checks users, teams, challenges, solves, Hikari challenges, upload
-files, and the activity table.
+files, the activity table, and the Elasticsearch reconstruction from active
+challenge log files.
 
 ## Research data
 
 Hikari stores operational data that can support later analysis:
 
-- CTFd login, registration, team, challenge view, and submission events.
+- CTFd login, registration, team, challenge view, and submission outcome
+  events.
 - Kibana access and query requests routed through the Hikari gateway. Each
   request is classified once and the structured facts stored alongside the
   record: query kind (search, bsearch, console, saved-object), indices
@@ -83,13 +82,19 @@ Hikari stores operational data that can support later analysis:
   excerpt when present.
 - Local feedback responses linked to user, team, and competition context.
 - Actor identifiers, team identifiers, timestamps, request metadata, and
-  event payloads.
+  bounded event payloads. Submission text remains in the CTFd submission
+  record, while the activity record captures the interaction outcome.
 - Competition logs streamed into Elasticsearch through Kafka.
 - Exportable activity records in JSONL format from the research dashboard.
 
-Researchers decide how to anonymize or aggregate data before publication.
-The artifact keeps identifiable records locally because operational analysis
-requires attribution during and after a competition.
+Researchers decide how to anonymize or aggregate exported data before
+publication. The artifact retains identifiable operational records locally so
+the operator can attribute activity during and after a competition.
+
+Historical backups created before the activity recorder retain the competition
+state and challenge logs available at the time of the backup. The import flow
+reconstructs the Elasticsearch hunting dataset from active challenge log
+files. Interaction telemetry begins when the recorder is active.
 
 ## Production deployment
 
@@ -97,35 +102,17 @@ The local compose file is an executable artifact and development target. A
 production deployment defines its TLS, hostnames, secrets, backup policy and
 access-control settings for the target environment.
 
-## Empirical validation
-
-The artifact has been validated empirically across multiple cohorts. The
-companion dissertation (Camargos Belo, 2026, *Uma Plataforma para
-Treinamento de Equipes de Defesa Cibernética por meio de Competições de
-Threat Hunting*, ITA/MPCOMP) reports execution in three educational
-contexts (ITA, PUC Minas, Hackers do Bem) with the following signal:
-
-- 92% of respondents identified log analysis as the most-developed skill.
-- 45-85% reported intrusion detection competence gains.
-- 85-90% considered the simulated scenarios realistic or partly realistic.
-- 85-90% reported the platform contributes to real-world incident
-  preparation.
-
-These figures are pre-existing evidence from prior Hikari executions,
-independent of the current artifact submission. The local stack
-reproduces the same operational surface used in those competitions.
-
 ## Artifact criteria
 
 Mapping to evidence in this repository:
 
 | Badge | Evidence |
 | --- | --- |
-| Available | Public Git repository with permissive license, archived stack pinned by tag, no external service dependencies beyond Docker images. |
-| Functional | `deploy/local/run_acceptance.sh` runs 26 scripted checks end-to-end covering every documented user story (registration, login, team flow, challenge solve, progressive log unlock, SIEM, live board, research export, feedback). |
-| Reproducible | Single-command bring-up (`docker-compose up -d --build`) on any Docker host. `verify_backup_import.sh` proves a sealed historical dataset replays cleanly into a fresh Compose project. |
-| Sustainable | Code organised behind documented module boundaries (`docs/PLUGIN.md`, `docs/ARCHITECTURE.md`), hygiene script blocks venue-specific copy and marketing terminology, all infrastructure pinned to specific image versions, tests resilient to legacy data via a versioned backup format. |
+| Available | Public Git repository with source code, environment examples, installation documentation, and Docker image dependencies declared in Compose files. |
+| Functional | `make review` executes 26 isolated checks covering registration, login, team flow, challenge solve, progressive log unlock, SIEM, live board, research export, and feedback. |
+| Reproducible | `make review` creates a disposable Compose project. `tests/verify_backup_import.sh` proves that a legacy backup restores into a separate project and reconstructs the active challenge log dataset. |
+| Sustainable | Documented module boundaries, pinned infrastructure images, reproducible migration scripts, and checks that reject repository debris. |
 
 See `docs/INSTALL.md` for prerequisites, `docs/PLUGIN.md` for module
 boundaries, `docs/AUTH.md` for authentication options, and
-`docs/PRIVACY.md` for LGPD-compliant data-handling guarantees.
+`docs/PRIVACY.md` for the operator data-handling checklist.

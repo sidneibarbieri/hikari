@@ -9,21 +9,38 @@ set -euo pipefail
 TOPIC=${TOPIC:-competition1}
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 LOCAL_DIR=$(cd "$SCRIPT_DIR/.." && pwd)
+source "$LOCAL_DIR/lib/compose.sh"
 COMPOSE_FILE=${COMPOSE_FILE:-"$LOCAL_DIR/docker-compose.yml"}
 
 probe_id="hikari-smoke-$(date +%s)"
-payload=$(printf '{"event":"smoke","probe_id":"%s","ts":"%s"}' \
-  "$probe_id" "$(date -u +%Y-%m-%dT%H:%M:%SZ)")
+payload=$(jq -cn \
+  --arg probe_id "$probe_id" \
+  --arg timestamp "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+  '{
+    event: "smoke",
+    probe_id: $probe_id,
+    "@timestamp": $timestamp,
+    "Source IP": "198.51.100.42",
+    "Destination IP": "203.0.113.12",
+    "Destination Port": "443",
+    "Threat Severity (custom)": "high",
+    "Fortinet Message (custom)": "Synthetic dashboard validation event",
+    "Event Name": "network_connection",
+    "URL (custom)": "https://validation.hikari.local/indicator",
+    "Command Line (custom)": "curl https://validation.hikari.local/indicator"
+    ,"udm.principal.location": "headquarters"
+    ,"udm.principal.location.country": "BR"
+  }')
 
 elasticsearch_search() {
   local path=$1 query_body=$2
-  docker-compose -f "$COMPOSE_FILE" exec -T elasticsearch \
+  hikari_compose -f "$COMPOSE_FILE" exec -T elasticsearch \
     curl -sS -H 'Content-Type: application/json' \
     -X POST "http://localhost:9200/$path" -d "$query_body"
 }
 
 echo "producing one record to topic '$TOPIC' with probe_id=$probe_id ..."
-echo "$payload" | docker-compose -f "$COMPOSE_FILE" exec -T kafka \
+echo "$payload" | hikari_compose -f "$COMPOSE_FILE" exec -T kafka \
   /opt/kafka/bin/kafka-console-producer.sh \
   --bootstrap-server localhost:9092 --topic "$TOPIC" >/dev/null
 echo "produced."
@@ -45,6 +62,13 @@ done
 if [[ "$hits" -lt 1 ]]; then
   echo "FAIL: probe_id=$probe_id not found in Elasticsearch after 30s"
   elasticsearch_search "$TOPIC/_search" "$query" | jq .
+  exit 1
+fi
+
+indexed_country=$(elasticsearch_search "$TOPIC/_search" "$query" \
+  | jq -r '.hits.hits[0]._source["udm.principal.location.country"] // empty')
+if [[ "$indexed_country" != "BR" ]]; then
+  echo "FAIL: competition index did not preserve dotted source fields"
   exit 1
 fi
 

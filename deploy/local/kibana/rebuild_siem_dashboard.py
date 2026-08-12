@@ -15,6 +15,17 @@ KIBANA_BASE = os.environ.get(
 INDEX_ID = "competition1"
 VERSION = "8.19.0"
 NDJSON_PATH = Path("deploy/local/kibana/hikari-siem.ndjson")
+INDEX_FIELDS = (
+    ("@timestamp", "date"),
+    ("Source IP", "string"),
+    ("Destination IP", "string"),
+    ("Destination Port", "string"),
+    ("Threat Severity (custom)", "string"),
+    ("Fortinet Message (custom)", "string"),
+    ("Event Name", "string"),
+    ("URL (custom)", "string"),
+    ("Command Line (custom)", "string"),
+)
 
 
 def _post(path: str, body: dict) -> dict:
@@ -54,12 +65,18 @@ def _create_saved_object(
 
 
 def create_index_pattern() -> None:
+    fields = [
+        {"name": name, "type": field_type, "esTypes": ["keyword"]}
+        for name, field_type in INDEX_FIELDS
+    ]
+    fields[0]["esTypes"] = ["date"]
     result = _create_saved_object(
         "index-pattern",
         INDEX_ID,
         {
             "title": INDEX_ID,
             "timeFieldName": "@timestamp",
+            "fields": json.dumps(fields),
         },
         references=[],
     )

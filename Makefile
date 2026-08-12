@@ -1,4 +1,4 @@
-.PHONY: help up acceptance down clean
+.PHONY: help up acceptance review down clean
 
 LOCAL := deploy/local
 
@@ -6,7 +6,7 @@ help:
 	@echo "Hikari Platform — comandos disponíveis:"
 	@echo ""
 	@echo "  make up          Sobe todos os serviços (Docker Compose)"
-	@echo "  make acceptance  Roda a suíte completa de testes de aceitação"
+	@echo "  make acceptance  Roda a suíte em um ambiente descartável"
 	@echo "  make down        Para e remove os contêineres"
 	@echo "  make clean       Remove artefatos locais e caches"
 	@echo ""
@@ -14,17 +14,17 @@ help:
 	@echo "  make review"
 	@echo ""
 
-review: up acceptance
+review: acceptance
 
 up:
-	@test -f $(LOCAL)/.env || cp $(LOCAL)/.env $(LOCAL)/.env
-	docker-compose -f $(LOCAL)/docker-compose.yml up -d --build
+	@test -f $(LOCAL)/.env || cp $(LOCAL)/.env.example $(LOCAL)/.env
+	bash $(LOCAL)/bootstrap.sh
 
 acceptance:
-	bash $(LOCAL)/run_acceptance.sh
+	bash $(LOCAL)/tests/acceptance_isolated.sh
 
 down:
-	docker-compose -f $(LOCAL)/docker-compose.yml down
+	@if docker compose version >/dev/null 2>&1; then docker compose -f $(LOCAL)/docker-compose.yml down; else docker-compose -f $(LOCAL)/docker-compose.yml down; fi
 
 clean:
 	rm -rf output .playwright-cli $(LOCAL)/artifacts

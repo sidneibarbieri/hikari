@@ -1,101 +1,43 @@
-# Local smoke test
+# Local operational checks
 
-Minimum acceptance for the local stack. Each step must pass before the
-next one is attempted. If a step fails, fix the cause and re-run from
-that step.
+Use these commands after changing the local stack or before opening it to
+participants. They do not create users, teams, or challenges.
 
-## Preconditions
+```bash
+cd deploy/local
+bash bootstrap.sh
+bash tests/smoke.sh --wait
+```
 
-- Docker Engine running.
-- 6 GB free RAM.
+The operator interface is available at:
 
-Steps 1-7 can be run end to end with:
+| Surface | URL | Access |
+| --- | --- | --- |
+| Competition | `http://localhost:8000/` | CTFd session |
+| SIEM gateway | `http://localhost:8000/hikari/siem` | CTFd session |
+| Live board | `http://localhost:8000/hikari/live` | Public |
+| Research dashboard | `http://localhost:8000/admin/hikari/research` | Administrator |
 
-    cd deploy/local
-    bash smoke.sh --wait        # stack reachable
-    bash setup_ctfd.sh          # admin account + ctf settings
-    bash verify_plugin.sh       # /admin/hikari renders, challenge type registered
-    bash verify_pipeline.sh     # seed competition1 through Kafka and Logstash
-    bash configure_siem.sh      # create the default Discover data view
+Run the full verification only in its isolated environment:
 
-The narrative below is the human-readable version of the same checks.
+```bash
+bash tests/acceptance_isolated.sh
+```
 
-## 1. Stack starts
+On a workstation with limited memory, stop the local stack first and start it
+again after validation. This preserves the named volumes and avoids running
+two Elasticsearch and Kibana instances at once.
 
-    cd deploy/local
-    docker-compose up -d --build
-    docker-compose ps
+```bash
+docker-compose stop
+bash tests/acceptance_isolated.sh
+docker-compose up -d
+```
 
-Expected: every service reports `running` or `healthy`. `elasticsearch`,
-`kafka`, and `db` carry healthchecks and must be healthy. CTFd waits on
-those and starts only after they are.
+To verify a legacy backup without changing the active stack:
 
-## 2. CTFd responds
+```bash
+bash tests/verify_backup_import.sh /path/to/data_backup.zip
+```
 
-    curl -sS -o /dev/null -w '%{http_code}\n' http://localhost:8000/
-
-Expected: `302` on first hit (redirect to setup wizard) or `200` after
-setup is complete.
-
-## 3. Complete setup wizard
-
-Open http://localhost:8000 in a browser. Fill in the wizard with an admin
-account. Choose **Teams** mode (the Hikari plugin assumes teams). Finish.
-
-## 4. Admin reaches the Hikari plugin page
-
-Logged in as admin, open http://localhost:8000/admin/hikari .
-
-Expected: the plugin's main page renders without a 500. The page shows
-three status rows (zerotier, teams, competition) with warning class until
-zerotiers exist. If the page loads, the plugin is registered.
-
-## 5. Challenge type is registered
-
-Open http://localhost:8000/admin/challenges/new .
-
-Expected: the challenge type selector contains `hikari` alongside CTFd's
-built-in types.
-
-## 6. Kibana responds through Hikari
-
-    bash verify_siem_flow.sh
-
-Expected: after `configure_siem.sh`, the script registers a competitor,
-reaches Kibana through `/hikari/kibana/api/status`, submits a query through
-Kibana's console proxy, and finds the corresponding `kibana.query` record in
-`hikari_activity`.
-
-## 7. Kafka and Logstash are wired
-
-    docker-compose exec kafka \
-      /opt/kafka/bin/kafka-topics.sh \
-      --bootstrap-server localhost:9092 --list
-
-Expected: at minimum the consumer group offsets topic. After step 8 below,
-`competition1` should also appear.
-
-## 8. End-to-end log injection
-
-Still logged in as admin: create a `hikari`-typed challenge, upload any
-small JSON array file (e.g. `[{"event":"test","ts":"2024-01-01T00:00:00Z"}]`)
-as its log, set its state to `visible`, then click "Start competition"
-on the plugin's main page.
-
-    docker-compose exec kafka \
-      /opt/kafka/bin/kafka-console-consumer.sh \
-      --bootstrap-server localhost:9092 \
-      --topic competition1 --from-beginning --max-messages 1 --timeout-ms 5000
-
-Expected: one JSON record echoed back.
-
-    docker-compose exec elasticsearch \
-      curl -sS 'http://localhost:9200/competition1/_search?size=1'
-
-Expected: at least one document indexed.
-
-## Tear down between runs
-
-    docker-compose down -v
-
-This resets MariaDB, Elasticsearch, Kafka, Redis, uploads and CTFd logs.
+The isolated checks create and remove their own Compose project and volumes.

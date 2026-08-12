@@ -1,33 +1,16 @@
 #!/usr/bin/env bash
-# Hikari local bootstrap: take a fresh laptop to a running competition stack
-# in one command, with friendly checks at every step.
-#
-# Aimed at the "tecnico pouco instruido" persona named in the artifact
-# brief: someone who knows how to read a terminal but should not have
-# to research what Docker is or which command installs it.
-#
-# What it does, in order:
-#   1. Detects the OS (Linux distros / macOS) so messages are accurate.
-#   2. Verifies system resources (RAM, disk, free ports).
-#   3. Checks Docker + docker compose v2; if missing, prints the exact
-#      install command for the detected platform. Root-level package
-#      installs stay under operator control.
-#   4. Copies .env.example -> .env on first run.
-#   5. Builds the stack (docker compose up -d --build).
-#   6. Runs run_acceptance.sh and surfaces the green/red summary.
-#
-# Idempotent: subsequent runs skip what's already done. Reports each
-# step with a clear PASS / SKIP / NEEDS-ACTION marker so the operator
-# always knows where they are.
+# Starts the local operator stack after checking host prerequisites.
+# The acceptance suite runs in a separate disposable Compose project.
 
 set -euo pipefail
 
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 cd "$SCRIPT_DIR"
+source "$SCRIPT_DIR/lib/compose.sh"
 
-ok()    { printf '  \033[32m✓\033[0m %s\n' "$1"; }
-skip()  { printf '  \033[33m·\033[0m %s\n' "$1"; }
-fail()  { printf '  \033[31m✗\033[0m %s\n' "$1" >&2; }
+ok()    { printf '  \033[32m[ok]\033[0m %s\n' "$1"; }
+skip()  { printf '  \033[33m[skip]\033[0m %s\n' "$1"; }
+fail()  { printf '  \033[31m[error]\033[0m %s\n' "$1" >&2; }
 step()  { printf '\n\033[1m%s\033[0m\n' "$1"; }
 
 
@@ -76,8 +59,8 @@ else
     skip "RAM: ${total_ram_mb} MB (8 GB recommended; smaller machines may run, slowly)"
 fi
 
-# Disk — need ~10 GB for images + indices.
-disk_free_gb=$(df -BG "$SCRIPT_DIR" | awk 'NR==2 {gsub("G","",$4); print $4}')
+# Disk — use KiB so this works on GNU and BSD df implementations.
+disk_free_gb=$(df -k "$SCRIPT_DIR" | awk 'NR==2 {print int($4 / 1024 / 1024)}')
 if [[ "$disk_free_gb" -ge 10 ]]; then
     ok "Disk: ${disk_free_gb} GB free in $(pwd)"
 else
@@ -85,14 +68,18 @@ else
     exit 1
 fi
 
-# Ports — refuse to start if 8000 (CTFd) or 5601 (Kibana) is busy.
-for port in 8000 5601; do
-    if (command -v lsof >/dev/null && lsof -nP -iTCP:$port -sTCP:LISTEN >/dev/null 2>&1); then
-        fail "Port $port is already in use. Stop the other service and re-run."
+# Only CTFd is published locally. Kibana stays behind the authenticated proxy.
+ctfd_port=${CTFD_PORT:-8000}
+if command -v lsof >/dev/null && lsof -nP -iTCP:"$ctfd_port" -sTCP:LISTEN >/dev/null 2>&1; then
+    if hikari_compose ps --services --status running 2>/dev/null | grep -qx 'ctfd'; then
+        skip "Port $ctfd_port is already used by the local Hikari stack"
+    else
+        fail "Port $ctfd_port is already in use. Stop the other service and re-run."
         exit 1
     fi
-done
-ok "Ports 8000 (CTFd) and 5601 (Kibana) are free"
+else
+    ok "Port $ctfd_port (CTFd) is free"
+fi
 
 
 # ---------------------------------------------------------------------------
@@ -122,19 +109,16 @@ EOF
 fi
 ok "Docker: $(docker --version)"
 
-if ! docker compose version >/dev/null 2>&1; then
-    if ! command -v docker-compose >/dev/null 2>&1; then
-        fail 'docker compose v2 not found.'
+if ! command -v docker-compose >/dev/null 2>&1 && ! docker compose version >/dev/null 2>&1; then
+        fail 'Docker Compose not found.'
         cat <<EOF
 
-    Modern Docker Desktop bundles compose; CLI users on Linux can
-    install it with:
+    Install either Docker Compose v2 or the docker-compose command:
       sudo apt-get install docker-compose-plugin
 EOF
         exit 1
-    fi
 fi
-ok 'docker compose available'
+ok 'Docker Compose available'
 
 
 # ---------------------------------------------------------------------------
@@ -152,30 +136,29 @@ fi
 
 
 # ---------------------------------------------------------------------------
-# 5. Build and start the stack
+# 5. Acceptance suite
 # ---------------------------------------------------------------------------
 
-step '5/6 Bringing the stack up (this may take a few minutes on first run)'
+step '5/6 Running the isolated acceptance suite'
 
-docker compose up -d --build
+bash tests/acceptance_isolated.sh
 
 
 # ---------------------------------------------------------------------------
-# 6. Acceptance suite
+# 6. Build and start the stack
 # ---------------------------------------------------------------------------
 
-step '6/6 Running the acceptance suite'
+step '6/6 Bringing the stack up (this may take a few minutes on first run)'
 
-bash run_acceptance.sh
+hikari_compose up -d --build
 
 
 cat <<EOF
 
-──────────────────────────────────────────────────────────────────────
-  Hikari is up.
-    CTFd:    http://localhost:8000
-    Kibana:  http://localhost:5601
-    Login:   admin@hikari.local / hikari_comp@2026  (change before
-             exposing any port — see SECURITY.md)
-──────────────────────────────────────────────────────────────────────
+Hikari is up.
+  CTFd:  http://localhost:${ctfd_port}
+  SIEM:  http://localhost:${ctfd_port}/hikari/siem
+  Login: admin@hikari.local / hikari_comp@2026
+
+Change the administrator password before exposing the service. See SECURITY.md.
 EOF

@@ -30,6 +30,8 @@ output/playwright/
 
 # Secrets and credentials
 .env
+.env.production
+.compose.env
 *.local.env
 
 # Data

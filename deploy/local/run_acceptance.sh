@@ -5,12 +5,39 @@
 #   scripts/  — operational steps that configure the platform
 #   tests/    — verification steps that assert correctness
 #
-# Usage: bash deploy/local/run_acceptance.sh
-# All steps are idempotent; re-running is safe.
+# This runner creates users, teams, challenges and events. Use the isolated
+# wrapper for normal validation so an active competition stays unchanged.
+#
+# Usage: bash deploy/local/tests/acceptance_isolated.sh
 
 set -uo pipefail
 
-cd "$(dirname "$0")"
+LOCAL_DIR=$(cd "$(dirname "$0")" && pwd)
+source "$LOCAL_DIR/lib/compose.sh"
+cd "$LOCAL_DIR"
+
+if [[ "${HIKARI_ACCEPTANCE_CONTEXT:-}" != "1" \
+  && "${HIKARI_ALLOW_MUTATING_ACCEPTANCE:-}" != "1" ]]; then
+  echo "Refusing to mutate the active stack." >&2
+  echo "Run: bash tests/acceptance_isolated.sh" >&2
+  echo "Set HIKARI_ALLOW_MUTATING_ACCEPTANCE=1 only for a disposable stack." >&2
+  exit 2
+fi
+
+# Most focused checks predate the Compose plugin and invoke `docker-compose`.
+# On plugin-only hosts, provide a process-local compatibility command instead
+# of requiring an obsolete binary system-wide.
+compose_shim_dir=
+if docker compose version >/dev/null 2>&1 && ! command -v docker-compose >/dev/null 2>&1; then
+  compose_shim_dir=$(mktemp -d)
+  cat > "$compose_shim_dir/docker-compose" <<'EOF'
+#!/usr/bin/env bash
+exec docker compose "$@"
+EOF
+  chmod +x "$compose_shim_dir/docker-compose"
+  export PATH="$compose_shim_dir:$PATH"
+fi
+trap '[[ -z "$compose_shim_dir" ]] || rm -rf "$compose_shim_dir"' EXIT
 
 steps=(
   "tests/verify_artifact_hygiene.sh|artifact hygiene and terminology"
@@ -47,7 +74,7 @@ failed=()
 # CTFd rate-limits POSTs to /login and /register at 10 per 5 seconds per IP.
 # Clear the counters before each step so tight-succession admin logins succeed.
 clear_ratelimit_cache() {
-  docker-compose exec -T cache redis-cli eval \
+  hikari_compose exec -T cache redis-cli eval \
     "local k = redis.call('keys', 'flask_cache_rl:*'); if #k > 0 then return redis.call('del', unpack(k)) else return 0 end" \
     0 >/dev/null 2>&1 || true
 }

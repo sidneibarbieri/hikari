@@ -2,8 +2,9 @@
 
 This document describes how to install and run the Hikari artifact on a
 single machine. The local stack is the supported path for development,
-artifact review and short-lived competitions. Production deployment is out
-of scope for this manual.
+artifact review and short-lived competitions. For a public server with a
+domain, TLS, backups and host-level access control, follow the separate
+[production guide](../deploy/production/README.md).
 
 ## Prerequisites
 
@@ -13,7 +14,7 @@ Colima and on Linux with Docker Engine. The following are required.
 | Tool | Minimum version | Why |
 | --- | --- | --- |
 | Docker Engine | 24 or newer | Builds the CTFd image and runs the stack |
-| docker-compose | 1.29 or compose v2 | Orchestrates the seven services |
+| Docker Compose | Compose plugin or `docker-compose` | Orchestrates the services |
 | git | 2.40 | Clones the repository |
 | bash | 5.0 | Runs the acceptance and helper scripts |
 | jq | 1.6 | Parses API responses in shell scripts |
@@ -31,16 +32,16 @@ container images, MariaDB, Elasticsearch indices and Kafka topics.
 ## First start
 
     cd deploy/local
-    cp .env.example .env
-    docker-compose up -d --build
-    bash run_acceptance.sh
+    bash bootstrap.sh
 
-`run_acceptance.sh` runs the full acceptance suite. A clean stack should
-finish at `passed: N` with no failures. Every step prints its own assertion
-output and the orchestrator prints a final summary.
+`bootstrap.sh` first runs the acceptance suite in a disposable Compose
+project and then starts the local operator stack. This sequencing avoids
+competing Elasticsearch instances on an 8 GB host. A clean run finishes at
+`passed: 26` with no failures. Every step prints its own assertion output and
+the orchestrator prints a final summary.
 
 The default admin credentials created by `setup_ctfd.sh` are
-`admin@hikari.local` / `hikari-admin-pw`. Change them through
+`admin@hikari.local` / `hikari_comp@2026`. Change the password through
 `Configurações` after the first login.
 
 ## Surfaces
@@ -61,10 +62,28 @@ The Kibana port is not exposed on the host. Competitors reach Kibana only
 through the authenticated `/hikari/siem` gateway, so every request can be
 attributed to a user and team.
 
+## Network boundaries
+
+The local installation publishes only CTFd on TCP 8000. Elasticsearch,
+Kibana, MariaDB, Redis, Kafka and Logstash remain on the internal Compose
+network. Production publishes TCP 80 and 443 through Nginx; CTFd listens on
+loopback only. This is the intended topology for a hosted installation.
+
+| Service | Local access | Production access |
+| --- | --- | --- |
+| CTFd and Hikari routes | `http://localhost:8000` | HTTPS through the public domain |
+| Kibana | `/hikari/siem` through CTFd | `/hikari/siem` through CTFd |
+| Elasticsearch, MariaDB, Redis, Kafka, Logstash | Internal network only | Internal network only |
+
+For a server deployment, follow [the production guide](../deploy/production/README.md).
+
 ## Bring the stack down
 
     cd deploy/local
     docker-compose down
+
+If your host uses the Docker Compose plugin instead, replace `docker-compose`
+with `docker compose`.
 
 Adding `-v` removes the named volumes, including the MariaDB database, the
 Elasticsearch indices and the CTFd uploads directory. Use this when you
@@ -78,11 +97,11 @@ before swapping anything, runs the imported migrations and reapplies the
 Hikari branding.
 
     cd deploy/local
-    bash import_backup.sh /path/to/data_backup.zip --yes
-    bash run_acceptance.sh
+    bash scripts/import_backup.sh /path/to/data_backup.zip --yes
 
-`verify_backup_import.sh` runs the same import flow in an isolated
-docker-compose project so the working stack is left untouched.
+`tests/verify_backup_import.sh` runs the same import flow in an isolated
+Compose project, rebuilds the active challenge logs in Elasticsearch, and
+leaves the working stack untouched.
 
 ## Troubleshooting
 

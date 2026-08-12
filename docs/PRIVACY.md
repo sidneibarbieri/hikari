@@ -1,8 +1,10 @@
 # Privacidade e tratamento de dados
 
-Esta declaração descreve, em conformidade com a Lei Geral de Proteção
-de Dados (LGPD, Lei 13.709/2018), quais dados pessoais o Hikari coleta,
-para qual finalidade e como os participantes podem exercer seus direitos.
+Esta declaração descreve os dados pessoais que uma instância Hikari pode
+tratar, suas finalidades e os controles que o operador deve configurar. Ela
+apoia a elaboração do aviso de privacidade e do procedimento de atendimento
+aos titulares exigidos para cada competição; não substitui análise jurídica
+nem torna uma instância automaticamente conforme com a LGPD.
 
 ## Operador
 
@@ -12,23 +14,22 @@ SOC). Essa organização é a controladora dos dados coletados durante
 suas competições. O projeto Hikari, como software livre, não opera nem
 recebe dados de terceiros.
 
-## Base legal
+## Bases legais e transparência
 
-- **Consentimento informado** para inscrição na competição e para o
-  questionário de feedback. Antes de cada competição, exiba aos
-  participantes um termo claro descrevendo este documento.
-- **Legítimo interesse de pesquisa científica** (art. 7º, IV da LGPD)
-  para a coleta e análise das atividades operacionais durante o
-  exercício.
+O operador deve definir, documentar e comunicar a base legal adequada a cada
+finalidade antes da coleta. A participação na competição e o questionário
+podem exigir fundamentos distintos. O aviso apresentado aos participantes
+deve identificar o controlador, a finalidade, o período de retenção, os
+canais de atendimento e as pessoas com acesso administrativo.
 
 ## Dados coletados
 
 | Categoria | Campos | Onde |
 | --- | --- | --- |
 | Identificação | nome de usuário, e-mail, instituição (opcional), país (opcional) | tabela `users` do CTFd |
-| Autenticação | hash bcrypt da senha, identificador OAuth (se MLC) | tabela `users` |
+| Autenticação | hash bcrypt da senha, identificador do provedor federado, quando habilitado | tabela `users` |
 | Composição de equipes | nome da equipe, senha de adesão, vínculo capitão/membro | tabela `teams` |
-| Submissões | desafio, payload submetido, marca temporal, acerto/erro | tabela `submissions` |
+| Submissões | desafio, texto submetido, marca temporal, acerto/erro | tabela `submissions` |
 | Atividade operacional | view de desafio, login, registro, consulta Kibana (KQL, índices, intervalo de tempo), tipo de requisição | tabela `hikari_activity` |
 | Feedback | respostas às escalas NASA-TLX, SUS, NICE, MITRE ATT&CK e campos qualitativos | tabela `hikari_feedback` |
 | Logs operacionais | eventos de rede sintetizados das competições, ingestados via Kafka | índice Elasticsearch `competition1` (sem dados pessoais reais) |
@@ -40,15 +41,13 @@ recebe dados de terceiros.
 - Coletar percepção dos participantes via questionário pós-evento para
   estudos de carga de trabalho, usabilidade e aprendizagem percebida.
 
-## Não fazemos
+## Limites do software
 
-- **Não compartilhamos** dados com terceiros. Não há analytics,
-  rastreadores publicitários, integração com redes sociais, nem
-  envio para serviços externos.
-- **Não usamos** os dados para perfil comercial ou marketing.
-- **Não retemos** dados após o ciclo de pesquisa para o qual foram
-  coletados. O operador da instância define a política de retenção
-  e exclusão.
+O repositório não incorpora rastreadores publicitários nem serviços externos
+de analytics. Uma implantação pode habilitar serviços como OAuth e SMTP; o
+operador deve informá-los no aviso de privacidade. A retenção, exclusão e o
+compartilhamento de dados são decisões operacionais do controlador da
+instância e devem ser configurados antes da competição.
 
 ## Direitos do titular (LGPD, art. 18)
 
@@ -61,8 +60,9 @@ Cada participante pode, a qualquer momento, solicitar:
   de pesquisa).
 - Revogação do consentimento.
 
-A solicitação deve ser dirigida ao operador da instância, que possui
-acesso administrativo ao CTFd e ao banco de dados.
+A solicitação deve ser dirigida ao operador da instância, que deve definir
+um canal de contato, autenticar o solicitante e aplicar o procedimento
+compatível com sua base legal e sua política de retenção.
 
 ## Anonimização para publicação
 
@@ -83,8 +83,8 @@ pesquisador**, antes de divulgar resultados. Sugerimos:
 - Banco MariaDB acessível apenas pela rede interna do Compose.
 - Elasticsearch e Kibana ficam atrás do gateway autenticado do CTFd em
   `/hikari/kibana/*`; não há porta exposta diretamente ao host.
-- Para produção, ajuste TLS, segredos, política de backup e
-  segregação de rede conforme `docs/INSTALL.md` (seção de implantação).
+- Para produção, ajuste TLS, segredos, política de backup e segregação de
+  rede conforme `deploy/production/README.md`.
 
 ## Dados sintéticos
 
@@ -98,4 +98,4 @@ inscritos na instância em uso.
 
 Dúvidas sobre este documento devem ser direcionadas ao operador da
 instância. Para questões sobre o software, abra uma issue em
-<https://github.com/hikari-edu/hikari>.
+<https://github.com/sidneibarbieri/hikari>.

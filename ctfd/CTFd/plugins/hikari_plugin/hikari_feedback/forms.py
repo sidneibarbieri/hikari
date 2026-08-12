@@ -9,8 +9,8 @@ instrument it implements, not in the storage layer. Optional fields keep
 from typing import Iterable, List, Tuple
 
 from flask_wtf import FlaskForm
-from wtforms import HiddenField, IntegerField, SelectField, SelectMultipleField, SubmitField, TextAreaField, widgets
-from wtforms.validators import DataRequired, NumberRange, Optional as OptionalValidator
+from wtforms import HiddenField, SelectField, SelectMultipleField, SubmitField, TextAreaField, widgets
+from wtforms.validators import DataRequired, Optional as OptionalValidator
 
 from CTFd.forms import CTFdCSRF
 
@@ -81,16 +81,34 @@ class _MultiCheckbox(SelectMultipleField):
     option_widget = widgets.CheckboxInput()
 
 
+def _score_choices(start: int, end: int):
+    return [("", "— Selecione —")] + [
+        (str(value), str(value)) for value in range(start, end + 1)
+    ]
+
+
 def _score5(label):
-    return IntegerField(label, validators=[OptionalValidator(), NumberRange(min=1, max=5)])
+    return SelectField(
+        label,
+        choices=_score_choices(1, 5),
+        validators=[OptionalValidator()],
+    )
 
 
 def _score7(label):
-    return IntegerField(label, validators=[OptionalValidator(), NumberRange(min=1, max=7)])
+    return SelectField(
+        label,
+        choices=_score_choices(1, 7),
+        validators=[OptionalValidator()],
+    )
 
 
 def _score10(label):
-    return IntegerField(label, validators=[OptionalValidator(), NumberRange(min=0, max=10)])
+    return SelectField(
+        label,
+        choices=_score_choices(0, 10),
+        validators=[OptionalValidator()],
+    )
 
 
 def _optional_select(label, choices):

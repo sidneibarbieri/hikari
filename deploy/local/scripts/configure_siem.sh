@@ -3,12 +3,13 @@ set -euo pipefail
 
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 LOCAL_DIR=$(cd "$SCRIPT_DIR/.." && pwd)
+source "$LOCAL_DIR/lib/compose.sh"
 COMPOSE_FILE=${COMPOSE_FILE:-"$LOCAL_DIR/docker-compose.yml"}
 DATA_VIEW_TITLE=${DATA_VIEW_TITLE:-competition1}
 TIME_FIELD=${TIME_FIELD:-@timestamp}
 
 compose() {
-  docker-compose -f "$COMPOSE_FILE" "$@"
+  hikari_compose -f "$COMPOSE_FILE" "$@"
 }
 
 kibana() {

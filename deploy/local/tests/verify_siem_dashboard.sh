@@ -3,13 +3,14 @@ set -euo pipefail
 
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 LOCAL_DIR=$(cd "$SCRIPT_DIR/.." && pwd)
+source "$LOCAL_DIR/lib/compose.sh"
 COMPOSE_FILE=${COMPOSE_FILE:-"$LOCAL_DIR/docker-compose.yml"}
 CTFD_URL=${CTFD_URL:-http://localhost:8000}
-ADMIN_EMAIL=${ADMIN_EMAIL:-admin@hikari.local}
+ADMIN_NAME=${ADMIN_NAME:-admin}
 ADMIN_PASSWORD=${ADMIN_PASSWORD:-hikari_comp@2026}
 
 compose() {
-  docker-compose -f "$COMPOSE_FILE" "$@"
+  hikari_compose -f "$COMPOSE_FILE" "$@"
 }
 
 kibana() {
@@ -128,7 +129,7 @@ nonce=$(extract_nonce "$page")
 
 code=$(curl -sS -c "$cookie_jar" -b "$cookie_jar" -o /dev/null -w '%{http_code}' \
   -X POST "$CTFD_URL/login" \
-  --data-urlencode "name=$ADMIN_EMAIL" \
+  --data-urlencode "name=$ADMIN_NAME" \
   --data-urlencode "password=$ADMIN_PASSWORD" \
   --data-urlencode "nonce=$nonce")
 [[ "$code" == "302" ]] || { echo "FAIL: admin login returned $code"; exit 1; }

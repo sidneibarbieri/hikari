@@ -23,11 +23,17 @@ if [[ -z "$ZIP" ]]; then
   exit 2
 fi
 [[ -f "$ZIP" ]] || { echo "not a file: $ZIP" >&2; exit 2; }
+ZIP=$(cd "$(dirname "$ZIP")" && pwd)/$(basename "$ZIP")
 
-cd "$(dirname "$0")"
-COMPOSE_FILE="$(pwd)/docker-compose.yml"
-PROJECT=${COMPOSE_PROJECT_NAME:-$(basename "$(pwd)")}
-COMPOSE=(docker-compose -f "$COMPOSE_FILE" -p "$PROJECT")
+SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+LOCAL_DIR=$(cd "$SCRIPT_DIR/.." && pwd)
+source "$LOCAL_DIR/lib/compose.sh"
+cd "$LOCAL_DIR"
+COMPOSE_FILE=${COMPOSE_FILE:-"$LOCAL_DIR/docker-compose.yml"}
+PROJECT=${COMPOSE_PROJECT_NAME:-$(basename "$LOCAL_DIR")}
+compose() {
+  hikari_compose -f "$COMPOSE_FILE" -p "$PROJECT" "$@"
+}
 UPLOADS_VOLUME="${PROJECT}_ctfd-uploads"
 NETWORK="${PROJECT}_hikari"
 SIDECAR="${PROJECT}-backup-sidecar"
@@ -53,7 +59,7 @@ cleanup() {
 trap cleanup EXIT
 
 echo "==> snapshotting current database to $snapshot_file"
-"${COMPOSE[@]}" exec -T db \
+compose exec -T db \
   mariadb-dump -uctfd -pctfd --routines --events --triggers ctfd \
   > "$snapshot_file"
 
@@ -114,15 +120,15 @@ echo "==> stopping sidecar"
 docker rm -f "$SIDECAR" >/dev/null
 
 echo "==> dropping and recreating ctfd database in the running mariadb"
-"${COMPOSE[@]}" exec -T db \
+compose exec -T db \
   mariadb -uctfd -pctfd -e "DROP DATABASE IF EXISTS ctfd; CREATE DATABASE ctfd CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
 
 echo "==> restoring dump into ctfd"
-"${COMPOSE[@]}" exec -T db \
+compose exec -T db \
   mariadb -uctfd -pctfd ctfd < "$dump_file"
 
 echo "==> marking imported CTFd instance as already set up"
-"${COMPOSE[@]}" exec -T db \
+compose exec -T db \
   mariadb -uctfd -pctfd ctfd -e \
   "INSERT INTO config (\`key\`, value)
    SELECT 'setup', '1'
@@ -136,10 +142,10 @@ docker run --rm \
   alpine sh -c 'rm -rf /dest/* /dest/..?* /dest/.[!.]* 2>/dev/null; cp -a /src/. /dest/'
 
 echo "==> clearing runtime cache after database replacement"
-"${COMPOSE[@]}" exec -T cache redis-cli FLUSHDB >/dev/null
+compose exec -T cache redis-cli FLUSHDB >/dev/null
 
 echo "==> restarting ctfd so create_all picks up new tables (hikari_activity)"
-"${COMPOSE[@]}" restart ctfd >/dev/null
+compose restart ctfd >/dev/null
 deadline=$((SECONDS + 90))
 while (( SECONDS < deadline )); do
   if curl -fsS -o /dev/null --max-time 3 "$CTFD_URL/login"; then
@@ -149,19 +155,28 @@ while (( SECONDS < deadline )); do
 done
 (( SECONDS < deadline )) || { echo "ctfd did not come back up"; exit 1; }
 
+echo "==> rebuilding competition1 from active challenge log files"
+rebuild_script="$SCRIPT_DIR/rebuild_competition_data.py"
+container_script="/tmp/rebuild_competition_data.py"
+compose cp "$rebuild_script" "ctfd:$container_script"
+compose exec -T ctfd python "$container_script"
+
 echo "==> verifying imported state"
-users=$("${COMPOSE[@]}" exec -T db \
+users=$(compose exec -T db \
   mariadb -uctfd -pctfd ctfd -N -B -e "SELECT COUNT(*) FROM users;" | tr -d '[:space:]')
-teams=$("${COMPOSE[@]}" exec -T db \
+teams=$(compose exec -T db \
   mariadb -uctfd -pctfd ctfd -N -B -e "SELECT COUNT(*) FROM teams;" | tr -d '[:space:]')
-challenges=$("${COMPOSE[@]}" exec -T db \
+challenges=$(compose exec -T db \
   mariadb -uctfd -pctfd ctfd -N -B -e "SELECT COUNT(*) FROM challenges;" | tr -d '[:space:]')
-solves=$("${COMPOSE[@]}" exec -T db \
+solves=$(compose exec -T db \
   mariadb -uctfd -pctfd ctfd -N -B -e "SELECT COUNT(*) FROM solves;" | tr -d '[:space:]')
-activity=$("${COMPOSE[@]}" exec -T db \
+activity=$(compose exec -T db \
   mariadb -uctfd -pctfd ctfd -N -B -e \
   "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='ctfd' AND table_name='hikari_activity';" \
   | tr -d '[:space:]')
+competition_events=$(compose exec -T elasticsearch \
+  curl -fsS http://localhost:9200/competition1/_count \
+  | jq -r '.count')
 
 cat <<EOF
 
@@ -170,12 +185,14 @@ Backup imported.
   teams      : $teams
   challenges : $challenges
   solves     : $solves
+  competition events : $competition_events
   hikari_activity table present : $activity
 
 Pre-import snapshot: $snapshot_file
 Backup dump kept at: $dump_file
 
 To recover the previous state:
-  COMPOSE_PROJECT_NAME="$PROJECT" docker-compose -f "$COMPOSE_FILE" exec -T db \\
+  source "$LOCAL_DIR/lib/compose.sh"
+  hikari_compose -f "$COMPOSE_FILE" -p "$PROJECT" exec -T db \\
     mariadb -uctfd -pctfd ctfd < $snapshot_file
 EOF
