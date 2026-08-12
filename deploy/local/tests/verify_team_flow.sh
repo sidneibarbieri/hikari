@@ -72,6 +72,8 @@ echo "== captain creates team =="
 login "$captain_jar" "$CAPTAIN_EMAIL" "$CAPTAIN_PASSWORD"
 page=$(mktemp)
 curl -sS -c "$captain_jar" -b "$captain_jar" -o "$page" "$CTFD_URL/teams/new"
+grep -q 'class="hikari-team-form"' "$page" \
+  || { echo "FAIL: team creation page is missing the Hikari form layout"; exit 1; }
 nonce=$(extract_nonce "$page")
 rm -f "$page"
 code=$(curl -sS -c "$captain_jar" -b "$captain_jar" \
@@ -88,6 +90,8 @@ register "$member_jar" "$MEMBER_NAME" "$MEMBER_EMAIL" "$MEMBER_PASSWORD"
 login "$member_jar" "$MEMBER_EMAIL" "$MEMBER_PASSWORD"
 page=$(mktemp)
 curl -sS -c "$member_jar" -b "$member_jar" -o "$page" "$CTFD_URL/teams/join"
+grep -q 'class="hikari-team-form"' "$page" \
+  || { echo "FAIL: team join page is missing the Hikari form layout"; exit 1; }
 nonce=$(extract_nonce "$page")
 rm -f "$page"
 code=$(curl -sS -c "$member_jar" -b "$member_jar" \

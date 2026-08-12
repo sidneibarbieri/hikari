@@ -49,5 +49,28 @@ grep -q '/plugins/hikari_plugin/assets/theme.css' "$page" \
   || { echo "FAIL: theme.css not linked from rendered HTML"; exit 1; }
 echo "PASS: design tokens stylesheet linked"
 
+admin_cookie=$(mktemp)
+admin_login=$(mktemp)
+admin_page=$(mktemp)
+trap 'rm -f "$page" "$admin_cookie" "$admin_login" "$admin_page"' EXIT
+
+curl -sS -c "$admin_cookie" -b "$admin_cookie" -o "$admin_login" \
+  "$CTFD_URL/login"
+nonce=$(grep -oE 'name="nonce"[^>]*value="[^"]+"' "$admin_login" \
+  | head -1 | sed -E 's/.*value="([^"]+)".*/\1/')
+code=$(curl -sS -c "$admin_cookie" -b "$admin_cookie" -o /dev/null \
+  -w '%{http_code}' -X POST "$CTFD_URL/login" \
+  --data-urlencode "name=${ADMIN_EMAIL:-admin@hikari.local}" \
+  --data-urlencode "password=${ADMIN_PASSWORD:-hikari_comp@2026}" \
+  --data-urlencode "nonce=$nonce")
+[[ "$code" == "302" ]] || { echo "FAIL: admin login returned $code"; exit 1; }
+
+curl -sS -c "$admin_cookie" -b "$admin_cookie" -o "$admin_page" \
+  "$CTFD_URL/admin"
+if grep -q "A new CTFd version is available" "$admin_page"; then
+  echo "FAIL: admin page renders the upstream update banner"; exit 1
+fi
+echo "PASS: upstream update banner disabled"
+
 echo
 echo "Branding verified."

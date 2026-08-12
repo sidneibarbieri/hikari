@@ -957,6 +957,37 @@ select option {
     gap: 0.75rem;
     margin-top: 1rem;
 }
+.hikari-team-form {
+    max-width: 46rem;
+    margin: 0 auto;
+    padding: clamp(1.2rem, 2.5vw, 1.8rem);
+    background-color: var(--hikari-surface);
+    border: 1px solid var(--hikari-border);
+    border-radius: var(--hikari-radius);
+}
+.hikari-team-form .hikari-field {
+    margin-bottom: 1rem;
+}
+.hikari-team-form .hikari-settings-actions .btn {
+    min-width: 8rem;
+}
+.hikari-team-form .mb-3 {
+    margin-bottom: 1rem !important;
+}
+.hikari-team-form .mb-3 > .form-label,
+.hikari-team-form .mb-3 > b > .form-label {
+    display: block;
+    margin-bottom: 0.4rem;
+}
+.hikari-team-note {
+    margin-top: 1.25rem;
+    padding: 0.8rem 0.9rem;
+    border-left: 3px solid var(--hikari-accent);
+    background-color: var(--hikari-accent-soft);
+    color: var(--hikari-text-muted);
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
 
 @media (max-width: 640px) {
     .container {

@@ -1,6 +1,7 @@
 """Rebuild the competition index from JSON files attached to active challenges."""
 
 import json
+import logging
 import os
 import sys
 import time
@@ -13,6 +14,7 @@ from confluent_kafka import Producer
 
 INDEX_NAME = "competition1"
 UPLOAD_DIRECTORY = "/var/uploads"
+LOGGER = logging.getLogger(__name__)
 
 
 def database_settings() -> dict[str, object]:
@@ -104,9 +106,15 @@ def main() -> int:
     reset_index(elasticsearch_url)
     event_count = publish_events(batches)
     wait_for_index_count(elasticsearch_url, event_count)
-    print(f"Rebuilt {INDEX_NAME} from {len(locations)} log files and {event_count} events.")
+    LOGGER.info(
+        "Rebuilt %s from %d log files and %d events.",
+        INDEX_NAME,
+        len(locations),
+        event_count,
+    )
     return 0
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
     sys.exit(main())

@@ -7,6 +7,7 @@ from CTFd.plugins import (
     register_admin_plugin_script,
     register_admin_plugin_stylesheet,
     register_plugin_assets_directory,
+    register_plugin_stylesheet,
 )
 from CTFd.utils.decorators import admins_only
 from CTFd.models import Teams
@@ -74,6 +75,7 @@ def load(app):
         mtime = int(os.path.getmtime(path)) if os.path.exists(path) else 0
         return f"/plugins/hikari_plugin/assets/{filename}?v={mtime}"
 
+    register_plugin_stylesheet(url=_versioned("theme.css"))
     register_admin_plugin_stylesheet(url=_versioned("admin.css"))
     # Best-effort ECharts theming. If statistics.js bundled echarts as a
     # private ES module, window.echarts won't exist and the script no-ops.

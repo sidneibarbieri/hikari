@@ -25,7 +25,7 @@ wait_http() {
   local url=$1 label=$2 timeout=${3:-240}
   local deadline=$((SECONDS + timeout))
   while (( SECONDS < deadline )); do
-    if curl -fsS -o /dev/null --max-time 3 "$url"; then
+    if curl -fsS -o /dev/null --max-time 3 "$url" 2>/dev/null; then
       ok "$label reachable at $url"; return 0
     fi
     sleep 3

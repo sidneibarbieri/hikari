@@ -1,9 +1,9 @@
 {% extends "base.html" %}
 
 {% block content %}
-  <div class="jumbotron">
+  <div class="jumbotron hikari-page-hero">
     <div class="container">
-      <h1>{% trans %}Join Team{% endtrans %}</h1>
+      <h1>Entrar em equipe</h1>
     </div>
   </div>
   <div class="container">
@@ -12,14 +12,14 @@
         {% include "components/errors.html" %}
 
         <p class="h3 text-center mt-md-4">
-          {% trans %}Welcome to{% endtrans %} <strong>{{ team.name }}</strong>!
+          Você foi convidado para <strong>{{ team.name }}</strong>.
         </p>
 
         <p class="text-center">
-          {% trans %}Click the button below to join the team!{% endtrans %}
+          Confirme a entrada para integrar a equipe.
           <br>
           <small class="text-muted">
-            Or <a href="{{ url_for('teams.new') }}">click here</a> if you'd prefer to create your own team.
+            Ou <a href="{{ url_for('teams.new') }}">crie uma equipe</a> para competir de forma independente.
           </small>
         </p>
 
@@ -27,7 +27,7 @@
           <form method="POST">
             <div class="row pt-3 text-center">
               <div class="col-md-12">
-                {{ form.submit(class="btn btn-success w-100") }}
+                {{ form.submit(class="btn btn-success w-100", value="Confirmar entrada") }}
               </div>
             </div>
             {{ form.nonce() }}

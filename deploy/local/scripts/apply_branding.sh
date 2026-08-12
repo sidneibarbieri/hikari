@@ -178,20 +178,14 @@ else
   echo "theme_footer already up to date"
 fi
 
-version_response=$(curl -sS -c "$cookie_jar" -b "$cookie_jar" \
-  "$CTFD_URL/api/v1/configs/version_latest")
-version_value=$(echo "$version_response" | jq -r '.data.value // empty')
-if [[ -n "$version_value" ]]; then
-  response=$(curl -sS -c "$cookie_jar" -b "$cookie_jar" \
-    -H "Content-Type: application/json" -H "Csrf-Token: $csrf" \
-    -X PATCH "$CTFD_URL/api/v1/configs/version_latest" \
-    -d '{"value":null}')
-  success=$(echo "$response" | jq -r '.success')
-  [[ "$success" == "true" ]] \
-    || { echo "FAIL: version_latest clear returned $response"; exit 1; }
-  echo "version banner cleared"
-else
-  echo "version banner already clear"
-fi
+response=$(curl -sS -c "$cookie_jar" -b "$cookie_jar" \
+  -H "Content-Type: application/json" -H "Csrf-Token: $csrf" \
+  -X PATCH "$CTFD_URL/api/v1/configs" \
+  -d '{"UPDATE_CHECK":"false"}')
+success=$(echo "$response" | jq -r '.success')
+[[ "$success" == "true" ]] \
+  || { echo "FAIL: update check disable returned $response"; exit 1; }
+
+echo "update banner disabled"
 
 echo "branding applied"

@@ -1,36 +1,36 @@
 {% extends "base.html" %}
 
 {% block content %}
-  <div class="jumbotron">
+  <div class="jumbotron hikari-page-hero">
     <div class="container">
-      <h1>{% trans %}Create Team{% endtrans %}</h1>
+      <h1>Criar equipe</h1>
+      <p class="hikari-page-hero-copy">Defina uma equipe para compartilhar progresso e pontuação durante a competição.</p>
     </div>
   </div>
   <div class="container">
     <div class="row">
-      <div class="col-md-6 offset-md-3">
+      <div class="col-md-8 col-lg-6 offset-md-2 offset-lg-3">
         {% include "components/errors.html" %}
 
         {% with form = Forms.teams.TeamRegisterForm() %}
           {% from "macros/forms.html" import render_extra_fields %}
-          <form method="POST">
-            <div class="mb-3">
-              <b>{{ form.name.label(class="form-label") }}</b>
-              {{ form.name(class="form-control") }}
+          <form method="POST" class="hikari-team-form">
+            <div class="hikari-field">
+              {{ form.name.label(class="form-label") }}
+              {{ form.name(class="form-control", autocomplete="organization") }}
             </div>
-            <div class="mb-3">
-              <b>{{ form.password.label(class="form-label") }}</b>
-              {{ form.password(class="form-control") }}
+            <div class="hikari-field">
+              {{ form.password.label(class="form-label") }}
+              {{ form.password(class="form-control", autocomplete="new-password") }}
             </div>
 
             {{ render_extra_fields(form.extra) }}
 
-            <div class="row ">
-              <div class="col-md-12">
-                <p>After creating your team, share the team name and password with your teammates so they can join your
-                  team.</p>
-                {{ form.submit(class="btn btn-success float-end px-4") }}
-              </div>
+            <div class="hikari-team-note">
+              Compartilhe o nome e a senha apenas com integrantes autorizados da equipe.
+            </div>
+            <div class="hikari-settings-actions">
+              {{ form.submit(class="btn btn-success px-4") }}
             </div>
             {{ form.nonce() }}
           </form>
