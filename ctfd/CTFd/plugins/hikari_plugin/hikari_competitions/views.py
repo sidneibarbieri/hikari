@@ -11,6 +11,7 @@ from CTFd.utils.decorators import admins_only
 from .dto import CompetitionDraft
 from .models import CompetitionRun
 from . import service
+from .timezone import format_schedule_time, operator_time_zone, parse_local_schedule
 
 
 def _now() -> datetime:
@@ -31,6 +32,8 @@ def dashboard():
         runs=runs,
         active_run=service.active_run(),
         csrf_nonce=session.get("nonce"),
+        format_schedule_time=format_schedule_time,
+        operator_time_zone=operator_time_zone().key,
     )
 
 
@@ -75,10 +78,24 @@ def start(run_id: int):
 
 
 @admins_only
+def schedule(run_id: int):
+    run = _run_or_404(run_id)
+    raw_start = request.form.get("starts_at", "")
+    try:
+        starts_at = parse_local_schedule(raw_start)
+        service.schedule_run(run, starts_at, _now())
+    except ValueError as error:
+        flash(str(error) or "Horário de início inválido", "danger")
+    else:
+        flash("Execução agendada. Cadastros permanecem disponíveis até o início.", "success")
+    return redirect(url_for("hikariplugin.hikari_competitions_dashboard"))
+
+
+@admins_only
 def extend(run_id: int):
     run = _run_or_404(run_id)
     try:
-        service.extend_run(run, int(request.form.get("hours", "0")), _now())
+        service.extend_run(run, int(request.form.get("additional_minutes", "0")), _now())
     except (TypeError, ValueError) as error:
         flash(str(error) or "Tempo adicional inválido", "danger")
     else:
@@ -119,4 +136,16 @@ def finish(run_id: int):
         flash(str(error), "danger")
     else:
         flash("Execução encerrada. Faça o checkpoint antes de reutilizar a instalação.", "success")
+    return redirect(url_for("hikariplugin.hikari_competitions_dashboard"))
+
+
+@admins_only
+def cancel(run_id: int):
+    run = _run_or_404(run_id)
+    try:
+        service.cancel_run(run)
+    except ValueError as error:
+        flash(str(error), "danger")
+    else:
+        flash("Agendamento cancelado.", "success")
     return redirect(url_for("hikariplugin.hikari_competitions_dashboard"))

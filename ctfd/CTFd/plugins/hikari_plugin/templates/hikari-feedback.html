@@ -34,7 +34,13 @@
             <div class="hikari-question hikari-question--{{ field.type|lower }}">
               <label for="{{ field.id }}">{{ field.label.text }}</label>
               {% if field.type == 'TextAreaField' %}
-                {{ field(rows=3, class="hikari-input hikari-input--text") }}
+                {% if field.name == 'most_valuable_technique' %}
+                  {{ field(rows=3, class="hikari-input hikari-input--text", placeholder="Ex.: correlacionei eventos por endereço IP e horário.") }}
+                {% elif field.name == 'biggest_learning_blocker' %}
+                  {{ field(rows=3, class="hikari-input hikari-input--text", placeholder="Ex.: faltaram exemplos de consulta; uma dica inicial ajudaria.") }}
+                {% else %}
+                  {{ field(rows=3, class="hikari-input hikari-input--text") }}
+                {% endif %}
               {% elif field.type in ['SelectMultipleField', '_MultiCheckbox'] %}
                 {{ field(class="hikari-checkboxes") }}
               {% elif field.type == 'SelectField' %}

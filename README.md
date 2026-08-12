@@ -28,6 +28,8 @@ training review and research analysis.
 - **Execution control** for creating a timed run, selecting team or individual
   scoring before it starts, extending a running schedule, pausing, resuming
   and closing the run.
+- **Challenge library import** that validates a versioned ZIP manifest before
+  creating reusable Hikari challenges, flags, prerequisites and log files.
 - **Local stack** as one `docker-compose` (CTFd, MariaDB, Redis, Kafka,
   Elasticsearch, Kibana, Logstash, fake SMTP).
 
@@ -57,8 +59,9 @@ The acceptance script runs focused checks for artifact hygiene, stack health,
 CTFd setup, branding application and rendering, plugin loading,
 Kafka-to-Elasticsearch data flow, default SIEM data view, activity logging in
 DB and Elasticsearch, competitor SIEM access with query attribution, Kibana
-proxy forensic classification, local feedback capture and export, lone-wolf
-and team competitor flows, admin challenge creation and player submission,
+proxy forensic classification, local feedback capture and export,
+one-person-team and multi-member-team competitor flows, admin challenge creation
+and player submission,
 progressive log activation after solve, the live competition board, and the
 research dashboard with feedback coverage and JSONL export. It also verifies
 that an administrator can create, start and extend a timed execution.
@@ -76,6 +79,7 @@ that an administrator can create, start and extend a timed execution.
 | `docs/AUTH.md` | Operator | Authentication options and MajorLeagueCyber integration |
 | `docs/PRIVACY.md` | Operator or DPO | Data-handling checklist and participant rights |
 | `docs/OPERATIONS.md` | Event operator | Execution control, checkpoint and recovery procedures |
+| `docs/CHALLENGE_LIBRARY.md` | Challenge author or operator | Portable package format and validated import |
 
 ## Compatibility
 

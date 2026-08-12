@@ -1,0 +1,28 @@
+{
+  "format_version": 1,
+  "package_key": "acceptance-library",
+  "display_name": "Biblioteca de validação",
+  "challenges": [
+    {
+      "key": "initial-hunt",
+      "name": "Investigação inicial",
+      "category": "Validação",
+      "description": "Localize o indicador inicial no fluxo de eventos.",
+      "flag": "hikari{acceptance-initial}",
+      "value": 100,
+      "state": "visible",
+      "log_file": "logs/initial-hunt.json"
+    },
+    {
+      "key": "dependent-hunt",
+      "name": "Investigação dependente",
+      "category": "Validação",
+      "description": "Correlacione a evidência liberada pela investigação inicial.",
+      "flag": "hikari{acceptance-dependent}",
+      "value": 200,
+      "state": "hidden",
+      "prerequisites": ["initial-hunt"],
+      "log_file": "logs/dependent-hunt.json"
+    }
+  ]
+}

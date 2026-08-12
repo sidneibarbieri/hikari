@@ -126,9 +126,7 @@ code=$(curl -sS -c "$cookie_jar" -b "$cookie_jar" \
   --data-urlencode "methodology_coherence=4" \
   --data-urlencode "nps_recommend=9" \
   --data-urlencode "most_valuable_technique=Pivoting on user agent + process tree." \
-  --data-urlencode "biggest_learning_blocker=Documentation drift between scenarios." \
-  --data-urlencode "suggested_scenarios=Cloud-native lateral movement." \
-  --data-urlencode "other_comments=Solid pacing.")
+  --data-urlencode "biggest_learning_blocker=Documentation drift between scenarios.")
 [[ "$code" == "302" ]] || { echo "POST /hikari/feedback returned $code"; exit 1; }
 echo "PASS: questionnaire submission accepted (302)"
 

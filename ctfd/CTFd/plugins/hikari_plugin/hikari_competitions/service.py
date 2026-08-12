@@ -8,7 +8,7 @@ from CTFd.utils import get_config, set_config
 from .models import CompetitionRun
 
 
-ACTIVE_STATUSES = {"running", "paused"}
+ACTIVE_STATUSES = {"scheduled", "running", "paused"}
 
 
 def active_run() -> CompetitionRun | None:
@@ -20,8 +20,26 @@ def active_run() -> CompetitionRun | None:
     )
 
 
+def schedule_run(run: CompetitionRun, starts_at: datetime, now: datetime) -> None:
+    """Schedule a draft execution while keeping registration available."""
+    other = active_run()
+    if other is not None and other.id != run.id:
+        raise ValueError("Já existe uma execução controlando esta instalação")
+    if run.status != "draft":
+        raise ValueError("Apenas execuções em rascunho podem ser agendadas")
+    if starts_at <= now:
+        raise ValueError("Escolha um horário futuro para o início")
+    _validate_scoring_mode(run)
+
+    run.starts_at = starts_at
+    run.ends_at = starts_at + timedelta(minutes=run.duration_minutes)
+    run.status = "scheduled"
+    _apply_schedule(run, paused=False)
+    db.session.commit()
+
+
 def start_run(run: CompetitionRun, now: datetime) -> None:
-    """Start a draft execution and apply its schedule to CTFd."""
+    """Start a draft or scheduled execution immediately."""
     other = active_run()
     if other is not None and other.id != run.id:
         raise ValueError("Já existe uma execução ativa nesta instalação")
@@ -37,15 +55,31 @@ def start_run(run: CompetitionRun, now: datetime) -> None:
     db.session.commit()
 
 
-def extend_run(run: CompetitionRun, hours: int, now: datetime) -> None:
+def synchronize_active_run(now: datetime) -> CompetitionRun | None:
+    """Apply scheduled start and end transitions when the application receives traffic."""
+    run = active_run()
+    if run is None:
+        return None
+    if run.status == "scheduled" and run.starts_at is not None and run.starts_at <= now:
+        run.status = "running"
+        _activate_initial_logs()
+        db.session.commit()
+        return run
+    if run.status == "running" and run.ends_at is not None and run.ends_at <= now:
+        run.status = "finished"
+        db.session.commit()
+    return run
+
+
+def extend_run(run: CompetitionRun, additional_minutes: int, now: datetime) -> None:
     """Extend a running execution without changing its start time."""
     if run.status != "running" or run.ends_at is None:
         raise ValueError("Apenas uma execução em andamento pode receber tempo adicional")
-    if hours not in {1, 2, 4}:
-        raise ValueError("Escolha 1, 2 ou 4 horas")
+    if not 5 <= additional_minutes <= 480 or additional_minutes % 5:
+        raise ValueError("Informe de 5 a 480 minutos, em múltiplos de cinco")
 
     base = max(run.ends_at, now)
-    run.ends_at = base + timedelta(hours=hours)
+    run.ends_at = base + timedelta(minutes=additional_minutes)
     _apply_schedule(run, paused=False)
     db.session.commit()
 
@@ -87,6 +121,19 @@ def finish_run(run: CompetitionRun, now: datetime) -> None:
     run.paused_remaining_seconds = None
     run.status = "finished"
     _apply_schedule(run, paused=False)
+    db.session.commit()
+
+
+def cancel_run(run: CompetitionRun) -> None:
+    """Cancel a scheduled execution without creating an invalid time window."""
+    if run.status != "scheduled":
+        raise ValueError("Apenas uma execução agendada pode ser cancelada")
+
+    run.status = "cancelled"
+    set_config("start", 0)
+    set_config("end", 0)
+    set_config("paused", False)
+    set_config("hikari_competition_key", "")
     db.session.commit()
 
 

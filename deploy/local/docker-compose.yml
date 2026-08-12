@@ -17,6 +17,7 @@ services:
       ERROR_LOG: "-"
       REVERSE_PROXY: "true"
       UPDATE_CHECK: "false"
+      HIKARI_TIME_ZONE: ${HIKARI_TIME_ZONE:-America/Sao_Paulo}
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       KAFKA_USE_SASL: "false"
       ELASTIC_URL: http://elasticsearch:9200

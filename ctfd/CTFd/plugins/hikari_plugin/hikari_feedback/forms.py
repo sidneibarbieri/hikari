@@ -178,11 +178,11 @@ class FeedbackForm(FlaskForm):
     nps_recommend = _score10("Qual é a probabilidade de recomendar o Hikari em treinamentos de defesa cibernética? (0-10)")
 
     most_valuable_technique = TextAreaField(
-        "Técnica ou metodologia mais útil que você utilizou",
+        "Qual técnica ou procedimento mais contribuiu para resolver os desafios? Cite um exemplo.",
         validators=[OptionalValidator()],
     )
     biggest_learning_blocker = TextAreaField(
-        "Maior obstáculo ao seu aprendizado nesta execução",
+        "Qual foi o principal obstáculo durante a competição e como ele poderia ser reduzido?",
         validators=[OptionalValidator()],
     )
     suggested_scenarios = TextAreaField(
@@ -303,13 +303,11 @@ FIELD_GROUPS: Tuple[Tuple[str, str, str, Tuple[str, ...]], ...] = (
     ),
     (
         "reflections",
-        "Reflexões qualitativas",
-        "Campos opcionais para registrar detalhes que as escalas não capturam.",
+        "Observações opcionais",
+        "Registre apenas fatos ou exemplos que as escalas anteriores não capturam.",
         (
             "most_valuable_technique",
             "biggest_learning_blocker",
-            "suggested_scenarios",
-            "other_comments",
         ),
     ),
 )

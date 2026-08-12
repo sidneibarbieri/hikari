@@ -35,6 +35,8 @@ services:
       MAIL_TLS: "${MAIL_TLS:-false}"
       MAIL_SSL: "${MAIL_SSL:-false}"
       WORKERS: "4"
+      HIKARI_TIME_ZONE: "${HIKARI_TIME_ZONE:-America/Sao_Paulo}"
+      UPDATE_CHECK: "false"
 
   db:
     restart: unless-stopped

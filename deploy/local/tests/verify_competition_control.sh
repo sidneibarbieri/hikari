@@ -33,6 +33,12 @@ run_status() {
     | tr -d '\r\n'
 }
 
+configured_start() {
+  docker-compose -f "$COMPOSE_FILE" exec -T db mariadb -N -uctfd -pctfd ctfd \
+    -e "SELECT value FROM config WHERE \`key\` = 'start';" \
+    | tr -d '\r\n'
+}
+
 remaining_seconds() {
   docker-compose -f "$COMPOSE_FILE" exec -T db mariadb -N -uctfd -pctfd ctfd \
     -e "SELECT COALESCE(paused_remaining_seconds, '') FROM hikari_competition_runs WHERE \`key\` = '$run_key';" \
@@ -41,7 +47,7 @@ remaining_seconds() {
 
 active_test_run() {
   docker-compose -f "$COMPOSE_FILE" exec -T db mariadb -N -uctfd -pctfd ctfd \
-    -e "SELECT id, \`key\` FROM hikari_competition_runs WHERE status IN ('running', 'paused') ORDER BY id DESC LIMIT 1;" \
+    -e "SELECT id, \`key\` FROM hikari_competition_runs WHERE status IN ('scheduled', 'running', 'paused') ORDER BY id DESC LIMIT 1;" \
     | tr -d '\r'
 }
 
@@ -93,6 +99,20 @@ nonce=$(extract_nonce "$dashboard")
 [[ -n "$nonce" ]] || { echo "FAIL: competition nonce missing"; exit 1; }
 
 code=$(curl -sS -c "$cookie_jar" -b "$cookie_jar" -o /dev/null -w '%{http_code}' \
+  -X POST "$CTFD_URL/admin/hikari/competitions/$run_id/schedule" \
+  --data-urlencode "nonce=$nonce" \
+  --data-urlencode "starts_at=2099-01-01T14:00")
+[[ "$code" == "302" ]] || { echo "FAIL: schedule run returned $code"; exit 1; }
+[[ "$(run_status)" == "scheduled" ]] || { echo "FAIL: execution was not scheduled"; exit 1; }
+expected_start=$(date -j -f '%Y-%m-%dT%H:%M %Z' '2099-01-01T14:00 America/Sao_Paulo' '+%s' 2>/dev/null || true)
+if [[ -n "$expected_start" ]]; then
+  [[ "$(configured_start)" == "$expected_start" ]] \
+    || { echo "FAIL: schedule did not store the configured local time"; exit 1; }
+fi
+
+dashboard=$(mktemp)
+curl -sS -c "$cookie_jar" -b "$cookie_jar" -o "$dashboard" "$CTFD_URL/admin/hikari/competitions"
+code=$(curl -sS -c "$cookie_jar" -b "$cookie_jar" -o /dev/null -w '%{http_code}' \
   -X POST "$CTFD_URL/admin/hikari/competitions/$run_id/start" \
   --data-urlencode "nonce=$nonce")
 [[ "$code" == "302" ]] || { echo "FAIL: start run returned $code"; exit 1; }
@@ -100,19 +120,22 @@ code=$(curl -sS -c "$cookie_jar" -b "$cookie_jar" -o /dev/null -w '%{http_code}'
 dashboard=$(mktemp)
 curl -sS -c "$cookie_jar" -b "$cookie_jar" -o "$dashboard" "$CTFD_URL/admin/hikari/competitions"
 grep -q "$run_key" "$dashboard" || { echo "FAIL: execution key not rendered"; exit 1; }
-grep -q "+2 h" "$dashboard" || { echo "FAIL: extension control missing"; exit 1; }
+grep -q "Tempo adicional em minutos" "$dashboard" \
+  || { echo "FAIL: extension control missing"; exit 1; }
+grep -q "90 corresponde a 1 hora e 30 minutos" "$dashboard" \
+  || { echo "FAIL: extension guidance missing"; exit 1; }
 
 code=$(curl -sS -c "$cookie_jar" -b "$cookie_jar" -o /dev/null -w '%{http_code}' \
   -X POST "$CTFD_URL/admin/hikari/competitions/$run_id/extend" \
   --data-urlencode "nonce=$(extract_nonce "$dashboard")" \
-  --data-urlencode "hours=2")
+  --data-urlencode "additional_minutes=90")
 [[ "$code" == "302" ]] || { echo "FAIL: extend run returned $code"; exit 1; }
 
 duration_minutes=$(run_duration_minutes)
 [[ "$duration_minutes" =~ ^[0-9]+$ ]] \
   || { echo "FAIL: execution schedule was not persisted"; exit 1; }
-[[ "$duration_minutes" -ge 360 ]] \
-  || { echo "FAIL: expected a six-hour execution after extension, got $duration_minutes minutes"; exit 1; }
+[[ "$duration_minutes" -ge 330 ]] \
+  || { echo "FAIL: expected a five-and-a-half-hour execution after extension, got $duration_minutes minutes"; exit 1; }
 
 code=$(curl -sS -c "$cookie_jar" -b "$cookie_jar" -o /dev/null -w '%{http_code}' \
   -X POST "$CTFD_URL/admin/hikari/competitions/$run_id/pause" \

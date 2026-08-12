@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="jbig-header"><div class="container"><h1>Solicitações da equipe</h1></div></div>
+<main class="container hikari-team-requests">
+  <header class="hikari-section-heading">
+    <h2>{{ team.name }}</h2>
+    <p>Revise quem poderá compartilhar a pontuação e as evidências da equipe.</p>
+  </header>
+  {% for membership_request in requests %}
+  <article class="hikari-request-card">
+    <div><h3>{{ membership_request.user.name }}</h3><p class="hikari-muted">Solicitado em {{ membership_request.requested_at.strftime('%d/%m/%Y %H:%M') }}</p></div>
+    <div class="hikari-settings-actions">
+      <form method="post" action="{{ url_for('hikariplugin.hikari_team_request_approve', request_id=membership_request.id) }}"><input name="nonce" type="hidden" value="{{ csrf_nonce }}"><button class="btn btn-primary" type="submit">Aprovar</button></form>
+      <form method="post" action="{{ url_for('hikariplugin.hikari_team_request_reject', request_id=membership_request.id) }}"><input name="nonce" type="hidden" value="{{ csrf_nonce }}"><button class="btn btn-outline-danger" type="submit">Recusar</button></form>
+    </div>
+  </article>
+  {% else %}
+  <p class="hikari-muted">Não há solicitações pendentes.</p>
+  {% endfor %}
+</main>
+{% endblock %}

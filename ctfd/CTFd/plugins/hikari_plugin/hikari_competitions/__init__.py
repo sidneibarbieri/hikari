@@ -1,6 +1,9 @@
 """Competition execution control for one isolated Hikari deployment."""
 
+from datetime import datetime
+
 from flask import Blueprint
+
 
 def register(blueprint: Blueprint) -> None:
     """Attach administrative execution controls after plugin initialization."""
@@ -11,6 +14,12 @@ def register(blueprint: Blueprint) -> None:
         endpoint="hikari_competitions_dashboard",
         view_func=views.dashboard,
         methods=["GET", "POST"],
+    )
+    blueprint.add_url_rule(
+        "/admin/hikari/competitions/<int:run_id>/schedule",
+        endpoint="hikari_competitions_schedule",
+        view_func=views.schedule,
+        methods=["POST"],
     )
     blueprint.add_url_rule(
         "/admin/hikari/competitions/<int:run_id>/start",
@@ -42,6 +51,22 @@ def register(blueprint: Blueprint) -> None:
         view_func=views.finish,
         methods=["POST"],
     )
+    blueprint.add_url_rule(
+        "/admin/hikari/competitions/<int:run_id>/cancel",
+        endpoint="hikari_competitions_cancel",
+        view_func=views.cancel,
+        methods=["POST"],
+    )
 
 
-__all__ = ["register"]
+def register_runtime_hooks(app: object) -> None:
+    """Promote a scheduled execution when its configured start time arrives."""
+
+    @app.before_request
+    def synchronize_competition_execution() -> None:
+        from .service import synchronize_active_run
+
+        synchronize_active_run(datetime.utcnow())
+
+
+__all__ = ["register", "register_runtime_hooks"]

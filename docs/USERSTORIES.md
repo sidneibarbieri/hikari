@@ -27,9 +27,10 @@ uma checagem operacional ou credenciais externas.
 **para** criar uma conta e participar da competição.
 
 **Critérios de aceite:**
-- O formulário exige nome (alfanumérico, único), e-mail válido e senha.
+- O formulário exige nome de usuário, e-mail válido e senha.
 - Após submeter, o competidor é autenticado e redirecionado ao painel.
-- O nome aceita apenas letras e números (validação no front-end e back-end).
+- O nome preserva caracteres Unicode visíveis, incluindo acentos e cedilha. A
+  plataforma normaliza a forma Unicode e rejeita caracteres de controle.
 - A conta fica registrada na base MariaDB com senha em hash bcrypt.
 
 **Verificação automatizada:** `verify_player_flow.sh` → registro bem-sucedido.
@@ -82,12 +83,14 @@ exige credenciais de um operador e não é simulada pela suíte local.
 
 ### US-05 — Criar equipe
 **Como** competidor,  
-**quero** criar uma equipe com nome e senha,  
+**quero** criar uma equipe com nome,
 **para** competir junto com meus colegas.
 
 **Critérios de aceite:**
 - O nome da equipe é único na competição.
 - O criador torna-se automaticamente o capitão.
+- Uma equipe com apenas o criador é válida para participação individual no
+  modo de pontuação por equipes.
 - A equipe é visível no placar após o primeiro ponto marcado.
 
 **Verificação automatizada:** `verify_team_flow.sh` → capitão cria equipe.
@@ -96,14 +99,16 @@ exige credenciais de um operador e não é simulada pela suíte local.
 
 ### US-06 — Entrar em uma equipe existente
 **Como** competidor,  
-**quero** entrar em uma equipe usando a senha da equipe ou um link de convite,  
+**quero** solicitar entrada em uma equipe existente,
 **para** competir com meu grupo já formado.
 
 **Critérios de aceite:**
-- Senha incorreta exibe mensagem de erro.
+- A relação de equipes permite buscar pelo nome e solicitar entrada.
+- A associação só ocorre depois da aprovação do capitão.
 - Um competidor só pode estar em uma equipe por vez.
 
-**Verificação automatizada:** `verify_team_flow.sh` → membro entra via senha.
+**Verificação automatizada:** `verify_team_flow.sh` → membro solicita entrada e
+o capitão aprova.
 
 ---
 

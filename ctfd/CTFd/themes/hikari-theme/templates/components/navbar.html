@@ -28,6 +28,12 @@
           </a>
         </li>
 
+        <li class="nav-item">
+          <a class="nav-link jnav-link" href="{{ url_for('hikariplugin.hikari_guide') }}">
+            Como participar
+          </a>
+        </li>
+
         {% if Configs.account_visibility != 'admins' %}
           <li class="nav-item">
             <a class="nav-link jnav-link" href="{{ url_for('users.listing') }}">

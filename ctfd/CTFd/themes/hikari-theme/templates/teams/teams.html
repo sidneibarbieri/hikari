@@ -21,7 +21,7 @@
 
         {% with form = Forms.teams.PublicTeamSearchForm(field=field, q=q) %}
           <form method="GET" class="jsearch-form">
-              {{ form.field(class="jform-control-2") }}
+              <input name="field" type="hidden" value="name">
 
               {{ form.q(class="jform-control-2 ", placeholder="Buscar equipes") }}
 

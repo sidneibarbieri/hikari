@@ -93,16 +93,21 @@ want a clean run.
 ## Running a competition
 
 Open `http://localhost:8000/admin/hikari/competitions` as an administrator.
-Create a draft with a descriptive key, choose the scoring mode, and start the
-execution. The initial duration may be extended by two or four hours while
-the execution is running. Pausing preserves the remaining time; resuming
-restores that remaining time.
+Create a draft with a descriptive key, choose the scoring mode, and either
+start it immediately or schedule a local date and time. The local stack uses
+`America/Sao_Paulo` by default; set `HIKARI_TIME_ZONE` in `.env` when the
+operator works in another IANA time zone. Registrations and team preparation
+remain available before the scheduled start. The initial duration may be
+extended in five-minute increments while the execution is running. Pausing
+preserves the remaining time; resuming restores that remaining time.
 
 Choose the scoring mode before participants submit flags:
 
 - **Equipes** supports collaborative teams and one-person teams. A one-person
   team is the supported solo mode when team scoring is selected.
-- **Competidores individuais** mantém a pontuação por conta e desativa as
+- A participant requests entry through the team directory. The captain
+  approves the request before the account shares the team score.
+- **Competidores individuais** mantêm a pontuação por conta e desativam as
   equipes durante essa execução.
 
 CTFd stores identities, scores and challenges globally in a database. One

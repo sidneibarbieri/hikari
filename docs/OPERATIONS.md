@@ -216,10 +216,19 @@ instalação.
 ### Controle de uma execução
 
 Em `/admin/hikari/competitions`, crie uma execução, selecione a modalidade e
-inicie. Uma execução em andamento pode receber `+2 h` ou `+4 h`. Ao pausar,
-o tempo restante fica registrado; ao retomar, esse saldo volta a contar. Ao
-encerrar, gere um checkpoint e exporte as atividades e os feedbacks antes de
-reutilizar a instalação.
+defina a duração. Agende o início no fuso definido por `HIKARI_TIME_ZONE`
+(`America/Sao_Paulo` por padrão). Durante a janela de cadastro, pessoas podem
+criar contas e equipes; desafios, submissões e acesso ao SIEM permanecem
+bloqueados até o início agendado.
+
+Uma execução em andamento aceita extensões de 5 a 480 minutos, em múltiplos de
+cinco. Ao pausar, o tempo restante fica registrado; ao retomar, esse saldo
+volta a contar. Ao encerrar, gere um checkpoint e exporte as atividades e os
+feedbacks antes de reutilizar a instalação.
+
+No modo por equipes, uma equipe com apenas uma pessoa é válida. Novos membros
+localizam a equipe em `/hikari/teams/join` e enviam uma solicitação; somente o
+capitão a aprova. Não compartilhe senhas de equipe.
 
 ---
 
@@ -229,6 +238,7 @@ reutilizar a instalação.
 |---|---|
 | Login admin | http://localhost:8000/login |
 | Painel admin (CTFd) | http://localhost:8000/admin |
+| Biblioteca de desafios | http://localhost:8000/admin/hikari/challenge-library |
 | Análise científica (atividade + feedback) | http://localhost:8000/admin/hikari/research |
 | Export atividades (JSONL) | http://localhost:8000/admin/hikari/research/export.jsonl |
 | Export feedback (JSONL) | http://localhost:8000/admin/hikari/research/feedback.jsonl |

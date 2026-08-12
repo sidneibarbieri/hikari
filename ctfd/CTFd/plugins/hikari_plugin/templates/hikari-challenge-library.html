@@ -1,0 +1,45 @@
+{% extends "admin/base.html" %}
+
+{% block stylesheets %}
+{{ super() }}
+<link rel="stylesheet" href="/plugins/hikari_plugin/assets/theme.css">
+{% endblock %}
+
+{% block content %}
+<main class="hikari-competition-admin">
+  <header class="hikari-admin-header">
+    <div>
+      <h1>Biblioteca de desafios</h1>
+      <p>Importe um pacote validado para reutilizar desafios, flags, dependências e logs.</p>
+    </div>
+  </header>
+
+  <section class="hikari-admin-card">
+    <h2>Importar pacote</h2>
+    <p class="hikari-admin-help">O ZIP deve conter <code>manifest.json</code> e os arquivos JSON declarados em <code>logs/</code>. A validação é concluída antes de qualquer desafio ser criado.</p>
+    <form class="hikari-admin-form" method="post" enctype="multipart/form-data">
+      <input name="nonce" type="hidden" value="{{ csrf_nonce }}">
+      <label>Biblioteca ZIP
+        <input class="form-control" name="library" type="file" accept=".zip,application/zip" required>
+      </label>
+      <button class="btn btn-primary" type="submit">Validar e importar</button>
+    </form>
+  </section>
+
+  <section class="hikari-admin-card">
+    <h2>Bibliotecas importadas</h2>
+    {% if libraries %}
+    <div class="table-responsive"><table class="table">
+      <thead><tr><th>Biblioteca</th><th>Chave</th><th>Desafios</th><th>Importada em</th></tr></thead>
+      <tbody>
+      {% for library in libraries %}
+      <tr><td>{{ library.display_name }}</td><td><code>{{ library.package_key }}</code></td><td>{{ library.entries|length }}</td><td>{{ library.imported_at }}</td></tr>
+      {% endfor %}
+      </tbody>
+    </table></div>
+    {% else %}
+    <p class="hikari-admin-help">Nenhuma biblioteca foi importada nesta instalação.</p>
+    {% endif %}
+  </section>
+</main>
+{% endblock %}

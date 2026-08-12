@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="jbig-header"><div class="container"><h1>Encontrar equipe</h1></div></div>
+<main class="container hikari-team-directory">
+  <header class="hikari-section-heading">
+    <h2>Escolha uma equipe</h2>
+    <p>Envie uma solicitação. O capitão confirma a entrada antes de você acessar os desafios.</p>
+  </header>
+  {% if pending_request %}
+  <div class="alert alert-info">Sua solicitação para <strong>{{ pending_request.team.name }}</strong> está aguardando decisão do capitão.</div>
+  {% endif %}
+  <form class="hikari-directory-search" method="get">
+    <label class="visually-hidden" for="team-query">Nome da equipe</label>
+    <input class="form-control" id="team-query" name="q" value="{{ query }}" placeholder="Buscar por nome da equipe">
+    <button class="btn btn-outline-primary" type="submit">Buscar</button>
+    <a class="btn btn-primary" href="{{ url_for('teams.new') }}">Criar minha equipe</a>
+  </form>
+  <div class="hikari-team-grid">
+  {% for team in teams %}
+    <article class="hikari-team-card">
+      <h3>{{ team.name }}</h3>
+      <p>{{ team.members|length }} integrante{{ '' if team.members|length == 1 else 's' }}</p>
+      {% if team.affiliation %}<p class="hikari-muted">{{ team.affiliation }}</p>{% endif %}
+      <form method="post" action="{{ url_for('hikariplugin.hikari_team_request', team_id=team.id) }}">
+        <input name="nonce" type="hidden" value="{{ csrf_nonce }}">
+        <button class="btn btn-primary" type="submit" {% if pending_request %}disabled{% endif %}>Solicitar entrada</button>
+      </form>
+    </article>
+  {% else %}
+    <p class="hikari-muted">Nenhuma equipe corresponde à busca.</p>
+  {% endfor %}
+  </div>
+</main>
+{% endblock %}

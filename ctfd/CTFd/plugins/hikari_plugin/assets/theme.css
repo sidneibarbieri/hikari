@@ -223,6 +223,9 @@ textarea.form-control {
     border: 1px solid var(--hikari-border);
     color: var(--hikari-text);
     border-radius: var(--hikari-radius);
+    font-family: var(--hikari-font);
+    font-size: 0.95rem;
+    line-height: 1.4;
 }
 .form-control:focus {
     background-color: var(--hikari-surface-2);
@@ -235,15 +238,15 @@ textarea.form-control {
 }
 .form-select,
 select.form-control {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-family: var(--hikari-font);
     color: var(--hikari-text);
-    font-size: 0.95rem;
 }
 .form-select option,
 select option {
     background-color: var(--hikari-surface);
     color: var(--hikari-text);
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-family: var(--hikari-font);
+    font-size: 0.95rem;
 }
 .form-select {
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='%23edf3f8' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3E%3C/svg%3E");
@@ -254,6 +257,23 @@ select option {
     text-decoration: none !important;
     text-decoration-line: none !important;
     -webkit-text-decoration: none !important;
+}
+
+.hikari-inline-control {
+    display: flex;
+    align-items: end;
+    gap: 0.6rem;
+}
+
+.hikari-inline-control .form-control {
+    min-width: 8rem;
+}
+
+.hikari-field-hint {
+    margin: 0.45rem 0 0;
+    color: var(--hikari-text-muted);
+    font-size: 0.82rem;
+    line-height: 1.4;
 }
 
 .hikari-page-hero .container {
@@ -451,7 +471,7 @@ select option {
 
 .jsearch-form {
     display: grid;
-    grid-template-columns: minmax(10rem, 16rem) minmax(0, 1fr) minmax(3rem, 4rem);
+    grid-template-columns: minmax(0, 1fr) auto;
     gap: 0.75rem;
     align-items: stretch;
     margin: 0 0 1.2rem;
@@ -487,6 +507,14 @@ select option {
     color: #06101f;
     font-weight: 700;
     letter-spacing: 0.01em;
+}
+@media (max-width: 34rem) {
+    .jsearch-form {
+        grid-template-columns: 1fr;
+    }
+    .jsearch-form button {
+        width: 100%;
+    }
 }
 .jsearch-form button:hover {
     background-color: var(--hikari-primary-strong, var(--hikari-primary));
@@ -974,12 +1002,28 @@ select option {
     min-width: 8rem;
 }
 .hikari-team-form .mb-3 {
+    display: grid;
+    grid-template-columns: minmax(12rem, 15rem) minmax(0, 1fr);
+    column-gap: 0.8rem;
+    align-items: center;
     margin-bottom: 1rem !important;
 }
 .hikari-team-form .mb-3 > .form-label,
 .hikari-team-form .mb-3 > b > .form-label {
-    display: block;
-    margin-bottom: 0.4rem;
+    grid-column: 1;
+    margin: 0;
+}
+.hikari-team-form .mb-3 > .form-control,
+.hikari-team-form .mb-3 > .form-select,
+.hikari-team-form .mb-3 > b + .form-control,
+.hikari-team-form .mb-3 > b + .form-select {
+    grid-column: 2;
+    grid-row: 1;
+}
+.hikari-team-form .mb-3 > .form-text,
+.hikari-team-form .mb-3 > b + .form-text {
+    grid-column: 2;
+    margin-top: 0.3rem;
 }
 .hikari-team-note {
     margin-top: 1.25rem;
@@ -990,6 +1034,129 @@ select option {
     font-size: 0.9rem;
     line-height: 1.5;
 }
+.hikari-team-captain-actions {
+    margin-top: 1rem;
+}
+.hikari-team-directory,
+.hikari-team-requests {
+    padding-bottom: 3rem;
+}
+.hikari-guide {
+    max-width: 62rem;
+    padding-top: 1.5rem;
+    padding-bottom: 3rem;
+}
+.hikari-guide-steps {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+    gap: 0.8rem;
+    margin: 1.4rem 0 1rem;
+    padding: 0;
+    list-style: none;
+    counter-reset: guide-step;
+}
+.hikari-guide-steps li {
+    position: relative;
+    min-height: 8.25rem;
+    padding: 1rem 1rem 1rem 3.25rem;
+    background: var(--hikari-surface);
+    border: 1px solid var(--hikari-border);
+    border-radius: var(--hikari-radius);
+    color: var(--hikari-text-muted);
+    font-size: 0.93rem;
+    line-height: 1.5;
+    counter-increment: guide-step;
+}
+.hikari-guide-steps li::before {
+    content: counter(guide-step);
+    position: absolute;
+    top: 1rem;
+    left: 1rem;
+    display: grid;
+    width: 1.55rem;
+    height: 1.55rem;
+    place-items: center;
+    background: var(--hikari-primary-soft);
+    border: 1px solid rgba(16, 185, 129, 0.45);
+    border-radius: 50%;
+    color: var(--hikari-primary-strong);
+    font-size: 0.78rem;
+    font-weight: 700;
+}
+.hikari-guide-steps strong {
+    color: var(--hikari-text);
+}
+.hikari-guide-rules {
+    padding: 1.1rem 1.2rem;
+    background: var(--hikari-surface);
+    border-left: 3px solid var(--hikari-accent);
+}
+.hikari-guide-rules h2 {
+    margin: 0 0 0.6rem;
+    font-size: 1.1rem;
+}
+.hikari-guide-rules ul {
+    display: grid;
+    gap: 0.4rem;
+    margin: 0;
+    padding-left: 1.15rem;
+    color: var(--hikari-text-muted);
+}
+.hikari-section-heading {
+    margin: 1.5rem 0 1rem;
+}
+.hikari-section-heading h2,
+.hikari-section-heading p {
+    margin: 0;
+}
+.hikari-section-heading p {
+    margin-top: 0.35rem;
+    color: var(--hikari-text-muted);
+}
+.hikari-directory-search {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    gap: 0.7rem;
+    margin: 1.25rem 0;
+}
+.hikari-directory-search .visually-hidden {
+    position: absolute;
+}
+.hikari-directory-search .form-control {
+    min-width: 0;
+}
+.hikari-directory-search .btn {
+    white-space: nowrap;
+}
+.hikari-team-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+    gap: 0.9rem;
+}
+.hikari-team-card,
+.hikari-request-card {
+    padding: 1rem;
+    background: var(--hikari-surface);
+    border: 1px solid var(--hikari-border);
+    border-radius: var(--hikari-radius);
+}
+.hikari-team-card h3,
+.hikari-request-card h3 {
+    margin: 0;
+    font-size: 1.1rem;
+}
+.hikari-team-card p,
+.hikari-request-card p {
+    margin: 0.45rem 0 1rem;
+}
+.hikari-request-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-top: 0.75rem;
+}
 
 @media (max-width: 640px) {
     .container {
@@ -998,6 +1165,12 @@ select option {
     .hikari-challenges-header {
         grid-template-columns: 1fr;
         align-items: start;
+    }
+    .hikari-directory-search {
+        grid-template-columns: 1fr 1fr;
+    }
+    .hikari-directory-search .form-control {
+        grid-column: 1 / -1;
     }
     .hikari-challenges-actions {
         justify-content: stretch;
@@ -1020,6 +1193,18 @@ select option {
     }
     .jchall-input-form {
         grid-template-columns: 1fr;
+    }
+    .hikari-directory-search,
+    .hikari-request-card {
+        grid-template-columns: 1fr;
+        display: grid;
+    }
+    .hikari-guide-steps {
+        grid-template-columns: 1fr;
+    }
+    .hikari-directory-search .btn,
+    .hikari-request-card .hikari-settings-actions .btn {
+        width: 100%;
     }
     .jsearch-form {
         grid-template-columns: 1fr;
@@ -1354,9 +1539,31 @@ select option {
 }
 
 @media (max-width: 43rem) {
+    .hikari-inline-control {
+        align-items: stretch;
+        flex-direction: column;
+    }
+    .hikari-inline-control .form-control {
+        width: 100%;
+    }
     .hikari-team-form .hikari-field {
         grid-template-columns: 1fr;
         gap: 0.4rem;
+    }
+    .hikari-team-form .mb-3 {
+        grid-template-columns: 1fr;
+        gap: 0.35rem;
+    }
+    .hikari-team-form .mb-3 > .form-label,
+    .hikari-team-form .mb-3 > b > .form-label,
+    .hikari-team-form .mb-3 > .form-control,
+    .hikari-team-form .mb-3 > .form-select,
+    .hikari-team-form .mb-3 > b + .form-control,
+    .hikari-team-form .mb-3 > b + .form-select,
+    .hikari-team-form .mb-3 > .form-text,
+    .hikari-team-form .mb-3 > b + .form-text {
+        grid-column: 1;
+        grid-row: auto;
     }
 }
 
@@ -1395,6 +1602,48 @@ select option {
     .navbar-expand-md .navbar-nav .nav-link {
         padding-right: 0.75rem;
         padding-left: 0.75rem;
+    }
+}
+
+@media (min-width: 768px) and (max-width: 96rem) {
+    .navbar-expand-md > .container,
+    .navbar-expand-md > .container-fluid,
+    .navbar-expand-md > .container-md,
+    .navbar-expand-md > .container-lg,
+    .navbar-expand-md > .container-xl {
+        flex-wrap: wrap;
+    }
+    .navbar-expand-md .navbar-collapse {
+        display: grid !important;
+        grid-template-columns: minmax(0, 1fr) auto;
+        width: 100%;
+        flex-basis: 100%;
+        align-items: center;
+    }
+    .navbar-expand-md .navbar-collapse > .navbar-nav.me-auto {
+        min-width: 0;
+        overflow-x: auto;
+        scrollbar-width: none;
+    }
+    .navbar-expand-md .navbar-collapse > .navbar-nav.me-auto::-webkit-scrollbar {
+        display: none;
+    }
+    .navbar-expand-md .navbar-collapse > .navbar-nav.ms-md-auto {
+        display: flex !important;
+        justify-self: end;
+        margin-left: 0 !important;
+        overflow: visible;
+    }
+    .navbar-expand-md .navbar-nav .nav-link {
+        padding-right: 0.48rem;
+        padding-left: 0.48rem;
+        font-size: 0.84rem;
+    }
+    .navbar .d-sm-inline.d-md-none.d-lg-inline {
+        display: none !important;
+    }
+    .navbar .d-none.d-md-inline.d-lg-none {
+        display: inline-block !important;
     }
 }
 

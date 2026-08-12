@@ -1,4 +1,4 @@
-from flask import current_app, render_template, request, redirect, url_for, flash, Blueprint, jsonify, session
+from flask import Blueprint, current_app, flash, redirect, render_template, request, url_for
 import random
 from sqlalchemy import event, inspect
 from sqlalchemy.exc import IntegrityError
@@ -16,7 +16,6 @@ from CTFd.models import db
 from CTFd.plugins.hikari_plugin.hikari_forms import ZerotierForm, ImportHikariCTFdForm, NotifyMultipleCompetitorsForm, HikariFileUploadForm, HikariAddChallengeForm
 from CTFd.forms import BaseForm
 from CTFd.utils.email import sendmail
-from CTFd.utils.config import get_app_config
 from werkzeug.utils import secure_filename
 from .hikari_kibana import KibanaHelper
 import os
@@ -30,10 +29,12 @@ import CTFd.plugins.hikari_plugin.hikari_importer as hikari_importer
 from CTFd.plugins.hikari_plugin import hikari_activity
 from CTFd.plugins.hikari_plugin import hikari_auth
 from CTFd.plugins.hikari_plugin import hikari_feedback
+from CTFd.plugins.hikari_plugin import hikari_guidance
 from CTFd.plugins.hikari_plugin import hikari_kibana_gateway
 from CTFd.plugins.hikari_plugin import hikari_live
 from CTFd.plugins.hikari_plugin import hikari_research
 from CTFd.plugins.hikari_plugin import hikari_competitions
+from CTFd.plugins.hikari_plugin import hikari_challenge_library
 
 
 
@@ -57,8 +58,16 @@ def save_hikari_log_file(file_obj: object) -> "str | None":
 
 def load(app):
     # Import the model before create_all so a fresh installation includes it.
+    from CTFd.plugins.hikari_plugin.hikari_challenge_library.models import (
+        ChallengeLibraryImport,
+        ChallengeLibraryEntry,
+    )
     from CTFd.plugins.hikari_plugin.hikari_competitions.models import CompetitionRun
+    from CTFd.plugins.hikari_plugin.hikari_team_requests.models import TeamMembershipRequest
+    del ChallengeLibraryImport
+    del ChallengeLibraryEntry
     del CompetitionRun
+    del TeamMembershipRequest
 
     # Create all tables
     app.db.create_all()
@@ -96,6 +105,9 @@ def load(app):
     # Register Hikari analytics in the CTFd admin sidebar under "Plugins".
     register_admin_plugin_menu_bar(title="Análise científica", route="/admin/hikari/research")
     register_admin_plugin_menu_bar(title="Execuções", route="/admin/hikari/competitions")
+    register_admin_plugin_menu_bar(
+        title="Biblioteca de desafios", route="/admin/hikari/challenge-library"
+    )
 
     hikariplugin = Blueprint('hikariplugin', __name__, template_folder="templates")
 
@@ -300,11 +312,16 @@ def load(app):
     
     hikari_research.register(hikariplugin)
     hikari_feedback.register(hikariplugin)
+    hikari_guidance.register(hikariplugin)
     hikari_kibana_gateway.register(hikariplugin)
     hikari_live.register(hikariplugin)
     hikari_competitions.register(hikariplugin)
+    hikari_challenge_library.register(hikariplugin)
+    from CTFd.plugins.hikari_plugin import hikari_team_requests
+    hikari_team_requests.register(hikariplugin)
     hikari_auth.register(hikariplugin)
     app.register_blueprint(hikariplugin)
+    hikari_competitions.register_runtime_hooks(app)
 
     # Expose Google OAuth availability to Jinja so the login and register
     # templates can render the button conditionally. is_google_enabled

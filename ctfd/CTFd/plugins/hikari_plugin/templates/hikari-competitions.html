@@ -11,13 +11,14 @@
   "scheduled": "Agendada",
   "running": "Em andamento",
   "paused": "Pausada",
-  "finished": "Encerrada"
+  "finished": "Encerrada",
+  "cancelled": "Cancelada"
 } %}
 <main class="hikari-competition-admin">
   <header class="hikari-admin-header">
     <div>
       <h1>Execuções de competição</h1>
-      <p>Controle o prazo e a modalidade da execução instalada neste ambiente.</p>
+      <p>Controle o prazo e a modalidade da execução instalada neste ambiente. Horários em {{ operator_time_zone }}.</p>
     </div>
     {% if active_run %}
     <div class="hikari-status-chip hikari-status-chip--{{ active_run.status }}">
@@ -66,15 +67,18 @@
         <td><strong>{{ run.name }}</strong><br><code>{{ run.key }}</code></td>
         <td>{{ "Equipes" if run.scoring_mode == "teams" else "Individual" }}</td>
         <td><span class="hikari-status-chip hikari-status-chip--{{ run.status }}">{{ status_labels.get(run.status, run.status) }}</span></td>
-        <td>{{ run.starts_at.strftime("%d/%m/%Y %H:%M") if run.starts_at else "—" }}</td>
-        <td>{{ run.ends_at.strftime("%d/%m/%Y %H:%M") if run.ends_at else "—" }}</td>
+        <td>{{ format_schedule_time(run.starts_at) }}</td>
+        <td>{{ format_schedule_time(run.ends_at) }}</td>
         <td>
           <div class="hikari-admin-actions">
-          {% if run.status in ["draft", "scheduled"] %}
-          <form method="post" action="/admin/hikari/competitions/{{ run.id }}/start"><input name="nonce" type="hidden" value="{{ csrf_nonce }}"><button class="btn btn-primary" type="submit">Iniciar</button></form>
+          {% if run.status == "draft" %}
+          <form method="post" action="/admin/hikari/competitions/{{ run.id }}/schedule"><input name="nonce" type="hidden" value="{{ csrf_nonce }}"><label class="visually-hidden" for="starts-at-{{ run.id }}">Início</label><input class="form-control" id="starts-at-{{ run.id }}" name="starts_at" type="datetime-local" required><button class="btn btn-outline-primary" type="submit">Agendar</button></form>
+          <form method="post" action="/admin/hikari/competitions/{{ run.id }}/start"><input name="nonce" type="hidden" value="{{ csrf_nonce }}"><button class="btn btn-primary" type="submit">Iniciar agora</button></form>
+          {% elif run.status == "scheduled" %}
+          <form method="post" action="/admin/hikari/competitions/{{ run.id }}/start"><input name="nonce" type="hidden" value="{{ csrf_nonce }}"><button class="btn btn-primary" type="submit">Iniciar agora</button></form>
+          <form method="post" action="/admin/hikari/competitions/{{ run.id }}/cancel"><input name="nonce" type="hidden" value="{{ csrf_nonce }}"><button class="btn btn-danger" type="submit">Cancelar</button></form>
           {% elif run.status == "running" %}
-          <form method="post" action="/admin/hikari/competitions/{{ run.id }}/extend"><input name="nonce" type="hidden" value="{{ csrf_nonce }}"><input name="hours" type="hidden" value="2"><button class="btn btn-outline-primary" type="submit">+2 h</button></form>
-          <form method="post" action="/admin/hikari/competitions/{{ run.id }}/extend"><input name="nonce" type="hidden" value="{{ csrf_nonce }}"><input name="hours" type="hidden" value="4"><button class="btn btn-outline-primary" type="submit">+4 h</button></form>
+          <form method="post" action="/admin/hikari/competitions/{{ run.id }}/extend"><input name="nonce" type="hidden" value="{{ csrf_nonce }}"><label for="additional-minutes-{{ run.id }}">Tempo adicional em minutos</label><div class="hikari-inline-control"><input class="form-control" id="additional-minutes-{{ run.id }}" name="additional_minutes" type="number" min="5" max="480" step="5" value="60" required><button class="btn btn-outline-primary" type="submit">Adicionar tempo</button></div><p class="hikari-field-hint">Use múltiplos de cinco. Exemplo: 90 corresponde a 1 hora e 30 minutos.</p></form>
           <form method="post" action="/admin/hikari/competitions/{{ run.id }}/pause"><input name="nonce" type="hidden" value="{{ csrf_nonce }}"><button class="btn btn-secondary" type="submit">Pausar</button></form>
           <form method="post" action="/admin/hikari/competitions/{{ run.id }}/finish"><input name="nonce" type="hidden" value="{{ csrf_nonce }}"><button class="btn btn-danger" type="submit">Encerrar</button></form>
           {% elif run.status == "paused" %}
@@ -94,7 +98,7 @@
 
   <section class="hikari-admin-note">
     <h2>Preservação e retomada</h2>
-    <p>Pausar preserva o tempo restante. Retomar restaura esse tempo. Para adicionar tempo, use +2 h ou +4 h durante a execução. Ao encerrar, gere um checkpoint pelo procedimento de operações. Restaurar um checkpoint substitui os dados desta instalação; para manter uma edição disponível enquanto outra ocorre, inicie outra instalação isolada.</p>
+    <p>Agendar aplica a janela futura ao CTFd: contas e equipes podem ser preparadas antes do início, enquanto desafios e submissões permanecem bloqueados. Pausar preserva o tempo restante. Retomar restaura esse tempo. Durante a execução, informe de 5 a 480 minutos adicionais, em múltiplos de cinco. Ao encerrar, gere um checkpoint pelo procedimento de operações. Restaurar um checkpoint substitui os dados desta instalação; para manter uma edição disponível enquanto outra ocorre, inicie outra instalação isolada.</p>
   </section>
 </main>
 {% endblock %}

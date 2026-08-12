@@ -20,6 +20,7 @@ from CTFd.utils.decorators.visibility import check_registration_visibility
 from CTFd.utils.helpers import error_for, get_errors, markup
 from CTFd.utils.logging import log
 from CTFd.utils.modes import TEAMS_MODE
+from CTFd.utils.identifiers import normalize_identifier
 from CTFd.utils.security.auth import login_user, logout_user
 from CTFd.utils.security.signing import unserialize
 from CTFd.utils.validators import ValidationError
@@ -198,7 +199,11 @@ def register():
         )
 
     if request.method == "POST":
-        name = request.form.get("name", "").strip()
+        try:
+            name = normalize_identifier(request.form.get("name", ""))
+        except ValueError as error:
+            errors.append(str(error))
+            name = ""
         email_address = request.form.get("email", "").strip().lower()
         password = request.form.get("password", "").strip()
 
@@ -381,7 +386,11 @@ def register():
 def login():
     errors = get_errors()
     if request.method == "POST":
-        name = request.form["name"]
+        try:
+            name = normalize_identifier(request.form["name"])
+        except ValueError:
+            errors.append("Seu nome de usuário ou senha está incorreto")
+            return render_template("login.html", errors=errors)
 
         # Check if the user submitted an email address or a team name
         if validators.validate_email(name) is True:

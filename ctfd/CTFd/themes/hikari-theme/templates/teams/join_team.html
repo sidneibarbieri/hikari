@@ -4,32 +4,17 @@
   <div class="jumbotron hikari-page-hero">
     <div class="container">
       <h1>Entrar em equipe</h1>
-      <p class="hikari-page-hero-copy">Informe as credenciais da equipe fornecidas pelo seu capitão.</p>
+      <p class="hikari-page-hero-copy">Localize a equipe e envie uma solicitação para aprovação do capitão.</p>
     </div>
   </div>
   <div class="container">
     <div class="row">
       <div class="col-md-8 col-lg-6 offset-md-2 offset-lg-3">
-        {% include "components/errors.html" %}
-
-        {% with form = Forms.teams.TeamJoinForm() %}
-          <form method="POST" class="hikari-team-form">
-            <div class="hikari-field">
-              {{ form.name.label(class="form-label") }}
-              {{ form.name(class="form-control", autocomplete="organization") }}
-            </div>
-
-            <div class="hikari-field">
-              {{ form.password.label(class="form-label") }}
-              {{ form.password(class="form-control", autocomplete="current-password") }}
-            </div>
-
-            <div class="hikari-settings-actions">
-              {{ form.submit(class="btn btn-success px-4") }}
-            </div>
-            {{ form.nonce() }}
-          </form>
-        {% endwith %}
+        <section class="hikari-guide">
+          <h2>Solicitação de entrada</h2>
+          <p>O capitão confirma cada novo integrante. Isso impede que alguém entre em uma equipe sem autorização.</p>
+          <a class="btn btn-primary" href="{{ url_for('hikariplugin.hikari_team_directory') }}">Ver equipes disponíveis</a>
+        </section>
       </div>
     </div>
   </div>

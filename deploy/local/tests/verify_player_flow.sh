@@ -15,11 +15,10 @@ LOCAL_DIR=$(cd "$SCRIPT_DIR/.." && pwd)
 COMPOSE_FILE=${COMPOSE_FILE:-"$LOCAL_DIR/docker-compose.yml"}
 
 stamp=$(date +%s)
-PLAYER_NAME="player_${stamp}"
+PLAYER_NAME="jogador_ação_${stamp}"
 PLAYER_EMAIL="player_${stamp}@hikari.local"
 PLAYER_PASSWORD="player-pw-${stamp}"
 TEAM_NAME="team_${stamp}"
-TEAM_PASSWORD="teampw-${stamp}"
 
 cookie_jar=$(mktemp)
 trap 'rm -f "$cookie_jar" /tmp/hikari-page-*.html' EXIT
@@ -45,6 +44,27 @@ db_count() {
     mariadb -uctfd -pctfd ctfd -N -B -e "$query")
   echo "${result//[[:space:]]/}"
 }
+
+open_challenge_window() {
+  docker-compose -f "$COMPOSE_FILE" exec -T ctfd python - <<'PY'
+from time import time
+
+from CTFd import create_app
+from CTFd.utils import set_config
+
+
+app = create_app()
+with app.app_context():
+    starts_at = int(time())
+    set_config("start", starts_at)
+    set_config("end", starts_at + 3600)
+    set_config("paused", False)
+PY
+}
+
+# The lifecycle test closes its test execution. Open a one-hour challenge
+# window so this player-flow test remains valid when invoked independently.
+open_challenge_window
 
 echo "== Step 1: register fresh user =="
 page=/tmp/hikari-page-register.html
@@ -94,7 +114,6 @@ code=$(curl -sS -c "$cookie_jar" -b "$cookie_jar" \
   -o /dev/null -w '%{http_code}' \
   -X POST "$CTFD_URL/teams/new" \
   --data-urlencode "name=$TEAM_NAME" \
-  --data-urlencode "password=$TEAM_PASSWORD" \
   --data-urlencode "nonce=$nonce")
 assert_status 302 "$code" "POST /teams/new"
 
@@ -118,7 +137,22 @@ count=$(echo "$listing" | jq -r '.data | length')
 echo "PASS: /api/v1/challenges accessible to player (challenges visible: $count)"
 
 echo
-echo "== Step 5: activity log captured the player's actions =="
+echo "== Step 5: read the public participant guide =="
+public_guide=$(curl -sS "$CTFD_URL/hikari/guide")
+[[ "$public_guide" == *"Como participar"* ]] \
+  || { echo "FAIL: participant guide is not available before login"; exit 1; }
+echo "PASS: participant guide is available before login"
+
+echo
+echo "== Step 6: read the participant guide after login =="
+guide=$(curl -sS -c "$cookie_jar" -b "$cookie_jar" \
+  "$CTFD_URL/hikari/guide")
+[[ "$guide" == *"Como participar"* ]] \
+  || { echo "FAIL: participant guide is not available to a logged-in player"; exit 1; }
+echo "PASS: participant guide remains available after login"
+
+echo
+echo "== Step 7: activity log captured the player's actions =="
 # Wait briefly because the publish path is async to the request.
 sleep 2
 captured=$(db_count "SELECT GROUP_CONCAT(event_type ORDER BY occurred_at) FROM hikari_activity WHERE actor_id=$player_id;")

@@ -66,6 +66,18 @@ The composite plugin that wires every Hikari surface to the CTFd app.
   The board reads from CTFd's solves and the Hikari activity log; an SVG
   line chart renders team progression so the page can be projected
   during a competition.
+* `hikari_competitions/` controls a scheduled execution. It stores the
+  lifecycle state, translates the operator's local time zone into UTC for
+  CTFd, gates challenges and the SIEM window, and records pauses and bounded
+  extensions.
+* `hikari_team_requests/` implements captain-approved membership requests.
+  It keeps a pending request separate from a team membership until the captain
+  accepts it.
+* `hikari_guidance/` provides the short participant guide shown before an
+  execution starts.
+* `hikari_challenge_library/` validates and imports portable ZIP packages of
+  Hikari challenges, flags, prerequisites and JSON log files. It records the
+  imported package and its challenge mapping for operational provenance.
 
 ## Surfaces hosted by the plugin
 
@@ -73,11 +85,15 @@ The composite plugin that wires every Hikari surface to the CTFd app.
 | --- | --- | --- |
 | `/admin/hikari` | Administrator | `hikari_plugin` main page |
 | `/admin/hikari/add-challenge` | Administrator | `hikari_plugin` (creates a Hikari challenge) |
+| `/admin/hikari/challenge-library` | Administrator | `hikari_challenge_library.views.dashboard` |
 | `/admin/hikari/init-competition` | Administrator | `hikari_challenge.HikariController` |
 | `/admin/hikari/research` | Administrator | `hikari_research.views.dashboard` |
 | `/admin/hikari/research/export.jsonl` | Administrator | `hikari_research.views.export_jsonl` |
 | `/admin/hikari/research/feedback.jsonl` | Administrator | `hikari_feedback.views.feedback_export_jsonl` |
 | `/hikari/feedback` | Competitor | `hikari_feedback.views.feedback` |
+| `/hikari/guide` | Competitor | `hikari_guidance.views.guide` |
+| `/hikari/teams/join` | Competitor | `hikari_team_requests.views.directory` |
+| `/hikari/team/requests` | Team captain | `hikari_team_requests.views.requests` |
 | `/hikari/live` | Anyone | `hikari_live.views.board` |
 | `/hikari/siem` | Competitor | `hikari_kibana_gateway.views.siem_entrypoint` |
 | `/hikari/kibana/<path>` | Competitor | `hikari_kibana_gateway.views.kibana_gateway` |
@@ -85,7 +101,9 @@ The composite plugin that wires every Hikari surface to the CTFd app.
 ## Hikari plugin database tables
 
 `hikari_challenges`, `hikari_files`, `hikari_activity`,
-`hikari_feedback_responses`, `zerotier`, `zerotier_config`.
+`hikari_feedback_responses`, `hikari_competition_runs`,
+`hikari_team_membership_requests`, `hikari_challenge_library_imports`,
+`hikari_challenge_library_entries`, `zerotier`, `zerotier_config`.
 
 CTFd's own tables (`users`, `teams`, `challenges`, `solves`, ...) carry the
 identity, scoring and challenge state. Hikari joins them by foreign key.

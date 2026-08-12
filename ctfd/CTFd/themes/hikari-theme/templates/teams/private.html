@@ -23,21 +23,9 @@
                 </small>
               </div>
 
-              <div class="mb-2">
-                {{ form.password.label(class="form-label") }}
-                {{ form.password(class="form-control") }}
-                <small class="form-text text-muted">
-                  {{ form.password.description }}
-                </small>
-              </div>
-
-              <div class="mb-2">
-                {{ form.confirm.label(class="form-label") }}
-                {{ form.confirm(class="form-control") }}
-                <small class="form-text text-muted">
-                  {{ form.confirm.description }}
-                </small>
-              </div>
+              <p class="hikari-muted mb-3">
+                Novos integrantes entram por solicitação aprovada pelo capitão.
+              </p>
 
               <div class="mb-2">
                 {{ form.website.label(class="form-label") }}
@@ -298,6 +286,12 @@
           ></i>
         </a>
       </div>
+
+      {% if user.id == team.captain_id %}
+      <div class="hikari-team-captain-actions">
+        <a class="btn btn-outline-primary" href="{{ url_for('hikariplugin.hikari_team_requests') }}">Solicitações de entrada</a>
+      </div>
+      {% endif %}
 
       <div class="pt-3">{% if team.website and (team.website.startswith('http://') or team.website.startswith('https://')) %}
           <a href="{{ team.website }}" target="_blank" style="color: inherit;" rel="noopener">

@@ -14,18 +14,10 @@
         nova. Uma equipe pode ter somente você ou incluir outros competidores.
       </p>
 
-      {% if integrations.mlc() %}
-        <a class="btn btn-primary w-100" href="{{ url_for('auth.oauth_login') }}">Jogar com equipe oficial</a>
-        <div class="team-join-actions">
-          <a class="btn btn-outline-primary" href="{{ url_for('teams.join') }}">Entrar em equipe não oficial</a>
-          <a class="btn btn-outline-primary" href="{{ url_for('teams.new') }}">Criar equipe não oficial</a>
-        </div>
-      {% else %}
-        <div class="team-join-actions">
-          <a class="btn btn-primary" href="{{ url_for('teams.join') }}">Entrar em equipe</a>
-          <a class="btn btn-primary" href="{{ url_for('teams.new') }}">Criar equipe, inclusive individual</a>
-        </div>
-      {% endif %}
+      <div class="team-join-actions">
+        <a class="btn btn-primary" href="{{ url_for('hikariplugin.hikari_team_directory') }}">Encontrar equipe</a>
+        <a class="btn btn-primary" href="{{ url_for('teams.new') }}">Criar equipe, inclusive individual</a>
+      </div>
     </div>
   </div>
 {% endblock %}

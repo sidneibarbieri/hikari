@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block content %}
+<main class="container hikari-guide">
+  <header class="hikari-section-heading">
+    <p class="hikari-eyebrow">Orientação ao competidor</p>
+    <h1>Como participar</h1>
+    <p>Leia estas instruções antes do início. Elas valem para toda a execução.</p>
+  </header>
+
+  <ol class="hikari-guide-steps">
+    <li><strong>Verifique sua conta.</strong> Entre com seu nome de usuário ou e-mail e confirme que seu perfil está correto.</li>
+    <li><strong>Entre em uma equipe.</strong> Você pode criar uma equipe com apenas você ou solicitar entrada em uma equipe existente. O capitão aprova novos integrantes.</li>
+    <li><strong>Aguarde o início.</strong> Antes da janela programada, cadastros e equipes ficam disponíveis. Desafios e SIEM são liberados no horário definido pela organização.</li>
+    <li><strong>Investigue no SIEM.</strong> Abra o desafio, consulte os logs no SIEM e registre apenas a flag encontrada na investigação.</li>
+    <li><strong>Acompanhe a execução.</strong> Consulte o placar ao vivo para ver a classificação e os últimos solves. A organização pode pausar ou estender o prazo.</li>
+    <li><strong>Registre sua experiência.</strong> Ao terminar, responda ao questionário de feedback. As respostas complementam os dados técnicos da execução.</li>
+  </ol>
+
+  <section class="hikari-guide-rules" aria-labelledby="guide-rules-title">
+    <h2 id="guide-rules-title">Regras de conduta</h2>
+    <ul>
+      <li>Use somente sua conta e os recursos liberados pela organização.</li>
+      <li>Não compartilhe flags, credenciais, sessões ou dados de outra equipe.</li>
+      <li>Não automatize tentativas de flag nem execute ações contra a infraestrutura da plataforma.</li>
+      <li>Registre problemas técnicos com a organização, sem explorar falhas da plataforma.</li>
+    </ul>
+  </section>
+</main>
+{% endblock %}

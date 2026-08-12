@@ -1,11 +1,12 @@
+import secrets
+
 from flask import Blueprint, abort, redirect, render_template, request, url_for
 
 from CTFd.cache import clear_team_session, clear_user_session
 from CTFd.exceptions import TeamTokenExpiredException, TeamTokenInvalidException
 from CTFd.models import Brackets, TeamFieldEntries, TeamFields, Teams, db
 from CTFd.utils import config, get_config, validators
-from CTFd.utils.crypto import verify_password
-from CTFd.utils.decorators import authed_only, ratelimit, registered_only
+from CTFd.utils.decorators import authed_only, registered_only
 from CTFd.utils.decorators.modes import require_team_mode
 from CTFd.utils.decorators.visibility import (
     check_account_visibility,
@@ -13,6 +14,7 @@ from CTFd.utils.decorators.visibility import (
 )
 from CTFd.utils.helpers import get_errors, get_infos
 from CTFd.utils.humanize.words import pluralize
+from CTFd.utils.identifiers import normalize_identifier
 from CTFd.utils.user import get_current_user, get_current_user_attrs
 from CTFd.utils.validators import ValidationError
 
@@ -124,65 +126,9 @@ def invite():
 @teams.route("/teams/join", methods=["GET", "POST"])
 @authed_only
 @require_team_mode
-@ratelimit(method="POST", limit=10, interval=5)
 def join():
-    infos = get_infos()
-    errors = get_errors()
-
-    user = get_current_user_attrs()
-    if user.team_id:
-        errors.append("You are already in a team. You cannot join another.")
-
-    if request.method == "GET":
-        team_size_limit = get_config("team_size", default=0)
-        if team_size_limit:
-            plural = "" if team_size_limit == 1 else "s"
-            infos.append(
-                "Teams are limited to {limit} member{plural}".format(
-                    limit=team_size_limit, plural=plural
-                )
-            )
-        return render_template("teams/join_team.html", infos=infos, errors=errors)
-
-    if request.method == "POST":
-        teamname = request.form.get("name")
-        passphrase = request.form.get("password", "").strip()
-
-        team = Teams.query.filter_by(name=teamname).first()
-
-        if errors:
-            return (
-                render_template("teams/join_team.html", infos=infos, errors=errors),
-                403,
-            )
-
-        if team and verify_password(passphrase, team.password):
-            team_size_limit = get_config("team_size", default=0)
-            if team_size_limit and len(team.members) >= team_size_limit:
-                errors.append(
-                    "{name} has already reached the team size limit of {limit}".format(
-                        name=team.name, limit=team_size_limit
-                    )
-                )
-                return render_template(
-                    "teams/join_team.html", infos=infos, errors=errors
-                )
-
-            user = get_current_user()
-            user.team_id = team.id
-            db.session.commit()
-
-            if len(team.members) == 1:
-                team.captain_id = user.id
-                db.session.commit()
-
-            clear_user_session(user_id=user.id)
-            clear_team_session(team_id=team.id)
-
-            return redirect(url_for("challenges.listing"))
-        else:
-            errors.append("That information is incorrect")
-            return render_template("teams/join_team.html", infos=infos, errors=errors)
+    """Send participants to the captain-approved Hikari team directory."""
+    return redirect(url_for("hikariplugin.hikari_team_directory"))
 
 
 @teams.route("/teams/new", methods=["GET", "POST"])
@@ -222,8 +168,12 @@ def new():
         return render_template("teams/new_team.html", infos=infos, errors=errors)
 
     elif request.method == "POST":
-        teamname = request.form.get("name", "").strip()
-        passphrase = request.form.get("password", "").strip()
+        try:
+            teamname = normalize_identifier(request.form.get("name", ""))
+        except ValueError as error:
+            errors.append(str(error))
+            teamname = ""
+        passphrase = secrets.token_urlsafe(32)
 
         website = request.form.get("website")
         affiliation = request.form.get("affiliation")

@@ -28,7 +28,7 @@ canais de atendimento e as pessoas com acesso administrativo.
 | --- | --- | --- |
 | Identificação | nome de usuário, e-mail, instituição (opcional), país (opcional) | tabela `users` do CTFd |
 | Autenticação | hash bcrypt da senha, identificador do provedor federado, quando habilitado | tabela `users` |
-| Composição de equipes | nome da equipe, senha de adesão, vínculo capitão/membro | tabela `teams` |
+| Composição de equipes | nome da equipe, vínculo capitão/membro e solicitações de adesão | tabelas `teams` e `hikari_team_membership_requests` |
 | Submissões | desafio, texto submetido, marca temporal, acerto/erro | tabela `submissions` |
 | Atividade operacional | view de desafio, login, registro, consulta Kibana (KQL, índices, intervalo de tempo), tipo de requisição | tabela `hikari_activity` |
 | Feedback | respostas às escalas NASA-TLX, SUS, NICE, MITRE ATT&CK e campos qualitativos | tabela `hikari_feedback` |
