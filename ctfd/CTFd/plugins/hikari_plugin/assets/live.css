@@ -309,6 +309,28 @@
     font-size: 0.85rem;
 }
 
+/* First blood. A quiet marker: it should read as a fact on the board, not as
+   an ornament competing with the standings for attention. */
+.live-solve-first {
+    border-left: 2px solid var(--hikari-accent);
+    padding-left: 0.6rem;
+    margin-left: -0.6rem;
+}
+
+.live-first-blood {
+    display: inline-block;
+    padding: 0.1rem 0.4rem;
+    color: var(--hikari-accent);
+    background-color: var(--hikari-accent-soft);
+    border: 1px solid var(--hikari-accent-soft);
+    border-radius: 999px;
+    font-family: var(--hikari-font);
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    vertical-align: middle;
+}
+
 .live-solve-value {
     color: var(--hikari-primary-strong);
     font-family: var(--hikari-font-display);

@@ -94,14 +94,14 @@ def schedule(run_id: int):
 
 
 @admins_only
-def extend(run_id: int):
+def adjust(run_id: int):
     run = _run_or_404(run_id)
     try:
-        service.extend_run(run, int(request.form.get("additional_minutes", "0")), _now())
+        service.adjust_run(run, int(request.form.get("adjust_minutes", "0")), _now())
     except (TypeError, ValueError) as error:
-        flash(str(error) or "Tempo adicional inválido", "danger")
+        flash(str(error) or "Ajuste de prazo inválido", "danger")
     else:
-        flash("Prazo estendido.", "success")
+        flash("Prazo ajustado.", "success")
     return redirect(url_for("hikariplugin.hikari_competitions_dashboard"))
 
 

@@ -314,6 +314,15 @@ def load(app):
     app.register_blueprint(hikariplugin)
     hikari_competitions.register_runtime_hooks(app)
 
+    # One destination for the standings. The CTFd scoreboard shows a subset of
+    # what the live board shows, and both are guarded by the same visibility
+    # checks, so the core route sends people to the live board rather than
+    # offering a second, poorer table.
+    def scoreboard_redirect():
+        return redirect(url_for("hikariplugin.hikari_live"))
+
+    app.view_functions["scoreboard.listing"] = scoreboard_redirect
+
     # Expose Google OAuth availability to Jinja so the login and register
     # templates can render the button conditionally. is_google_enabled
     # only reads environment variables with safe defaults; it cannot

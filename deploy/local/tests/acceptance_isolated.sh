@@ -9,6 +9,33 @@ source "$LOCAL_DIR/lib/compose.sh"
 
 stamp=$(date +%s)
 PROJECT=${HIKARI_ACCEPTANCE_PROJECT:-"hikariaccept${stamp}"}
+LOCK_DIR="${TMPDIR:-/tmp}/hikari-acceptance.lock"
+
+# A run killed by the operator, by the out-of-memory killer or by a reboot
+# leaves the directory behind. Without this check the stale lock would block
+# every future run with no way out but deleting it by hand.
+claim_lock() {
+  mkdir "$LOCK_DIR" 2>/dev/null && return 0
+
+  local owner_pid
+  owner_pid=$(cat "$LOCK_DIR/pid" 2>/dev/null || true)
+  if [[ -n "$owner_pid" ]] && kill -0 "$owner_pid" 2>/dev/null; then
+    return 1
+  fi
+
+  echo "Reclaiming a lock left by run ${owner_pid:-unknown}, which is no longer running." >&2
+  rm -rf "$LOCK_DIR"
+  mkdir "$LOCK_DIR" 2>/dev/null
+}
+
+if ! claim_lock; then
+  cat >&2 <<TXT
+Another isolated acceptance run is already active (PID $(cat "$LOCK_DIR/pid" 2>/dev/null)).
+Wait for it to finish before starting another disposable stack.
+TXT
+  exit 4
+fi
+printf '%s\n' "$$" > "$LOCK_DIR/pid"
 
 available_port() {
   python3 - <<'PY'
@@ -29,12 +56,40 @@ CTFD_URL="http://localhost:${CTFD_PORT}"
 
 cleanup() {
   hikari_compose -f "$COMPOSE_FILE" -p "$PROJECT" down -v --remove-orphans >/dev/null 2>&1 || true
+  rm -rf "$LOCK_DIR"
 }
 trap cleanup EXIT
 
 if ! command -v jq >/dev/null 2>&1; then
   echo "jq is required for the acceptance suite." >&2
   exit 127
+fi
+
+# A disposable stack runs its own Elasticsearch beside the operating one. On a
+# host that cannot feed both, the kernel reclaims memory from whichever it
+# picks, and the loser is usually the stack holding real data. Say so before
+# starting rather than leaving the operator to discover a dead index later.
+REQUIRED_MEMORY_GIB=${HIKARI_ACCEPTANCE_MEMORY_GIB:-10}
+operating_containers=$(hikari_compose -f "$COMPOSE_FILE" -p local ps -q --status running 2>/dev/null | wc -l | tr -d ' ')
+if [[ "$operating_containers" != "0" ]]; then
+  available_gib=$(docker info --format '{{.MemTotal}}' 2>/dev/null \
+    | awk '{printf "%d", $1 / 1024 / 1024 / 1024}')
+  if [[ -n "$available_gib" && "$available_gib" -lt "$REQUIRED_MEMORY_GIB" ]]; then
+    cat >&2 <<TXT
+A stack de operação está no ar e o Docker tem ${available_gib} GiB, abaixo dos
+${REQUIRED_MEMORY_GIB} GiB necessários para as duas ao mesmo tempo. Rodar assim
+derruba o Elasticsearch de uma delas, normalmente a que guarda dados reais.
+
+Pare a stack de operação, rode a suíte e suba de novo:
+
+  docker-compose -p local stop
+  bash tests/acceptance_isolated.sh
+  docker-compose -p local start
+
+Para ignorar esta checagem: HIKARI_ACCEPTANCE_MEMORY_GIB=0
+TXT
+    exit 3
+  fi
 fi
 
 export COMPOSE_PROJECT_NAME="$PROJECT"

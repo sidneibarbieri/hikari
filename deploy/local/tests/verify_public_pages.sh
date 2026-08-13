@@ -33,7 +33,12 @@ check_page() {
 check_page "/" "Desafios reais"
 check_page "/login" "Entrar no Hikari"
 check_page "/register" "Crie uma conta"
-check_page "/scoreboard" "Pontuação"
+# curl reports the absolute Location, so compare the path rather than the
+# whole URL, which carries the host and port of whichever stack is running.
+scoreboard_target=$(curl -sS -o /dev/null -w '%{redirect_url}' "$CTFD_URL/scoreboard")
+[[ "${scoreboard_target#"$CTFD_URL"}" == "/hikari/live" ]] \
+  || { echo "FAIL: /scoreboard redirected to '$scoreboard_target' instead of /hikari/live"; exit 1; }
+echo "PASS: /scoreboard redirects to the live board"
 check_page "/users" "Usuários"
 check_page "/teams" "Equipes"
 check_page "/hikari/live" "Placar ao vivo"

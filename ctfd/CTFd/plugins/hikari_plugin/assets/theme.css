@@ -656,15 +656,22 @@ select option {
     line-height: 1.25;
     overflow-wrap: anywhere;
 }
+/* The pill carries the state in colour, which the eye reads before the word.
+   Neutral for a challenge still open, green only once it is solved. */
 .hikari-challenge-status {
     justify-self: start;
     padding: 0.22rem 0.5rem;
-    color: var(--hikari-primary-strong);
-    background-color: rgba(16, 185, 129, 0.10);
-    border: 1px solid rgba(16, 185, 129, 0.24);
+    color: var(--hikari-text-muted);
+    background-color: var(--hikari-surface-2);
+    border: 1px solid var(--hikari-border);
     border-radius: 999px;
     font-size: 0.72rem;
     font-weight: 700;
+}
+.jchallenge-solved .hikari-challenge-status {
+    color: var(--hikari-primary-strong);
+    background-color: rgba(16, 185, 129, 0.10);
+    border-color: rgba(16, 185, 129, 0.24);
 }
 .hikari-challenge-points {
     display: inline-flex;

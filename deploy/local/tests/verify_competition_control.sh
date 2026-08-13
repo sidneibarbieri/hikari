@@ -120,15 +120,15 @@ code=$(curl -sS -c "$cookie_jar" -b "$cookie_jar" -o /dev/null -w '%{http_code}'
 dashboard=$(mktemp)
 curl -sS -c "$cookie_jar" -b "$cookie_jar" -o "$dashboard" "$CTFD_URL/admin/hikari/competitions"
 grep -q "$run_key" "$dashboard" || { echo "FAIL: execution key not rendered"; exit 1; }
-grep -q "Tempo adicional em minutos" "$dashboard" \
-  || { echo "FAIL: extension control missing"; exit 1; }
-grep -q "90 corresponde a 1 hora e 30 minutos" "$dashboard" \
-  || { echo "FAIL: extension guidance missing"; exit 1; }
+grep -q "Ajuste de prazo em minutos" "$dashboard" \
+  || { echo "FAIL: deadline adjustment control missing"; exit 1; }
+grep -q "Positivo estende, negativo encurta" "$dashboard" \
+  || { echo "FAIL: deadline adjustment guidance missing"; exit 1; }
 
 code=$(curl -sS -c "$cookie_jar" -b "$cookie_jar" -o /dev/null -w '%{http_code}' \
-  -X POST "$CTFD_URL/admin/hikari/competitions/$run_id/extend" \
+  -X POST "$CTFD_URL/admin/hikari/competitions/$run_id/adjust" \
   --data-urlencode "nonce=$(extract_nonce "$dashboard")" \
-  --data-urlencode "additional_minutes=90")
+  --data-urlencode "adjust_minutes=90")
 [[ "$code" == "302" ]] || { echo "FAIL: extend run returned $code"; exit 1; }
 
 duration_minutes=$(run_duration_minutes)

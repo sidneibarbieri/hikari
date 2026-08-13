@@ -69,6 +69,7 @@ steps=(
   "tests/verify_research.sh|researcher dashboard renders, JSONL export streams parseable records"
   "tests/verify_competition_control.sh|admin completes the isolated execution lifecycle"
   "tests/simulate_competition.sh|a whole competition, from registration to research export"
+  "tests/ensaio_operacional.sh|full-event rehearsal for administrators, competitors and sponsors"
   "tests/verify_edition_archive.sh|edition handover archives the record and clears the installation"
 )
 
@@ -80,7 +81,7 @@ failed=()
 clear_ratelimit_cache() {
   hikari_compose exec -T cache redis-cli eval \
     "local k = redis.call('keys', 'flask_cache_rl:*'); if #k > 0 then return redis.call('del', unpack(k)) else return 0 end" \
-    0 >/dev/null 2>&1 || true
+    0 >/dev/null
 }
 
 for entry in "${steps[@]}"; do

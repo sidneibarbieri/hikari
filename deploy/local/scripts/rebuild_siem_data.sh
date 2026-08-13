@@ -30,5 +30,5 @@ hikari_compose exec -T ctfd python "$CONTAINER_SCRIPT"
 
 documents=$(hikari_compose exec -T elasticsearch curl -fsS \
   "http://localhost:9200/competition1/_count" \
-  | python3 -c 'import json,sys; print(json.load(sys.stdin)["count"])')
+  | jq '.count')
 echo "Índice competition1 com $documents documento(s)."

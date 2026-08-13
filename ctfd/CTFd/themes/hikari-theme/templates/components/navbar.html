@@ -51,11 +51,6 @@
         {% endif %}
 
         {% if Configs.account_visibility != 'admins' and Configs.score_visibility != 'admins' %}
-          <li class="nav-item">
-            <a class="nav-link jnav-link" href="{{ url_for('scoreboard.listing') }}">
-              Pontuação
-            </a>
-          </li>
         {% endif %}
 
         <li class="nav-item">

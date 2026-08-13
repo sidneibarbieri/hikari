@@ -26,7 +26,7 @@ restore_database=""
 
 cleanup() {
   if [[ -n "$restore_database" ]]; then
-    hikari_compose exec -T db mariadb -uctfd -pctfd \
+    hikari_compose exec -T db mariadb -uroot -pctfd \
       -e "DROP DATABASE IF EXISTS \`$restore_database\`;" >/dev/null
   fi
   rm -rf "$workspace"
@@ -86,15 +86,19 @@ done < "$destination/feedback.jsonl" || fail "the feedback export is not readabl
 unzip -l "$destination/acervo-desafios.zip" > /dev/null \
   || fail "the challenge collection archive is not a readable zip"
 grep -q "Edição arquivada" "$destination/MANIFESTO.md" \
-  || fail "the manifest does not describe the archive"
+  || fail "the manifest fails to describe the archive"
 restore_database="hikari_archive_restore_check"
-hikari_compose exec -T db mariadb -uctfd -pctfd \
+hikari_compose exec -T db mariadb -uroot -pctfd \
   -e "CREATE DATABASE \`$restore_database\`;"
-hikari_compose exec -T db mariadb -uctfd -pctfd "$restore_database" \
+hikari_compose exec -T db mariadb -uroot -pctfd "$restore_database" \
   < "$destination/banco.sql"
-[[ "$(sql "SELECT COUNT(*) FROM information_schema.tables
-              WHERE table_schema = '$restore_database' AND table_name = 'challenges';")" != "0" ]] \
-  || fail "the database archive cannot be restored"
+# information_schema only reveals tables the connected user may touch, and the
+# application user has no rights on the scratch database, so ask as root.
+restored_tables=$(hikari_compose exec -T db mariadb -uroot -pctfd -N -e \
+  "SELECT COUNT(*) FROM information_schema.tables
+    WHERE table_schema = '$restore_database' AND table_name = 'challenges';" \
+  2> >(grep -v 'Using a password on the command line' >&2) | tr -d '[:space:]')
+[[ "$restored_tables" != "0" ]] || fail "the database archive cannot be restored"
 pass "archive holds readable telemetry, challenge collection and a restorable database"
 
 echo

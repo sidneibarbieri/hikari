@@ -302,9 +302,9 @@ echo "== 6. extension, pause and resume during the competition =="
 curl -sS -c "$admin_jar" -b "$admin_jar" -o "$dashboard" "$CTFD_URL/admin/hikari/competitions"
 ends_before=$(db_query "SELECT FLOOR(UNIX_TIMESTAMP(ends_at)) FROM hikari_competition_runs WHERE id=$run_id;" | tr -d '[:space:]')
 code=$(curl -sS -c "$admin_jar" -b "$admin_jar" -o /dev/null -w '%{http_code}' \
-  -X POST "$CTFD_URL/admin/hikari/competitions/$run_id/extend" \
+  -X POST "$CTFD_URL/admin/hikari/competitions/$run_id/adjust" \
   --data-urlencode "nonce=$(extract_nonce "$dashboard")" \
-  --data-urlencode "additional_minutes=90")
+  --data-urlencode "adjust_minutes=90")
 [[ "$code" == "302" ]] || { echo "FAIL: extension returned $code"; exit 1; }
 ends_after=$(db_query "SELECT FLOOR(UNIX_TIMESTAMP(ends_at)) FROM hikari_competition_runs WHERE id=$run_id;" | tr -d '[:space:]')
 [[ $((ends_after - ends_before)) -eq 5400 ]] \

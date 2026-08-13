@@ -28,9 +28,9 @@ def register(blueprint: Blueprint) -> None:
         methods=["POST"],
     )
     blueprint.add_url_rule(
-        "/admin/hikari/competitions/<int:run_id>/extend",
-        endpoint="hikari_competitions_extend",
-        view_func=views.extend,
+        "/admin/hikari/competitions/<int:run_id>/adjust",
+        endpoint="hikari_competitions_adjust",
+        view_func=views.adjust,
         methods=["POST"],
     )
     blueprint.add_url_rule(

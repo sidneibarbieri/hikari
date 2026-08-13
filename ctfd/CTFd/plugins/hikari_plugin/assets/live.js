@@ -98,11 +98,18 @@
 
   function solveRow(solve) {
     const row = document.createElement("div");
-    row.className = "live-solve";
+    row.className = solve.first_blood ? "live-solve live-solve-first" : "live-solve";
 
     const body = document.createElement("div");
     const title = document.createElement("strong");
     title.textContent = solve.challenge_name;
+    // Being first on a challenge can only happen once, so it is worth naming.
+    if (solve.first_blood) {
+      const badge = document.createElement("span");
+      badge.className = "live-first-blood";
+      badge.textContent = "1º a resolver";
+      title.append(" ", badge);
+    }
     const detail = document.createElement("p");
     detail.textContent = `${solve.user_name}${solve.team_name ? " · " + solve.team_name : ""} · ${formatDate(solve.occurred_at)}`;
     body.append(title, detail);

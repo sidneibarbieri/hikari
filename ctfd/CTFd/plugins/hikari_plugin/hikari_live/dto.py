@@ -18,6 +18,7 @@ class RecentSolve(BaseModel):
     user_name: str
     team_name: Optional[str]
     value: int
+    first_blood: bool = False
 
 
 class TimelinePoint(BaseModel):

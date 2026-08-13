@@ -19,7 +19,10 @@ LOCAL_DIR=$(cd "$SCRIPT_DIR/.." && pwd)
 source "$LOCAL_DIR/lib/compose.sh"
 
 ARCHIVE_ROOT=${ARCHIVE_ROOT:-"$LOCAL_DIR/arquivo"}
-TEST_ACCOUNT_PATTERN='^(jogador_[0-9]+|equipe_[0-9]+|squad|solo)_[0-9]{10}$|^jogador_ação_[0-9]{10}$'
+# Every verification script names what it creates with an underscore and the
+# epoch second it ran. A person registering never produces that suffix, and
+# listing the matches before deleting keeps the judgement with the operator.
+TEST_ACCOUNT_PATTERN='_1[0-9]{9}$'
 
 mode=""
 confirmed=0
@@ -29,8 +32,10 @@ usage() {
 Uso: bash scripts/archive_edition.sh <modo> [--confirmar]
 
 Modos:
-  --limpar-testes   Remove dados de uma verificação isolada. Requer
-                    HIKARI_ACCEPTANCE_CONTEXT=1 para executar.
+  --limpar-testes   Remove contas, equipes, submissões e desafios criados
+                    pelos scripts de verificação, identificados pelo sufixo de
+                    época no nome. Lista os nomes antes de apagar. Contas de
+                    pessoas reais não são tocadas.
 
   --nova-edicao     Arquiva a edição atual (registro científico, acervo de
                     desafios e cópia do banco) e depois zera identidades,
@@ -63,7 +68,7 @@ require_no_open_competition() {
 }
 
 report_test_data() {
-  echo "Contas e equipes candidatas à limpeza na verificação isolada:"
+  echo "Contas e equipes criadas por scripts de verificação:"
   sql "SELECT CONCAT('  contas de teste .......... ', COUNT(*)) FROM users
         WHERE name REGEXP '$TEST_ACCOUNT_PATTERN';
        SELECT CONCAT('  equipes de teste ......... ', COUNT(*)) FROM teams
@@ -82,6 +87,18 @@ report_test_data() {
         WHERE type = 'user' AND name NOT REGEXP '$TEST_ACCOUNT_PATTERN';
        SELECT CONCAT('  submissões dessas contas . ', COUNT(*)) FROM submissions s
         JOIN users u ON u.id = s.user_id WHERE u.name NOT REGEXP '$TEST_ACCOUNT_PATTERN';"
+}
+
+# Deleting accounts is irreversible, so the operator sees the actual names
+# before confirming rather than a count they have to trust.
+list_test_accounts() {
+  local names
+  names=$(sql "SELECT name FROM users WHERE name REGEXP '$TEST_ACCOUNT_PATTERN'
+               ORDER BY name;" | tr -d '\r')
+  [[ -n "$names" ]] || return 0
+  echo
+  echo "Contas que serão removidas:"
+  printf '  %s\n' $names
 }
 
 report_edition_data() {
@@ -163,8 +180,7 @@ PY
 }
 
 exported_challenge_count() {
-  unzip -p "$1" manifest.json | python3 -c \
-    'import json, sys; print(len(json.load(sys.stdin)["challenges"]))'
+  unzip -p "$1" manifest.json | jq '.challenges | length'
 }
 
 write_manifest() {
@@ -270,9 +286,8 @@ require_no_open_competition
 
 case "$mode" in
   --limpar-testes)
-    [[ "${HIKARI_ACCEPTANCE_CONTEXT:-}" == "1" ]] \
-      || fail "--limpar-testes só pode rodar no contexto isolado da suíte de verificação."
     report_test_data
+    list_test_accounts
     if [[ $confirmed -eq 0 ]]; then
       echo
       echo "Nada foi alterado. Repita com --confirmar para aplicar."

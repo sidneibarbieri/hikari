@@ -95,15 +95,28 @@ def synchronize_active_run(now: datetime) -> CompetitionRun | None:
     return run
 
 
-def extend_run(run: CompetitionRun, additional_minutes: int, now: datetime) -> None:
-    """Extend a running execution without changing its start time."""
-    if run.status != "running" or run.ends_at is None:
-        raise ValueError("Apenas uma execução em andamento pode receber tempo adicional")
-    if not 5 <= additional_minutes <= 480 or additional_minutes % 5:
-        raise ValueError("Informe de 5 a 480 minutos, em múltiplos de cinco")
+# A shortened run still has to leave people time to finish what they are
+# doing, so the new deadline can never land on top of the present moment.
+MINIMUM_REMAINING_MINUTES = 5
 
-    base = max(run.ends_at, now)
-    run.ends_at = base + timedelta(minutes=additional_minutes)
+
+def adjust_run(run: CompetitionRun, minutes: int, now: datetime) -> None:
+    """Move the deadline of a running execution forward or backward."""
+    if run.status != "running" or run.ends_at is None:
+        raise ValueError("Apenas uma execução em andamento pode ter o prazo ajustado")
+    if run.ends_at <= now:
+        raise ValueError("O prazo da execução já terminou. Inicie uma nova execução.")
+    if minutes == 0 or abs(minutes) > 480 or minutes % 5:
+        raise ValueError("Informe de -480 a 480 minutos, em múltiplos de cinco")
+
+    adjusted = run.ends_at + timedelta(minutes=minutes)
+    if adjusted < now + timedelta(minutes=MINIMUM_REMAINING_MINUTES):
+        raise ValueError(
+            f"O novo prazo precisa deixar ao menos {MINIMUM_REMAINING_MINUTES} minutos. "
+            "Para terminar agora, use Encerrar."
+        )
+
+    run.ends_at = adjusted
     _apply_schedule(run, paused=False)
     db.session.commit()
 

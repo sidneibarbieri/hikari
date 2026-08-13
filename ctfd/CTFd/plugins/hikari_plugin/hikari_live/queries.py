@@ -129,9 +129,28 @@ def ranked_standings(standings: Iterable[LiveStanding]) -> List[LiveStanding]:
     ]
 
 
+def first_blood_solve_ids() -> set:
+    """Ids of the solves that landed first on their challenge.
+
+    Being first is a property of the solves already recorded, so it is derived
+    here instead of stored, which keeps a single source of truth. Hidden and
+    banned accounts are excluded, matching the rest of the board.
+    """
+    rows = (
+        db.session.query(db.func.min(Solves.id))
+        .join(Users, Solves.user_id == Users.id)
+        .filter(Users.hidden == False, Users.banned == False)
+        .group_by(Solves.challenge_id)
+        .all()
+    )
+    return {row[0] for row in rows}
+
+
 def recent_solves(limit: int) -> List[RecentSolve]:
+    first_bloods = first_blood_solve_ids()
     rows = (
         db.session.query(
+            Solves.id,
             Solves.date,
             Challenges.name.label("challenge_name"),
             Challenges.value,
@@ -153,6 +172,7 @@ def recent_solves(limit: int) -> List[RecentSolve]:
             user_name=row.user_name,
             team_name=row.team_name,
             value=int(row.value or 0),
+            first_blood=row.id in first_bloods,
         )
         for row in rows
     ]
