@@ -27,12 +27,12 @@
   </section>
 
   <section class="hikari-admin-card">
-    <h2>Exportar pacote</h2>
-    <p class="hikari-admin-help">Gera um ZIP no mesmo formato aceito acima, com os desafios Hikari desta instalação, suas flags, pré-requisitos e arquivos de log. Guarde o arquivo antes de zerar a base para reaproveitar os desafios em outra competição.</p>
+    <h2>Exportar desafios da instalação</h2>
+    <p class="hikari-admin-help">Gera um ZIP com todos os desafios Hikari completos desta instalação, suas flags, pré-requisitos e arquivos de log. Guarde o arquivo antes de iniciar uma instalação independente para reaproveitar o conteúdo em outra competição.</p>
     <p class="hikari-admin-help"><strong>{{ preview.exportable | length }}</strong> desafio(s) entram no pacote.</p>
     {% if preview.skipped %}
       <p class="alert alert-warning">
-        {{ preview.skipped | length }} desafio(s) ficam de fora porque o pacote exige flag estática e o arquivo de log declarado:
+        {{ preview.skipped | length }} desafio(s) ficam de fora para que o pacote permaneça íntegro:
         {% for item in preview.skipped %}<br><code>{{ item.name }}</code> — {{ item.reason }}{% endfor %}
       </p>
     {% endif %}

@@ -71,6 +71,20 @@ chaves duplicadas, arquivos ausentes, caminhos fora de `logs/` e JSON de logs
 malformado. As flags ficam somente no banco da instalação; não publique o ZIP
 de uma biblioteca com flags de uma competição em repositório público.
 
+## Preservar e reutilizar desafios
+
+Em **Biblioteca de desafios**, use **Exportar desafios da instalação** para
+criar um ZIP reutilizável. O exportador inclui apenas desafios completos e
+informa, antes do download, cada item que ficou de fora. Um desafio dependente
+de item ausente também fica de fora: isso impede que o pacote exportado perca a
+progressão definida pela biblioteca.
+
+A biblioteca preserva conteúdo de desafios. Ela não substitui o checkpoint da
+competição, que preserva participantes, equipes, submissões, placar, logs de
+atividade e respostas de feedback. Para executar uma competição independente
+sem afetar uma edição que poderá ser retomada, use um projeto Compose separado,
+conforme `docs/OPERATIONS.md`.
+
 ## Relação com conjuntos legados
 
 Conjuntos recebidos em formatos antigos podem servir como fonte de migração,

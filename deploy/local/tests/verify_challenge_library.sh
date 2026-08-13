@@ -127,10 +127,11 @@ curl -sS -c "$admin_jar" -b "$admin_jar" -o "$page" \
   "$CTFD_URL/admin/hikari/challenge-library"
 nonce=$(extract_nonce "$page")
 rm -f "$page"
-curl -sS -c "$admin_jar" -b "$admin_jar" -o /dev/null \
+code=$(curl -sS -c "$admin_jar" -b "$admin_jar" -o /dev/null -w '%{http_code}' \
   -X POST "$CTFD_URL/admin/hikari/challenge-library" \
   -F "nonce=$nonce" \
-  -F "library=@$export_zip;type=application/zip"
+  -F "library=@$export_zip;type=application/zip")
+[[ "$code" == "302" ]] || { echo "FAIL: exported package import returned $code"; exit 1; }
 reimported=$(db_query "SELECT COUNT(*) FROM hikari_challenge_library_imports WHERE package_key='$export_key';" | tr -d '[:space:]')
 [[ "$reimported" == "1" ]] \
   || { echo "FAIL: exported package was not accepted by the importer"; exit 1; }

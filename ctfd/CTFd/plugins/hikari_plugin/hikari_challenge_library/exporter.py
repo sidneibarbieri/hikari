@@ -9,7 +9,7 @@ database can be cleared without losing the work.
 import io
 import json
 import re
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 from zipfile import ZipFile, ZIP_DEFLATED
 
 from CTFd.models import Flags
@@ -22,10 +22,24 @@ from .models import ChallengeLibraryEntry
 FORMAT_VERSION = 1
 LOGS_DIRECTORY = "logs"
 _INVALID_KEY_CHARS = re.compile(r"[^a-z0-9]+")
+_PACKAGE_KEY_PATTERN = re.compile(r"^[a-z0-9][a-z0-9-]{2,63}$")
 
 
 class ChallengeExportError(ValueError):
     """The installation holds no challenge that can be exported."""
+
+
+def validate_export_metadata(package_key: str, display_name: str) -> Tuple[str, str]:
+    """Validate export metadata before it becomes manifest or file data."""
+    normalized_key = package_key.strip().lower()
+    normalized_name = display_name.strip()
+    if not _PACKAGE_KEY_PATTERN.fullmatch(normalized_key):
+        raise ChallengeExportError(
+            "O identificador deve usar letras minúsculas, números e hífens."
+        )
+    if not 3 <= len(normalized_name) <= 128:
+        raise ChallengeExportError("O nome de exibição deve ter entre 3 e 128 caracteres.")
+    return normalized_key, normalized_name
 
 
 def export_preview() -> Dict[str, List]:
@@ -34,14 +48,8 @@ def export_preview() -> Dict[str, List]:
     Shown on the library page so the operator sees the situation before
     downloading, instead of discovering an absence later.
     """
-    exportable = []
-    skipped = []
-    for challenge in _hikari_challenges():
-        reason = _blocking_reason(challenge)
-        if reason is None:
-            exportable.append(challenge.name)
-        else:
-            skipped.append({"name": challenge.name, "reason": reason})
+    challenges, skipped = _export_plan()
+    exportable = [challenge.name for challenge in challenges]
     return {"exportable": exportable, "skipped": skipped}
 
 
@@ -52,10 +60,8 @@ def export_library(package_key: str, display_name: str) -> bytes:
     rest of the work recoverable; refusing the whole export because of one
     draft would cause the loss the export exists to prevent.
     """
-    challenges = [
-        challenge for challenge in _hikari_challenges()
-        if _blocking_reason(challenge) is None
-    ]
+    package_key, display_name = validate_export_metadata(package_key, display_name)
+    challenges, _ = _export_plan()
     if not challenges:
         raise ChallengeExportError(
             "Nenhum desafio Hikari completo para exportar. "
@@ -86,6 +92,41 @@ def _hikari_challenges() -> List[object]:
     return hikari_models.HikariChallengeModel.query.order_by(
         hikari_models.HikariChallengeModel.id.asc()
     ).all()
+
+
+def _export_plan() -> Tuple[List[object], List[dict]]:
+    """Return exportable challenges and explicit reasons for every omission."""
+    challenges = _hikari_challenges()
+    challenges_by_id = {challenge.id: challenge for challenge in challenges}
+    excluded = {
+        challenge.id: reason
+        for challenge in challenges
+        if (reason := _blocking_reason(challenge)) is not None
+    }
+
+    changed = True
+    while changed:
+        changed = False
+        for challenge in challenges:
+            if challenge.id in excluded:
+                continue
+            for prerequisite_id in _prerequisite_ids(challenge):
+                if prerequisite_id not in challenges_by_id:
+                    excluded[challenge.id] = "dependência fora da biblioteca Hikari"
+                    changed = True
+                    break
+                if prerequisite_id in excluded:
+                    excluded[challenge.id] = "dependência ausente no pacote"
+                    changed = True
+                    break
+
+    exportable = [challenge for challenge in challenges if challenge.id not in excluded]
+    skipped = [
+        {"name": challenge.name, "reason": excluded[challenge.id]}
+        for challenge in challenges
+        if challenge.id in excluded
+    ]
+    return exportable, skipped
 
 
 def _blocking_reason(challenge: object) -> Optional[str]:
@@ -156,9 +197,12 @@ def _static_flag(challenge_id: int) -> Optional[object]:
 
 
 def _prerequisite_keys(challenge: object, keys: Dict[int, str]) -> List[str]:
+    return [keys[challenge_id] for challenge_id in _prerequisite_ids(challenge)]
+
+
+def _prerequisite_ids(challenge: object) -> List[int]:
     requirements = challenge.requirements or {}
-    prerequisite_ids = requirements.get("prerequisites") or []
-    return [keys[challenge_id] for challenge_id in prerequisite_ids if challenge_id in keys]
+    return requirements.get("prerequisites") or []
 
 
 def _log_name(log_filename: Optional[str]) -> Optional[str]:
@@ -174,6 +218,8 @@ def _stored_log(log_filename: str) -> Optional[object]:
 
 def _read_log(log_filename: str) -> bytes:
     stored = _stored_log(log_filename)
+    if stored is None:
+        raise ChallengeExportError(f"O arquivo de log {log_filename} não está disponível")
     with _uploader().open(stored.location) as handle:
         return handle.read()
 
