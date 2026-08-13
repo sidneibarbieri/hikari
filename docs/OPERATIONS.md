@@ -31,6 +31,21 @@ curl -sLo /dev/null -w "SIEM:    %{http_code}\n"   http://localhost:8000/hikari/
 curl -sLo /dev/null -w "ES:      %{http_code}\n"   http://localhost:9200
 ```
 
+**Confira a cadeia de ingestão pelo nome, não pela aparência.** Um serviço que
+caiu aparece como `restarting`; um serviço que nunca subiu simplesmente não
+aparece na lista, e some do seu campo de visão. O `logstash` é o elo entre o
+Kafka e o Elasticsearch: sem ele, as submissões continuam pontuando
+normalmente, mas o SIEM para de receber dados novos **sem sinal nenhum**.
+
+```bash
+for servico in ctfd db cache kafka logstash elasticsearch kibana; do
+    estado=$(docker-compose ps --format '{{.Service}} {{.Status}}' | grep "^$servico " || echo "$servico AUSENTE")
+    echo "$estado"
+done
+```
+
+Se algum aparecer como `AUSENTE`, suba-o com `docker-compose up -d <serviço>`.
+
 ---
 
 ## 1. Um serviço caiu ou não responde
@@ -266,7 +281,136 @@ capitão a aprova. Não compartilhe senhas de equipe.
 
 ---
 
-## 9. Quando escalar (chamar o desenvolvedor)
+## 9. Trocar o domínio da plataforma
+
+O domínio vive em **uma única variável**, `HIKARI_DOMAIN`, no
+`deploy/production/.env.production`. A partir dela o `setup_production.sh`
+deriva o `server_name` do Nginx, o certificado TLS, o endereço público do
+Kibana (`SERVER_PUBLICBASEURL`), a base de redirecionamento do login pelo
+Google e o remetente de e-mail. A configuração de implantação não grava o
+domínio no banco de dados.
+
+Duas etapas ficam **fora da plataforma** e precisam ser feitas antes:
+
+1. **DNS** — aponte um registro `A` do novo domínio para o IP do servidor e
+   espere a propagação. O `certbot` recusa emitir o certificado enquanto o
+   nome não resolver para esta máquina.
+2. **Google Cloud Console** — em *Credenciais → ID do cliente OAuth*,
+   acrescente o novo URI autorizado de redirecionamento:
+   `https://NOVO_DOMINIO/auth/google/callback`. Mantenha o antigo até
+   a virada terminar; assim ninguém fica sem entrar no meio da troca.
+
+Feito isso, a troca na plataforma são três comandos:
+
+```bash
+cd deploy/production
+bash update_domain.sh novo.dominio.br
+bash setup_production.sh
+```
+
+O script emite o certificado do novo nome, reescreve a configuração do Nginx,
+regenera o `.compose.env` e recria os contêineres com o novo endereço público.
+Contas, equipes, desafios, submissões e histórico não são tocados — nenhum
+deles guarda o domínio.
+
+Depois valide e remova o URI antigo do Google Cloud Console:
+
+```bash
+curl -sLo /dev/null -w "plataforma: %{http_code}\n" https://novo.dominio.br/
+curl -sLo /dev/null -w "guia:       %{http_code}\n" https://novo.dominio.br/hikari/guide
+```
+
+Se o domínio antigo continuar apontando para o servidor, o Nginx passa a
+responder por ele com o certificado do novo nome, o que gera aviso no
+navegador. Remova o registro DNS antigo assim que a virada estiver validada.
+
+---
+
+## 10. Ciclo de vida de uma edição
+
+Três conjuntos de dados dividem a mesma instalação e **têm tempos de vida
+diferentes**. Confundi-los é o que faz a plataforma acumular lixo entre uma
+competição e outra.
+
+| Conjunto | O que é | Pertence a | Na virada de edição |
+| --- | --- | --- | --- |
+| Acervo de desafios | desafios, flags e os arquivos de log que alimentam o SIEM | à **plataforma** | permanece |
+| Registro científico | atividade dos competidores e respostas de feedback | à **edição** | é arquivado |
+| Identidades e placar | contas, equipes, submissões, acertos | à **edição** | é zerado |
+
+A consequência prática é a que se espera: **a cada nova edição os competidores
+se cadastram de novo.** Contas antigas não são reaproveitadas, porque o placar
+precisa nascer zerado e porque manter identidades de uma edição encerrada não
+serve a nada além de poluir a lista.
+
+### Onde o SIEM entra nisso
+
+O índice que os competidores investigam é o *palheiro*, e ele pertence ao
+acervo de desafios, não à edição. Fora de uma competição o acesso ao SIEM fica
+bloqueado, então ninguém vê nada. Durante uma competição as consultas são
+atribuídas àquela execução pelo `competition_key`. Por isso, **sempre que o
+conjunto de desafios ativos mudar**, o palheiro precisa ser refeito, para que
+ninguém veja telemetria de um desafio que não está em jogo:
+
+```bash
+cd deploy/local
+bash scripts/rebuild_siem_data.sh
+```
+
+O script se recusa a rodar durante uma competição — trocar os dados sob os pés
+de quem está investigando invalidaria o trabalho em curso.
+
+### Encerrar uma edição e preparar a próxima
+
+```bash
+cd deploy/local
+bash scripts/archive_edition.sh --nova-edicao              # relata, não altera
+bash scripts/archive_edition.sh --nova-edicao --confirmar  # arquiva e zera
+```
+
+Sem `--confirmar` o comando só descreve o que faria. Com `--confirmar` ele
+grava, **antes de remover qualquer coisa**, um diretório datado em
+`deploy/local/arquivo/` contendo:
+
+| Arquivo | Conteúdo |
+| --- | --- |
+| `atividade.jsonl` | toda a telemetria dos competidores, uma linha por evento |
+| `feedback.jsonl` | as respostas do questionário |
+| `acervo-desafios.zip` | o acervo em formato portátil, pronto para reimportar |
+| `banco.sql` | cópia completa do banco daquela edição |
+| `MANIFESTO.md` | contagens e instruções de recuperação |
+
+Só depois disso ele zera contas, equipes, submissões, acertos, atividade e
+feedback. Desafios, flags e contas administrativas permanecem.
+
+Para reabrir uma edição arquivada, suba um projeto Compose próprio e restaure
+o `banco.sql` dela — o procedimento está na seção 7. Nunca restaure sobre a
+instalação em uso.
+
+### Resíduo de verificação
+
+A suíte oficial executa em um projeto Compose descartável e remove seus próprios
+dados no término. Não execute uma limpeza por padrão de nome numa instalação de
+competição: uma conta humana pode coincidir com qualquer convenção futura de
+testes. Quando uma verificação isolada for interrompida, derrube o projeto
+descartável em vez de limpar a instalação operacional:
+
+```bash
+docker-compose -p <projeto-de-verificacao> down -v --remove-orphans
+```
+
+### O ciclo completo
+
+1. Importe ou ajuste os desafios em `/admin/hikari/challenge-library`.
+2. Rode `scripts/rebuild_siem_data.sh` para o palheiro refletir esses desafios.
+3. Crie a execução em `/admin/hikari/competitions` e conduza a competição.
+4. Encerre a execução e confira o feedback em `/admin/hikari/research`.
+5. Rode `scripts/archive_edition.sh --nova-edicao --confirmar`.
+6. Volte ao passo 1 para a próxima edição.
+
+---
+
+## 11. Quando escalar (chamar o desenvolvedor)
 
 Reinicie o serviço uma vez e tente as instruções desta página. Se em
 **5 minutos** o problema persistir, escale:
@@ -281,7 +425,7 @@ sempre mais rápido e seguro do que diagnosticar bug ao vivo.
 
 ---
 
-## 10. Pós-competição: preservar evidências
+## 12. Pós-competição: preservar evidências
 
 Antes de derrubar a infra, capture o estado final:
 

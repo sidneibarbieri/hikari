@@ -40,3 +40,7 @@ data_backup.zip
 # Build
 dist/
 build/
+
+# Archived editions: database copies and competitor telemetry. Personal data,
+# never versioned.
+deploy/local/arquivo/

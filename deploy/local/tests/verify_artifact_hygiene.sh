@@ -22,7 +22,7 @@ $generated_hits"
 echo "PASS: no generated runtime files are tracked"
 
 hikari_files=$(printf '%s\n' "$tracked_files" | grep -E \
-  '^(README.md|docs/|deploy/local/|ctfd/HIKARI.md|ctfd/CTFd/plugins/hikari_|ctfd/CTFd/plugins/hikari_plugin|ctfd/CTFd/themes/hikari-theme/templates/)' || true)
+  '^(README.md|SECURITY.md|Makefile|docs/|deploy/(local|production)/|ctfd/HIKARI.md|ctfd/CTFd/plugins/hikari_|ctfd/CTFd/plugins/hikari_plugin|ctfd/CTFd/themes/hikari-theme/templates/)' || true)
 
 [[ -n "$hikari_files" ]] || fail "no Hikari-owned files found for hygiene scan"
 
@@ -70,22 +70,40 @@ restricted_terms=(
   $'\U00002728'
 )
 forbidden_terms=$(IFS='|'; echo "${restricted_terms[*]}")
-term_hits=$(printf '%s\n' "$hikari_files" | xargs rg -n "$forbidden_terms" || true)
+# Terminology is a property of text. Screenshots and other binaries would
+# otherwise match on arbitrary byte sequences.
+scannable_files=$(printf '%s\n' "$hikari_files" | grep -vE '\.(png|jpg|jpeg|gif|webp|ico|pdf|zip|mp4|woff2?)$')
+
+run_scan() {
+  local paths=$1
+  local expression=$2
+  local scan_result
+  local scan_status
+
+  set +e
+  scan_result=$(printf '%s\n' "$paths" | xargs rg -n "$expression")
+  scan_status=$?
+  set -e
+  [[ $scan_status -le 1 ]] || fail "scan failed to run (rg exit $scan_status)"
+  printf '%s' "$scan_result"
+}
+
+term_hits=$(run_scan "$scannable_files" "$forbidden_terms")
 [[ -z "$term_hits" ]] || fail "forbidden terms found in Hikari-owned files:
 $term_hits"
 echo "PASS: naming and style scan is clean"
 
-personal_default_hits=$(printf '%s\n' "$hikari_files" \
-  | xargs rg -n 'sidneibarbieri@gmail\\.com' || true)
+personal_default_hits=$(run_scan "$scannable_files" 'sidneibarbieri@gmail\\.com')
 [[ -z "$personal_default_hits" ]] || fail "personal account data remains in the artifact:\n$personal_default_hits"
 echo "PASS: no personal account is seeded by default"
 
 exception_pattern="except ""Exception|\\bprint\\("
 # rebuild_siem_dashboard.py is a standalone CLI tool that uses stdout for
 # progress reporting — exclude it from the application-code print rule.
-exception_hits=$(printf '%s\n' "$hikari_files" \
-  | grep -v 'rebuild_siem_dashboard\.py' \
-  | xargs rg -n "$exception_pattern" || true)
+exception_files=$(printf '%s\n' "$scannable_files" \
+  | grep -E '\.(py|sh)$' \
+  | grep -v 'rebuild_siem_dashboard\.py')
+exception_hits=$(run_scan "$exception_files" "$exception_pattern")
 if [[ -n "$exception_hits" ]]; then
   fail "broad exception or print usage remains in Hikari-owned files:
 $exception_hits"

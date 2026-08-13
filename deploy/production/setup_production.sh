@@ -13,19 +13,22 @@ fail() { printf '[error] %s\n' "$*" >&2; exit 1; }
 
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 PLATFORM_DIR=$(cd "$SCRIPT_DIR/../.." && pwd)
-ENV_FILE="$SCRIPT_DIR/.env.production"
+ENV_FILE=${HIKARI_PRODUCTION_ENV:-"$SCRIPT_DIR/.env.production"}
 COMPOSE_PROJECT_NAME=${HIKARI_COMPOSE_PROJECT:-hikari}
 HIKARI_BACKUP_DIR=${HIKARI_BACKUP_DIR:-/opt/hikari/backups}
 
 # ---- 1. Verificar pré-requisitos --------------------------------------------
 info "Verificando pré-requisitos..."
 
+[[ $EUID -eq 0 ]] || fail "Execute com sudo: sudo bash setup_production.sh"
 [[ -f "$ENV_FILE" ]] \
   || fail "Arquivo $ENV_FILE não encontrado. Copie .env.production.example e preencha."
 
 source "$ENV_FILE"
 
-[[ -n "${HIKARI_DOMAIN:-}" ]] || fail "HIKARI_DOMAIN não definido em .env.production"
+[[ -n "${HIKARI_DOMAIN:-}" ]] || fail "HIKARI_DOMAIN não definido em $ENV_FILE"
+[[ "$HIKARI_DOMAIN" =~ ^[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?(\.[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?)+$ ]] \
+  || fail "HIKARI_DOMAIN deve ser um domínio válido, sem protocolo ou caminho."
 [[ -n "${ADMIN_EMAIL:-}" ]] || fail "ADMIN_EMAIL não definido"
 [[ -n "${ADMIN_PASSWORD:-}" ]] || fail "ADMIN_PASSWORD não definido"
 [[ -n "${SECRET_KEY:-}" ]]    || fail "SECRET_KEY não definido"

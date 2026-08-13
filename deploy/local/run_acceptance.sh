@@ -69,6 +69,7 @@ steps=(
   "tests/verify_research.sh|researcher dashboard renders, JSONL export streams parseable records"
   "tests/verify_competition_control.sh|admin completes the isolated execution lifecycle"
   "tests/simulate_competition.sh|a whole competition, from registration to research export"
+  "tests/verify_edition_archive.sh|edition handover archives the record and clears the installation"
 )
 
 passed=()
