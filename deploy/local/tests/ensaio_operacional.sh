@@ -60,7 +60,7 @@ flush_rate_limit() {
 siem_documents() {
   hikari_compose exec -T elasticsearch curl -fsS \
     "http://localhost:9200/competition1/_count" \
-    | python3 -c 'import json,sys; print(json.load(sys.stdin)["count"])'
+    | jq '.count'
 }
 
 siem_marker_hits() {

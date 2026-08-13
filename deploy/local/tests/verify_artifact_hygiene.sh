@@ -15,13 +15,22 @@ tracked_files=$(git ls-files | while IFS= read -r path; do
   [[ -e "$path" ]] && printf '%s\n' "$path"
 done)
 
+# Terminology and style apply to a file from the moment it is written, not from
+# the moment it is committed. Scanning only tracked files let a brand new file
+# through in exactly the window where it is most likely to carry a mistake.
+# Ignored paths stay out: they never reach the artifact.
+reviewable_files=$(git ls-files --cached --others --exclude-standard \
+  | while IFS= read -r path; do
+      [[ -e "$path" ]] && printf '%s\n' "$path"
+    done)
+
 generated_patterns='(^|/)(\.DS_Store|\.env)$|^deploy/local/artifacts/|^(lab|detectionlab)/|data_backup\.zip|(^|/)__pycache__/|\.pyc$'
 generated_hits=$(printf '%s\n' "$tracked_files" | grep -E "$generated_patterns" || true)
 [[ -z "$generated_hits" ]] || fail "generated or local-only files are tracked:
 $generated_hits"
 echo "PASS: no generated runtime files are tracked"
 
-hikari_files=$(printf '%s\n' "$tracked_files" | grep -E \
+hikari_files=$(printf '%s\n' "$reviewable_files" | grep -E \
   '^(README.md|SECURITY.md|Makefile|docs/|deploy/(local|production)/|ctfd/HIKARI.md|ctfd/CTFd/plugins/hikari_|ctfd/CTFd/plugins/hikari_plugin|ctfd/CTFd/themes/hikari-theme/templates/)' || true)
 
 [[ -n "$hikari_files" ]] || fail "no Hikari-owned files found for hygiene scan"
