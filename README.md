@@ -110,19 +110,24 @@ ativos reconstruídos no Elasticsearch e o acesso ao plugin após a importação
 
 ## Contas administrativas
 
-O `scripts/ensure_admin.sh` semeia duas contas de administrador, ambas ocultas
-no placar:
+O `scripts/ensure_admin.sh` cria ou atualiza uma conta técnica de administrador,
+oculta no placar:
 
 | Conta | E-mail | Uso |
 | --- | --- | --- |
 | `admin` | `admin@hikari.local` | Automação e verificação |
-| `sidneibarbieri` | `sidneibarbieri@gmail.com` | Responsável pela plataforma; entra pelo Google, com senha como via de recuperação |
 
-A senha inicial das duas contas é `hikari_comp@2026`. **Troque as senhas antes
+A senha inicial local é `hikari_comp@2026`. **Troque a senha antes
 de expor a instalação em rede**, conforme `SECURITY.md`. Para definir outras
 credenciais:
 
-    ADMIN_PASSWORD='...' OWNER_EMAIL='...' OWNER_PASSWORD='...' bash scripts/ensure_admin.sh
+    ADMIN_PASSWORD='...' bash scripts/ensure_admin.sh
+
+Para criar uma segunda conta administrativa, informe os três campos de forma
+explícita:
+
+    OWNER_NAME='operador' OWNER_EMAIL='operador@organizacao.example' \
+      OWNER_PASSWORD='...' bash scripts/ensure_admin.sh
 
 ## Licença
 

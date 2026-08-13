@@ -6,7 +6,7 @@ o artefato entrega por padrão e o que requer configuração externa.
 ## Padrão: usuário e senha local
 
 O Hikari herda o cadastro local do CTFd. O administrador é criado pelo
-`deploy/local/ensure_admin.sh` e os competidores se registram em
+`deploy/local/scripts/ensure_admin.sh` e os competidores se registram em
 `/register`. A senha é armazenada com hash bcrypt na tabela `users`.
 
 Endpoints relevantes:

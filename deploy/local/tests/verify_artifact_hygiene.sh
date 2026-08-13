@@ -75,6 +75,11 @@ term_hits=$(printf '%s\n' "$hikari_files" | xargs rg -n "$forbidden_terms" || tr
 $term_hits"
 echo "PASS: naming and style scan is clean"
 
+personal_default_hits=$(printf '%s\n' "$hikari_files" \
+  | xargs rg -n 'sidneibarbieri@gmail\\.com' || true)
+[[ -z "$personal_default_hits" ]] || fail "personal account data remains in the artifact:\n$personal_default_hits"
+echo "PASS: no personal account is seeded by default"
+
 exception_pattern="except ""Exception|\\bprint\\("
 # rebuild_siem_dashboard.py is a standalone CLI tool that uses stdout for
 # progress reporting — exclude it from the application-code print rule.

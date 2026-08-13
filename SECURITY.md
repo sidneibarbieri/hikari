@@ -13,12 +13,11 @@ auxiliares. A escolha é deliberada: dá a mesma experiência de primeiro acesso
 para qualquer pessoa que clone o repositório e permite que a suíte de
 verificação autentique sem intervenção humana.
 
-Duas contas administrativas são semeadas com essa senha:
+Uma conta administrativa é semeada com essa senha:
 
 | Conta | E-mail | Uso |
 | --- | --- | --- |
 | `admin` | `admin@hikari.local` | Automação e verificação |
-| `sidneibarbieri` | `sidneibarbieri@gmail.com` | Responsável pela plataforma; entra pelo Google, com senha como via de recuperação |
 
 **Esse padrão não é um segredo.** A stack local escuta apenas em `127.0.0.1` e
 deve ser alcançável somente a partir da máquina do operador. Não exponha
@@ -27,13 +26,12 @@ nenhuma porta de `deploy/local/` à internet.
 Para trocar as credenciais localmente:
 
 ```bash
-ADMIN_PASSWORD='sua-senha' OWNER_PASSWORD='outra-senha' \
-  bash deploy/local/scripts/ensure_admin.sh
+ADMIN_PASSWORD='sua-senha' bash deploy/local/scripts/ensure_admin.sh
 ```
 
-> Como as duas contas têm senha documentada, **troque as duas antes de expor a
-> instalação em qualquer rede compartilhada**. Uma conta que entra por Google
-> continua aceitando a senha local enquanto ela existir.
+Para uma segunda conta administrativa, informe `OWNER_NAME`, `OWNER_EMAIL` e
+`OWNER_PASSWORD` no mesmo comando. **Troque toda senha documentada antes de
+expor a instalação em qualquer rede compartilhada.**
 
 ## Implantação em produção
 

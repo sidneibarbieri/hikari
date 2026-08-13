@@ -1,12 +1,8 @@
 #!/usr/bin/env bash
 # Creates or updates the administrator accounts without touching competition data.
 #
-# Two accounts are seeded:
-#   - the automation administrator used by the acceptance suite;
-#   - the platform owner, who signs in through Google and keeps password
-#     access as the recovery path.
-#
-# Both are idempotent upserts: run as many times as needed.
+# The technical administrator is an idempotent upsert. An optional second
+# administrator is created only when the operator provides all its fields.
 
 set -euo pipefail
 
@@ -14,9 +10,9 @@ ADMIN_NAME=${ADMIN_NAME:-admin}
 ADMIN_EMAIL=${ADMIN_EMAIL:-admin@hikari.local}
 ADMIN_PASSWORD=${ADMIN_PASSWORD:-hikari_comp@2026}
 
-OWNER_NAME=${OWNER_NAME:-sidneibarbieri}
-OWNER_EMAIL=${OWNER_EMAIL:-sidneibarbieri@gmail.com}
-OWNER_PASSWORD=${OWNER_PASSWORD:-$ADMIN_PASSWORD}
+OWNER_NAME=${OWNER_NAME:-}
+OWNER_EMAIL=${OWNER_EMAIL:-}
+OWNER_PASSWORD=${OWNER_PASSWORD:-}
 
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 LOCAL_DIR=$(cd "$SCRIPT_DIR/.." && pwd)
@@ -87,4 +83,11 @@ PY
 }
 
 upsert_admin "$ADMIN_NAME" "$ADMIN_EMAIL" "$ADMIN_PASSWORD"
-upsert_admin "$OWNER_NAME" "$OWNER_EMAIL" "$OWNER_PASSWORD"
+
+if [[ -n "$OWNER_NAME$OWNER_EMAIL$OWNER_PASSWORD" ]]; then
+  [[ -n "$OWNER_NAME" && -n "$OWNER_EMAIL" && -n "$OWNER_PASSWORD" ]] || {
+    echo "OWNER_NAME, OWNER_EMAIL e OWNER_PASSWORD devem ser informados juntos." >&2
+    exit 1
+  }
+  upsert_admin "$OWNER_NAME" "$OWNER_EMAIL" "$OWNER_PASSWORD"
+fi

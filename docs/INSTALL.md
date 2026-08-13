@@ -44,26 +44,25 @@ orquestrador imprime um resumo final.
 
 ### Contas administrativas
 
-O `scripts/ensure_admin.sh` semeia duas contas de administrador, ambas ocultas
-no placar:
+O `scripts/ensure_admin.sh` cria ou atualiza uma conta técnica de administrador,
+oculta no placar:
 
 | Conta | E-mail | Uso |
 | --- | --- | --- |
 | `admin` | `admin@hikari.local` | Automação e verificação |
-| `sidneibarbieri` | `sidneibarbieri@gmail.com` | Responsável pela plataforma; entra pelo Google, com senha como via de recuperação |
 
-O login aceita o nome da conta ou o e-mail. A senha inicial das duas é
+O login aceita o nome da conta ou o e-mail. A senha inicial local é
 `hikari_comp@2026`; troque-a em `Configurações` após o primeiro acesso e
 **antes de expor a instalação em rede** (veja `SECURITY.md`).
 
-Para semear credenciais diferentes:
+Para definir outra senha:
 
-    ADMIN_PASSWORD='...' OWNER_EMAIL='...' OWNER_PASSWORD='...' \
-      bash scripts/ensure_admin.sh
+    ADMIN_PASSWORD='...' bash scripts/ensure_admin.sh
 
-Quando o acesso pelo Google está configurado (veja [AUTH.md](AUTH.md)), a conta
-é reconhecida pelo endereço de e-mail: ao entrar pelo Google com um e-mail que
-já pertence a uma conta administrativa, a sessão assume essa conta.
+Para criar uma segunda conta administrativa, informe os três valores:
+
+    OWNER_NAME='operador' OWNER_EMAIL='operador@organizacao.example' \
+      OWNER_PASSWORD='...' bash scripts/ensure_admin.sh
 
 ## Superfícies
 
