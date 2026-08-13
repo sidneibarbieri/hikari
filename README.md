@@ -67,11 +67,20 @@ identidade visual, carregamento do plugin, fluxo de dados do Kafka ao
 Elasticsearch, data view padrão do SIEM, registro de atividade no banco e no
 Elasticsearch, acesso do competidor ao SIEM com atribuição de consultas,
 classificação forense no proxy do Kibana, captura e exportação do feedback
-local, fluxos de competidor em equipe individual e em equipe com vários
+local, fluxos de competidor em equipe de uma pessoa e em equipe com vários
 integrantes, criação de desafio pelo administrador e submissão pelo jogador,
 ativação progressiva de logs após o solve, placar ao vivo e painel de análise
 científica com cobertura de feedback e exportação em JSONL. Também verifica que
 um administrador consegue criar, iniciar e estender uma execução cronometrada.
+
+## Interfaces
+
+As capturas abaixo foram produzidas por uma instalação descartável, sem dados de
+competidores, desafios ou flags de uma execução real.
+
+| Entrada | Orientação ao competidor |
+| --- | --- |
+| ![Tela de entrada](docs/images/login.png) | ![Guia do competidor](docs/images/competitor-guide.png) |
 
 ## Mapa da documentação
 
@@ -117,9 +126,18 @@ oculta no placar:
 | --- | --- | --- |
 | `admin` | `admin@hikari.local` | Automação e verificação |
 
-A senha inicial local é `hikari_comp@2026`. **Troque a senha antes
-de expor a instalação em rede**, conforme `SECURITY.md`. Para definir outras
-credenciais:
+Primeiro acesso local:
+
+```text
+Usuário: admin
+Senha: hikari_comp@2026
+```
+
+Esse acesso existe apenas para preparar e verificar uma instalação local. Em
+servidores compartilhados ou expostos em rede, defina uma senha própria antes
+de iniciar a operação, conforme `SECURITY.md`.
+
+Para definir a senha da conta técnica antes do primeiro acesso:
 
     ADMIN_PASSWORD='...' bash scripts/ensure_admin.sh
 

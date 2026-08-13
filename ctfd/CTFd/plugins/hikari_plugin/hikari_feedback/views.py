@@ -2,7 +2,6 @@ import json
 from datetime import datetime
 
 from flask import Response, flash, redirect, render_template, request, stream_with_context, url_for
-from pydantic import ValidationError
 
 from CTFd.models import db
 from CTFd.utils.decorators import admins_only, authed_only
@@ -124,15 +123,16 @@ _DTO_FIELDS = (
 def payload_from_form(form: object) -> FeedbackPayload:
     """Build the Pydantic payload from the WTForm, coercing empty strings to None."""
     raw = {name: _normalise(getattr(form, name).data) for name in _DTO_FIELDS}
-    try:
-        return FeedbackPayload(**raw)
-    except ValidationError as error:
-        raise ValueError(str(error)) from error
+    return FeedbackPayload(**raw)
 
 
 def _normalise(value: object) -> object:
-    """Coerce empty strings and empty lists to None for uniform null handling."""
-    if value == "" or value == []:
+    """Coerce an unanswered field to None.
+
+    An empty list is left untouched: on a multiselect it means "none of these",
+    which is an answer, while an empty string means the field was skipped.
+    """
+    if value == "":
         return None
     return value
 

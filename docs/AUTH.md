@@ -12,7 +12,8 @@ O Hikari herda o cadastro local do CTFd. O administrador é criado pelo
 Endpoints relevantes:
 
 - `GET /register`, `POST /register` — auto-cadastro.
-- `GET /login`, `POST /login` — autenticação por e-mail e senha.
+- `GET /login`, `POST /login` — autenticação por nome de usuário ou e-mail e
+  senha.
 - `GET /settings` — alteração de perfil, idioma e senha (página
   reformulada pelo tema Hikari em PT-BR, ver `docs/COMPONENTS.md`).
 - `POST /logout` — encerramento de sessão.

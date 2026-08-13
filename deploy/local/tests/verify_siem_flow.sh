@@ -29,6 +29,27 @@ db_value() {
     mariadb -uctfd -pctfd ctfd -N -B -e "$query"
 }
 
+open_hunting_window() {
+  docker-compose -f "$COMPOSE_FILE" exec -T ctfd python - <<'PY'
+from time import time
+
+from CTFd import create_app
+from CTFd.utils import set_config
+
+
+app = create_app()
+with app.app_context():
+    starts_at = int(time())
+    set_config("start", starts_at)
+    set_config("end", starts_at + 3600)
+    set_config("paused", False)
+PY
+}
+
+# The SIEM is intentionally closed outside an active game window. Open a
+# bounded test window so this flow exercises hunting as an eligible player.
+open_hunting_window
+
 echo "== register and login competitor =="
 page=/tmp/hikari-siem-register.html
 curl -sS -c "$cookie_jar" -b "$cookie_jar" -o "$page" "$CTFD_URL/register"

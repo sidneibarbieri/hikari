@@ -55,6 +55,13 @@ O login aceita o nome da conta ou o e-mail. A senha inicial local é
 `hikari_comp@2026`; troque-a em `Configurações` após o primeiro acesso e
 **antes de expor a instalação em rede** (veja `SECURITY.md`).
 
+Primeiro acesso local:
+
+```text
+Usuário: admin
+Senha: hikari_comp@2026
+```
+
 Para definir outra senha:
 
     ADMIN_PASSWORD='...' bash scripts/ensure_admin.sh

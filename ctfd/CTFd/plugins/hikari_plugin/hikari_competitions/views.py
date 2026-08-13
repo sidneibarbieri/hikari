@@ -61,6 +61,8 @@ def _create_run():
     )
     db.session.add(run)
     db.session.commit()
+    # Close play until the operator schedules or starts this execution.
+    service.close_for_draft(run, _now())
     flash("Execução criada. Revise o modo de pontuação antes de iniciá-la.", "success")
     return redirect(url_for("hikariplugin.hikari_competitions_dashboard"))
 
@@ -143,7 +145,7 @@ def finish(run_id: int):
 def cancel(run_id: int):
     run = _run_or_404(run_id)
     try:
-        service.cancel_run(run)
+        service.cancel_run(run, _now())
     except ValueError as error:
         flash(str(error), "danger")
     else:

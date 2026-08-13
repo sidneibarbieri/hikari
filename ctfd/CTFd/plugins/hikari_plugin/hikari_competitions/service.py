@@ -20,6 +20,30 @@ def active_run() -> CompetitionRun | None:
     )
 
 
+# A draft has no start time yet, so the platform is closed with a window that
+# has not begun. CTFd treats an empty schedule as "no restriction", which would
+# leave challenges and the SIEM open during the registration window.
+DRAFT_CLOSED_DAYS = 365
+
+
+def close_for_draft(run: CompetitionRun, now: datetime) -> None:
+    """Keep play closed while an execution is only a draft.
+
+    Registration and team formation stay available; challenges, submissions
+    and the SIEM open when the operator schedules or starts the run, which
+    overwrites this placeholder window.
+    """
+    if active_run() is not None:
+        return
+    placeholder_start = now + timedelta(days=DRAFT_CLOSED_DAYS)
+    set_config("ctf_name", run.name)
+    set_config("start", int(placeholder_start.timestamp()))
+    set_config("end", int((placeholder_start + timedelta(minutes=run.duration_minutes)).timestamp()))
+    set_config("paused", False)
+    set_config("hikari_competition_key", run.key)
+    db.session.commit()
+
+
 def schedule_run(run: CompetitionRun, starts_at: datetime, now: datetime) -> None:
     """Schedule a draft execution while keeping registration available."""
     other = active_run()
@@ -124,17 +148,13 @@ def finish_run(run: CompetitionRun, now: datetime) -> None:
     db.session.commit()
 
 
-def cancel_run(run: CompetitionRun) -> None:
-    """Cancel a scheduled execution without creating an invalid time window."""
+def cancel_run(run: CompetitionRun, now: datetime) -> None:
+    """Cancel a scheduled execution while keeping play surfaces closed."""
     if run.status != "scheduled":
         raise ValueError("Apenas uma execução agendada pode ser cancelada")
 
     run.status = "cancelled"
-    set_config("start", 0)
-    set_config("end", 0)
-    set_config("paused", False)
-    set_config("hikari_competition_key", "")
-    db.session.commit()
+    close_for_draft(run, now)
 
 
 def _apply_schedule(run: CompetitionRun, paused: bool) -> None:

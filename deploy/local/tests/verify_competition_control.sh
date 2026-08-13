@@ -163,4 +163,37 @@ code=$(curl -sS -c "$cookie_jar" -b "$cookie_jar" -o /dev/null -w '%{http_code}'
 [[ "$code" == "302" ]] || { echo "FAIL: finish run returned $code"; exit 1; }
 [[ "$(run_status)" == "finished" ]] || { echo "FAIL: execution was not finished"; exit 1; }
 
-echo "PASS: run created, started, extended, paused, resumed, and finished"
+# A cancelled schedule must not restore CTFd's unrestricted 0/0 window.
+cancel_key="${run_key}-cancelled"
+dashboard=$(mktemp)
+curl -sS -c "$cookie_jar" -b "$cookie_jar" -o "$dashboard" "$CTFD_URL/admin/hikari/competitions"
+code=$(curl -sS -c "$cookie_jar" -b "$cookie_jar" -o /dev/null -w '%{http_code}' \
+  -X POST "$CTFD_URL/admin/hikari/competitions" \
+  --data-urlencode "nonce=$(extract_nonce "$dashboard")" \
+  --data-urlencode "key=$cancel_key" \
+  --data-urlencode "name=Cancelled Run $stamp" \
+  --data-urlencode "scoring_mode=teams" \
+  --data-urlencode "duration_minutes=240")
+[[ "$code" == "302" ]] || { echo "FAIL: cancellation test run creation returned $code"; exit 1; }
+
+curl -sS -c "$cookie_jar" -b "$cookie_jar" -o "$dashboard" "$CTFD_URL/admin/hikari/competitions"
+cancel_id=$(grep -oE "/admin/hikari/competitions/[0-9]+/schedule" "$dashboard" | tail -1 | grep -oE '[0-9]+')
+[[ -n "$cancel_id" ]] || { echo "FAIL: cancellation test run lacks schedule action"; exit 1; }
+code=$(curl -sS -c "$cookie_jar" -b "$cookie_jar" -o /dev/null -w '%{http_code}' \
+  -X POST "$CTFD_URL/admin/hikari/competitions/$cancel_id/schedule" \
+  --data-urlencode "nonce=$(extract_nonce "$dashboard")" \
+  --data-urlencode "starts_at=2099-01-01T14:00")
+[[ "$code" == "302" ]] || { echo "FAIL: cancellation test schedule returned $code"; exit 1; }
+
+curl -sS -c "$cookie_jar" -b "$cookie_jar" -o "$dashboard" "$CTFD_URL/admin/hikari/competitions"
+code=$(curl -sS -c "$cookie_jar" -b "$cookie_jar" -o /dev/null -w '%{http_code}' \
+  -X POST "$CTFD_URL/admin/hikari/competitions/$cancel_id/cancel" \
+  --data-urlencode "nonce=$(extract_nonce "$dashboard")")
+[[ "$code" == "302" ]] || { echo "FAIL: cancellation returned $code"; exit 1; }
+cancelled_status=$(docker-compose -f "$COMPOSE_FILE" exec -T db mariadb -N -uctfd -pctfd ctfd \
+  -e "SELECT status FROM hikari_competition_runs WHERE \`key\` = '$cancel_key';" | tr -d '\r\n')
+[[ "$cancelled_status" == "cancelled" ]] || { echo "FAIL: scheduled execution was not cancelled"; exit 1; }
+[[ "$(configured_start)" -gt "$(date +%s)" ]] \
+  || { echo "FAIL: cancellation reopened the CTFd play window"; exit 1; }
+
+echo "PASS: run created, started, extended, paused, resumed, finished, and cancelled safely"
