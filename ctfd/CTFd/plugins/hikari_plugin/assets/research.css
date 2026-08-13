@@ -95,9 +95,12 @@
     justify-content: center;
 }
 
+/* Equal columns regardless of how many cards a section holds. The previous
+   1fr 2fr 2fr declared three columns for sections that carry two cards, so
+   the pair rendered at different widths with dead space on the right. */
 .research-grid {
     display: grid;
-    grid-template-columns: 1fr 2fr 2fr;
+    grid-template-columns: repeat(auto-fit, minmax(min(22rem, 100%), 1fr));
     gap: 1rem;
     margin-bottom: 1rem;
     align-items: start;

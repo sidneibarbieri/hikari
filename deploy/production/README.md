@@ -150,12 +150,52 @@ sudo ./setup_production.sh
 
 ## Endereços e portas
 
-O proxy Nginx recebe todo o tráfego público. Configure o firewall para expor
-somente TCP 80 e 443. Os serviços de dados permanecem na rede Docker interna.
+O proxy Nginx recebe todo o tráfego público. Os serviços de dados permanecem na
+rede Docker interna.
+
+### Regras de firewall
+
+Abra exatamente estas três portas de entrada:
+
+| Porta | Protocolo | Para quê |
+| --- | --- | --- |
+| 80 | TCP | Redirecionamento para HTTPS e validação do certificado |
+| 443 | TCP | Toda a plataforma, incluindo o SIEM e o placar |
+| 22 | TCP | Administração por SSH, de preferência restrita à faixa da equipe |
+
+**Não abra a porta 5601.** O Kibana não escuta em nenhuma interface do
+servidor: o `docker-compose.production.yml` declara `ports: []` para ele. Uma
+regra liberando 5601 não habilita nada agora, mas cria dois riscos concretos:
+
+1. **Acesso sem autenticação.** O Kibana desta instalação roda sem
+   `xpack.security`. Quem alcançasse a porta diretamente leria todos os
+   eventos da competição sem credencial alguma.
+2. **Perda dos dados de pesquisa.** O acesso legítimo passa por
+   `/hikari/siem`, que autentica pelo CTFd e registra cada consulta com pessoa
+   e equipe. Um caminho direto para a 5601 contorna esse registro, e as
+   consultas dos competidores deixam de existir para a análise científica.
+
+Se a regra já existe, remova-a antes de anunciar o endereço aos participantes.
+No Google Cloud:
+
+```bash
+gcloud compute firewall-rules delete default-allow-kibana
+```
+
+Com `ufw`:
+
+```bash
+ufw delete allow 5601/tcp
+ufw allow 80/tcp && ufw allow 443/tcp && ufw allow 22/tcp && ufw enable
+ufw status numbered
+```
+
+### Endereços publicados
 
 | Serviço | Endereço público | Porta pública |
 | --- | --- | --- |
 | Plataforma | `https://HIKARI_DOMAIN/` | 443 |
+| Guia de participação | `https://HIKARI_DOMAIN/hikari/guide` | 443 |
 | SIEM autenticado | `https://HIKARI_DOMAIN/hikari/siem` | 443 |
 | Placar | `https://HIKARI_DOMAIN/hikari/live` | 443 |
 | Redirecionamento HTTP para HTTPS | `http://HIKARI_DOMAIN/` | 80 |
@@ -164,6 +204,21 @@ somente TCP 80 e 443. Os serviços de dados permanecem na rede Docker interna.
 O CTFd escuta em `127.0.0.1:${CTFD_PORT:-8000}` apenas para o Nginx. Não
 publique Elasticsearch, Kibana, MariaDB, Redis ou Kafka em uma interface de
 rede do servidor.
+
+### Conferir o que está escutando
+
+Depois de subir a stack, confirme que apenas 80, 443 e 22 respondem de fora:
+
+```bash
+ss -tlnp | grep -vE '127\.0\.0\.1|::1'
+```
+
+A partir de outra máquina, a 5601 precisa recusar a conexão:
+
+```bash
+curl -m 5 http://HIKARI_DOMAIN:5601 && echo "EXPOSTO — corrija o firewall" \
+  || echo "fechada, como esperado"
+```
 
 ---
 

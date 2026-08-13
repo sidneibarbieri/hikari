@@ -1,58 +1,60 @@
-# Data captured by Hikari
+# Dados capturados pelo Hikari
 
-Hikari keeps competition data attributed to the user and team that generated
-it. The attribution is required for operational review, training assessment
-and later research analysis. Publication datasets can be anonymized after
-export.
+O Hikari guarda os dados da competição atribuídos à pessoa e à equipe que os
+geraram. A atribuição é necessária para revisão operacional, avaliação de
+treinamento e análise posterior de pesquisa. Conjuntos de dados destinados a
+publicação podem ser anonimizados após a exportação.
 
-## Activity records
+## Registros de atividade
 
-`hikari_activity` is the system of record for observed platform actions.
+`hikari_activity` é o registro de referência das ações observadas na
+plataforma.
 
-| Field | Meaning |
+| Campo | Significado |
 | --- | --- |
-| `event_type` | Event family, such as `user.login`, `challenge.attempt` or `kibana.query`. |
-| `actor_id` | CTFd user id when a logged-in user triggered the event. |
-| `actor_role` | Coarse role at capture time. |
-| `team_id` | CTFd team id when the actor belongs to a team. |
-| `target_kind` | Entity touched by the event, such as challenge or Kibana route. |
-| `target_id` | Numeric target id when available. |
-| `occurred_at` | Server-side timestamp. |
-| `payload` | Structured event details. |
-| `request_ip` | Source IP observed by CTFd. |
+| `event_type` | Família do evento, como `user.login`, `challenge.attempt` ou `kibana.query`. |
+| `actor_id` | Id da pessoa no CTFd quando o evento partiu de uma sessão autenticada. |
+| `actor_role` | Papel geral no momento da captura. |
+| `team_id` | Id da equipe no CTFd quando a pessoa pertence a uma equipe. |
+| `target_kind` | Entidade afetada pelo evento, como desafio ou rota do Kibana. |
+| `target_id` | Id numérico do alvo, quando disponível. |
+| `occurred_at` | Momento registrado pelo servidor. |
+| `payload` | Detalhes estruturados do evento. |
+| `request_ip` | IP de origem observado pelo CTFd. |
 
-The same activity stream is published to Kafka topic `hikari-activity` and
-indexed in Elasticsearch for search and dashboarding.
+O mesmo fluxo de atividade é publicado no tópico Kafka `hikari-activity` e
+indexado no Elasticsearch para busca e painéis.
 
-## Kibana query facts
+## Fatos das consultas ao Kibana
 
-Requests routed through `/hikari/siem` are classified before storage. The
-payload can include:
+As requisições que passam por `/hikari/siem` são classificadas antes do
+armazenamento. O payload pode conter:
 
-- query kind: browse, search, bsearch, console, saved object, Discover open,
-  dashboard open or visualization open;
-- indices touched by the request;
-- boolean clause counts for `must`, `should`, `must_not` and `filter`;
-- result size requested;
-- time range field, lower bound and upper bound;
-- KQL or query string excerpt when present.
+- tipo da consulta: navegação, busca, bsearch, console, objeto salvo, abertura
+  do Discover, de painel ou de visualização;
+- índices tocados pela requisição;
+- contagem de cláusulas booleanas `must`, `should`, `must_not` e `filter`;
+- tamanho de resultado solicitado;
+- campo de tempo, limite inferior e limite superior;
+- trecho da consulta KQL ou query string, quando presente.
 
-## Feedback records
+## Registros de feedback
 
-`hikari_feedback_responses` stores local questionnaire responses with user,
-team, competition key, timestamp, request IP, user agent and JSON payload.
-The form covers prior exposure, self-assessed work roles, tool fluency,
-task load, usability, learning outcomes, realism and free-text reflection.
+`hikari_feedback_responses` guarda as respostas do questionário local com
+pessoa, equipe, chave da competição, momento, IP da requisição, agente de
+usuário e payload em JSON. O formulário cobre experiência prévia,
+autoavaliação de competências, fluência em ferramentas, carga de trabalho,
+usabilidade, aprendizado percebido, realismo e reflexões em texto livre.
 
-## Research dashboard
+## Painel de análise científica
 
-The research surface summarizes activity records and can filter by event
-type, actor id and team id. The activity JSONL export applies the same
-filters, so the dashboard can be used to inspect a subset before exporting
-it for notebooks or external analysis.
+A superfície de pesquisa resume os registros de atividade e permite filtrar
+por tipo de evento, id da pessoa e id da equipe. A exportação em JSONL aplica
+os mesmos filtros, então o painel pode ser usado para inspecionar um
+subconjunto antes de exportá-lo para notebooks ou análise externa.
 
-## Competition data
+## Dados da competição
 
-CTFd stores users, teams, challenges, flags, submissions and solves. Hikari
-challenge records add the activation state and log payload metadata used for
-progressive Elasticsearch injection.
+O CTFd armazena pessoas, equipes, desafios, flags, submissões e solves. Os
+registros de desafio do Hikari acrescentam o estado de ativação e os metadados
+do arquivo de log usados na injeção progressiva no Elasticsearch.

@@ -89,9 +89,7 @@ um administrador consegue criar, iniciar e estender uma execução cronometrada.
 | `docs/DATA.md` | Pesquisador | Atividade capturada, fatos do Kibana e esquema do feedback |
 | `docs/ARTIFACT.md` | Revisor | Evidências de execução e escopo operacional |
 
-Os documentos voltados a operação estão em português. Os documentos técnicos
-destinados a revisão internacional (`ARCHITECTURE`, `COMPONENTS`, `PLUGIN`,
-`DATA`, `ARTIFACT`) permanecem em inglês.
+Toda a documentação está em português, o idioma do público da plataforma.
 
 ## Compatibilidade
 

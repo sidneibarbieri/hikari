@@ -1,25 +1,26 @@
-# Component Matrix
+# Matriz de componentes
 
-This artifact pins infrastructure versions in `deploy/local/docker-compose.yml`.
-The matrix below records the versions exercised by the local acceptance suite.
+Este artefato fixa as versões de infraestrutura em
+`deploy/local/docker-compose.yml`. A matriz abaixo registra as versões
+exercitadas pela suíte de verificação local.
 
-| Component | Tested version | Role |
+| Componente | Versão testada | Papel |
 | --- | --- | --- |
-| CTFd | 3.7.3 fork | Competition interface, challenge lifecycle, user and team flows |
-| Python | 3.11 slim bookworm | CTFd runtime |
-| MariaDB | 11.8 | Relational store for CTFd and Hikari activity records |
-| Redis | 8.2 Alpine | Cache, sessions, and rate-limit state |
-| Apache Kafka | 4.2.0 | Event stream for competition logs and activity events |
-| Elasticsearch | 8.19.15 | Search store for challenge logs and research activity mirrors |
-| Kibana | 8.19.15 | SIEM interface and dashboards |
-| Logstash | 8.19.15 local image built from `deploy/local/logstash` | Kafka-to-Elasticsearch ingestion pipelines |
+| CTFd | fork da 3.7.3 | Interface da competição, ciclo de vida dos desafios, fluxos de pessoa e equipe |
+| Python | 3.11 slim bookworm | Runtime do CTFd |
+| MariaDB | 11.8 | Armazenamento relacional do CTFd e dos registros de atividade do Hikari |
+| Redis | 8.2 Alpine | Cache, sessões e estado do limite de requisições |
+| Apache Kafka | 4.2.0 | Fluxo de eventos dos logs da competição e das atividades |
+| Elasticsearch | 8.19.15 | Índice dos logs dos desafios e do espelho de atividade para pesquisa |
+| Kibana | 8.19.15 | Interface do SIEM e painéis |
+| Logstash | 8.19.15, imagem local construída de `deploy/local/logstash` | Pipelines de ingestão do Kafka para o Elasticsearch |
 
-Upgrade one component at a time. After each change, rebuild the stack and run:
+Atualize um componente por vez. Após cada mudança, reconstrua a stack e execute:
 
 ```bash
 cd deploy/local
 make acceptance
 ```
 
-Keep the pinned version when the suite fails. Record the failure, fix the
-integration, then rerun the same suite before publishing the change.
+Mantenha a versão fixada quando a suíte falhar. Registre a falha, corrija a
+integração e execute a mesma suíte novamente antes de publicar a mudança.

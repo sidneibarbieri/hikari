@@ -2,7 +2,8 @@
 # Smoke test of the data plane: produce one JSON record into the Kafka
 # 'competition1' topic and assert that Elasticsearch indexes it through the
 # Logstash pipeline. This isolates the data plane from the CTFd plugin's
-# competition lifecycle (which currently requires zerotier setup).
+# competition lifecycle, so a pipeline regression is not masked by
+# challenge or execution state.
 
 set -euo pipefail
 

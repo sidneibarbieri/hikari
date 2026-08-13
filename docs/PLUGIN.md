@@ -1,109 +1,111 @@
-# Hikari plugin packages
+# Pacotes do plugin Hikari
 
-The Hikari behaviour is delivered as two CTFd plugins under
-`ctfd/CTFd/plugins/`. CTFd hosts identity, teams, scoring and the admin
-shell. Hikari adds the challenge type that ingests competition logs, the
-SIEM gateway, the activity instrumentation, the research dashboard, the
-live board and the local feedback questionnaire. The breakdown below is
-the honest map of where each capability lives.
+O comportamento do Hikari é entregue como dois plugins do CTFd em
+`ctfd/CTFd/plugins/`. O CTFd hospeda identidade, equipes, pontuação e a casca
+administrativa. O Hikari acrescenta o tipo de desafio que injeta os logs da
+competição, o gateway do SIEM, a instrumentação de atividade, o painel de
+análise científica, o placar ao vivo e o questionário local de feedback. O mapa
+abaixo indica onde cada capacidade vive.
 
 ## `hikari_challenge/`
 
-* `__init__.py` registers the `hikari` challenge type with CTFd and the
-  `HikariController` that activates a challenge's log file when the
-  challenge becomes solvable. `activate_logs` reads the JSON log attached
-  to the challenge and produces each record into the Kafka topic
-  `competition1`. Logstash subscribes to that topic and writes the events
-  into the Elasticsearch index `competition1` that Kibana queries.
-* `migrations/` carries the alembic revision that adds the
-  `hikari_challenges` table.
+* `__init__.py` registra o tipo de desafio `hikari` no CTFd e o
+  `HikariController`, que ativa o arquivo de log de um desafio quando ele se
+  torna solucionável. O `activate_logs` lê o JSON anexado ao desafio e produz
+  cada registro no tópico Kafka `competition1`. O Logstash assina esse tópico e
+  escreve os eventos no índice `competition1` do Elasticsearch consultado pelo
+  Kibana.
+* `migrations/` traz a revisão alembic que cria a tabela `hikari_challenges`.
 
 ## `hikari_plugin/`
 
-The composite plugin that wires every Hikari surface to the CTFd app.
+O plugin composto que liga cada superfície do Hikari à aplicação CTFd.
 
-* `__init__.py` registers the Flask blueprint, mounts every URL handled
-  by Hikari, attaches the activity listener and the live board, and
-  forwards Kibana provisioning hooks to the gateway when enabled.
-* `kafka_client.py` is the single Kafka producer factory. Both the
-  challenge type and the activity recorder share the producer.
-* `hikari_models/` carries the SQLAlchemy models for the platform:
-  `Zerotier`, `ZerotierConfig`, `HikariFiles`, `HikariChallengeModel`.
-* `hikari_forms/` holds the WTForms surfaces used by the admin pages.
-* `hikari_importer/` reads legacy `data/` exports and imports them into a
-  running CTFd.
-* `hikari_kibana/` is the legacy helper that talks to the Elastic
-  security API. It is opt-in through the `HIKARI_KIBANA_PROVISIONING`
-  environment variable.
-* `hikari_kibana_gateway/` is the authenticated reverse proxy in front
-  of Kibana. `views.py` exposes `/hikari/siem` and the catch-all
-  `/hikari/kibana/<path>`; `proxy.py` forwards the HTTP request while
-  preserving the session; `activity.py` builds the activity record for
-  the request; `classifier.py` parses the body into structured facts
-  (kind, indices, boolean counts, time range, KQL excerpt) so the
-  record carries analytical signal.
-* `hikari_activity/` is the structured event log:
-  `models.py` defines the `hikari_activity` table;
-  `dto.py` is the Pydantic DTO that crosses the recorder boundary;
-  `recorder.py` persists to MariaDB and publishes to the
-  `hikari-activity` Kafka topic;
-  `event_map.py` maps each Flask endpoint to an event type;
-  `builders.py` pulls the actor and target from the request;
-  `listeners.py` is the `after_request` hook that wires it all up.
-* `hikari_feedback/` is the local research questionnaire:
-  `models.py` is the SQLAlchemy table that stores the JSON payload;
-  `dto.py` is the Pydantic schema (NICE roles, MITRE tactics, NASA-TLX,
-  SUS, learning outcomes, NPS, qualitative reflections);
-  `forms.py` is the WTForms binding with field grouping;
-  `views.py` renders the form and exposes the admin-only JSONL export.
-* `hikari_research/` is the analytical surface:
-  `dto.py`, `queries.py`, `exporter.py`, `views.py` and the
-  `hikari-research.html` template. The dashboard aggregates activity by
-  event type, by team and by feedback role; the JSONL export streams
-  every activity row.
-* `hikari_live/` is the public live-board:
-  `dto.py`, `queries.py`, `views.py` and the `hikari-live.html` template.
-  The board reads from CTFd's solves and the Hikari activity log; an SVG
-  line chart renders team progression so the page can be projected
-  during a competition.
-* `hikari_competitions/` controls a scheduled execution. It stores the
-  lifecycle state, translates the operator's local time zone into UTC for
-  CTFd, gates challenges and the SIEM window, and records pauses and bounded
-  extensions.
-* `hikari_team_requests/` implements captain-approved membership requests.
-  It keeps a pending request separate from a team membership until the captain
-  accepts it.
-* `hikari_guidance/` provides the short participant guide shown before an
-  execution starts.
-* `hikari_challenge_library/` validates and imports portable ZIP packages of
-  Hikari challenges, flags, prerequisites and JSON log files. It records the
-  imported package and its challenge mapping for operational provenance.
+* `__init__.py` registra o blueprint Flask, monta as URLs atendidas pelo
+  Hikari, conecta o ouvinte de atividade e o placar ao vivo, e encaminha os
+  ganchos de provisionamento do Kibana ao gateway quando habilitados.
+* `kafka_client.py` é a fábrica única do produtor Kafka. O tipo de desafio e o
+  gravador de atividade compartilham o mesmo produtor.
+* `hikari_models/` reúne os modelos SQLAlchemy da plataforma:
+  `HikariFiles` e `HikariChallengeModel`.
+* `hikari_forms/` contém os formulários WTForms usados pelas páginas
+  administrativas.
+* `hikari_importer/` lê exportações `data/` antigas e as importa em um CTFd em
+  execução.
+* `hikari_kibana/` é o auxiliar que conversa com a API de segurança do Elastic.
+  É opcional, habilitado pela variável de ambiente
+  `HIKARI_KIBANA_PROVISIONING`.
+* `hikari_kibana_gateway/` é o proxy reverso autenticado à frente do Kibana.
+  `views.py` expõe `/hikari/siem` e a rota abrangente
+  `/hikari/kibana/<path>`; `proxy.py` encaminha a requisição preservando a
+  sessão; `activity.py` monta o registro de atividade da requisição;
+  `classifier.py` interpreta o corpo em fatos estruturados (tipo, índices,
+  contagens booleanas, intervalo de tempo, trecho KQL) para que o registro
+  carregue sinal analítico.
+* `hikari_activity/` é o log estruturado de eventos:
+  `models.py` define a tabela `hikari_activity`;
+  `dto.py` é o DTO Pydantic que atravessa a fronteira do gravador;
+  `recorder.py` persiste no MariaDB e publica no tópico Kafka
+  `hikari-activity`;
+  `event_map.py` associa cada endpoint Flask a um tipo de evento;
+  `builders.py` extrai ator e alvo da requisição;
+  `listeners.py` é o gancho `after_request` que integra tudo.
+* `hikari_feedback/` é o questionário local de pesquisa:
+  `models.py` é a tabela SQLAlchemy que guarda o payload JSON;
+  `dto.py` é o esquema Pydantic (papéis NICE, táticas MITRE, NASA-TLX, SUS,
+  aprendizado percebido, NPS, reflexões qualitativas);
+  `forms.py` faz a ligação com WTForms e o agrupamento de campos;
+  `views.py` renderiza o formulário e expõe a exportação JSONL restrita a
+  administradores.
+* `hikari_research/` é a superfície analítica:
+  `dto.py`, `queries.py`, `exporter.py`, `views.py` e o template
+  `hikari-research.html`. O painel agrega atividade por tipo de evento, por
+  equipe e por papel declarado no feedback; a exportação JSONL transmite todas
+  as linhas de atividade.
+* `hikari_live/` é o placar público:
+  `dto.py`, `queries.py`, `views.py` e o template `hikari-live.html`. O placar
+  lê os solves do CTFd e o log de atividade do Hikari; um gráfico de linhas em
+  SVG mostra a progressão das equipes para que a página possa ser projetada
+  durante a competição.
+* `hikari_competitions/` controla uma execução agendada. Guarda o estado do
+  ciclo de vida, converte o fuso local do operador para UTC no CTFd, delimita a
+  janela dos desafios e do SIEM e registra pausas e extensões limitadas.
+* `hikari_team_requests/` implementa as solicitações de entrada aprovadas pelo
+  capitão. Mantém a solicitação pendente separada da participação até que o
+  capitão aceite.
+* `hikari_guidance/` fornece o guia curto de participação exibido antes do
+  início de uma execução.
+* `hikari_challenge_library/` valida e importa pacotes ZIP portáteis de
+  desafios Hikari, flags, pré-requisitos e arquivos JSON de log. Registra o
+  pacote importado e o mapeamento de desafios para rastreabilidade.
 
-## Surfaces hosted by the plugin
+## Superfícies hospedadas pelo plugin
 
-| Route | Audience | Module |
+| Rota | Público | Módulo |
 | --- | --- | --- |
-| `/admin/hikari` | Administrator | `hikari_plugin` main page |
-| `/admin/hikari/add-challenge` | Administrator | `hikari_plugin` (creates a Hikari challenge) |
-| `/admin/hikari/challenge-library` | Administrator | `hikari_challenge_library.views.dashboard` |
-| `/admin/hikari/init-competition` | Administrator | `hikari_challenge.HikariController` |
-| `/admin/hikari/research` | Administrator | `hikari_research.views.dashboard` |
-| `/admin/hikari/research/export.jsonl` | Administrator | `hikari_research.views.export_jsonl` |
-| `/admin/hikari/research/feedback.jsonl` | Administrator | `hikari_feedback.views.feedback_export_jsonl` |
-| `/hikari/feedback` | Competitor | `hikari_feedback.views.feedback` |
-| `/hikari/guide` | Competitor | `hikari_guidance.views.guide` |
-| `/hikari/teams/join` | Competitor | `hikari_team_requests.views.directory` |
-| `/hikari/team/requests` | Team captain | `hikari_team_requests.views.requests` |
-| `/hikari/live` | Anyone | `hikari_live.views.board` |
-| `/hikari/siem` | Competitor | `hikari_kibana_gateway.views.siem_entrypoint` |
-| `/hikari/kibana/<path>` | Competitor | `hikari_kibana_gateway.views.kibana_gateway` |
+| `/admin/hikari` | Administrador | página principal do `hikari_plugin` |
+| `/admin/hikari/add-challenge` | Administrador | `hikari_plugin` (cria um desafio Hikari) |
+| `/admin/hikari/challenge-library` | Administrador | `hikari_challenge_library.views.dashboard` |
+| `/admin/hikari/competitions` | Administrador | `hikari_competitions.views.dashboard` |
+| `/admin/hikari/init-competition` | Administrador | `hikari_challenge.HikariController` |
+| `/admin/hikari/research` | Administrador | `hikari_research.views.dashboard` |
+| `/admin/hikari/research/export.jsonl` | Administrador | `hikari_research.views.export_jsonl` |
+| `/admin/hikari/research/feedback.jsonl` | Administrador | `hikari_feedback.views.feedback_export_jsonl` |
+| `/hikari/feedback` | Competidor | `hikari_feedback.views.feedback` |
+| `/hikari/guide` | Competidor | `hikari_guidance.views.guide` |
+| `/hikari/teams/join` | Competidor | `hikari_team_requests.views.directory` |
+| `/hikari/team/requests` | Capitão da equipe | `hikari_team_requests.views.requests` |
+| `/hikari/live` | Qualquer pessoa | `hikari_live.views.board` |
+| `/hikari/siem` | Competidor | `hikari_kibana_gateway.views.siem_entrypoint` |
+| `/hikari/kibana/<path>` | Competidor | `hikari_kibana_gateway.views.kibana_gateway` |
 
-## Hikari plugin database tables
+## Tabelas do plugin no banco
 
 `hikari_challenges`, `hikari_files`, `hikari_activity`,
 `hikari_feedback_responses`, `hikari_competition_runs`,
 `hikari_team_membership_requests`, `hikari_challenge_library_imports`,
-`hikari_challenge_library_entries`, `zerotier`, `zerotier_config`.
+`hikari_challenge_library_entries`.
 
-CTFd's own tables (`users`, `teams`, `challenges`, `solves`, ...) carry the
-identity, scoring and challenge state. Hikari joins them by foreign key.
+As tabelas do próprio CTFd (`users`, `teams`, `challenges`, `solves`, ...)
+carregam identidade, pontuação e o estado dos desafios. O Hikari se liga a elas
+por chave estrangeira.

@@ -13,7 +13,7 @@ from CTFd.utils.decorators import admins_only
 from CTFd.models import Teams
 from CTFd.models import Users
 from CTFd.models import db
-from CTFd.plugins.hikari_plugin.hikari_forms import ZerotierForm, ImportHikariCTFdForm, NotifyMultipleCompetitorsForm, HikariFileUploadForm, HikariAddChallengeForm
+from CTFd.plugins.hikari_plugin.hikari_forms import ImportHikariCTFdForm, NotifyMultipleCompetitorsForm, HikariFileUploadForm, HikariAddChallengeForm
 from CTFd.forms import BaseForm
 from CTFd.utils.email import sendmail
 from werkzeug.utils import secure_filename
@@ -232,57 +232,53 @@ def load(app):
 
         return redirect(url_for('hikariplugin.hikari_main'))
 
-    def check_all():
-        if (check_teams_status())['status'] == 'error':
-            return False
-        if (check_zerotiers())['status'] == 'error':
-            return False
-        
-        return True
-
     def check_teams_status():
-        teams = Teams.query.all()
-        zerotiers = hikari_models.ZerotierConfig.query.all()
-
-        if len(teams) != len(zerotiers):
+        team_count = Teams.query.count()
+        if team_count == 0:
             return {
-                "message": "Há equipes sem rede Zerotier associada.",
+                "message": "Nenhuma equipe cadastrada.",
                 "status": "warning",
                 "label": "Atenção",
                 "class": "hikari-warning",
             }
-        return {"message": "Configuração completa.", "status": "ok", "label": "Pronto", "class": "hikari-success"}
+        return {
+            "message": f"{team_count} equipe(s) cadastrada(s).",
+            "status": "ok",
+            "label": "Pronto",
+            "class": "hikari-success",
+        }
 
-    def check_zerotiers():
-        zerotiers = hikari_models.Zerotier.query.all()
-        
-        if len(zerotiers) == 0:
+    def check_challenges_status():
+        challenge_count = hikari_models.HikariChallengeModel.query.count()
+        if challenge_count == 0:
             return {
-                "message": "Nenhuma rede Zerotier cadastrada.",
+                "message": "Nenhum desafio cadastrado.",
                 "status": "warning",
                 "label": "Atenção",
                 "class": "hikari-warning",
             }
-        return {"message": "Redes cadastradas.", "status": "ok", "label": "Pronto", "class": "hikari-success"}
+        return {
+            "message": f"{challenge_count} desafio(s) cadastrado(s).",
+            "status": "ok",
+            "label": "Pronto",
+            "class": "hikari-success",
+        }
 
     def check_competition_status():
-        if check_all():
-            chall = hikari_models.HikariChallengeModel.query.filter_by(logs_activated=True).first()
-            if chall and chall.logs_activated:
-                return {"message": "Execução iniciada.", "status": "started", "label": "Iniciada", "class": "hikari-success"}
+        activated = hikari_models.HikariChallengeModel.query.filter_by(logs_activated=True).first()
+        if activated is not None:
+            return {"message": "Execução iniciada.", "status": "started", "label": "Iniciada", "class": "hikari-success"}
         return {"message": "Execução aguardando início.", "status": "not_running", "label": "Parada", "class": "hikari-error"}
 
     # Route: main page
     @hikariplugin.route('/admin/hikari', methods=['GET'])
     @admins_only
     def hikari_main():
-
-        # Load them on main page
-        stats = dict()
-        stats['zerotier'] = check_zerotiers()
-        stats['teams'] = check_teams_status()
-        stats['competition'] = check_competition_status()
-
+        stats = {
+            "teams": check_teams_status(),
+            "challenges": check_challenges_status(),
+            "competition": check_competition_status(),
+        }
         return render_template('hikari-page.html', stats=stats)
     
     # Route: notification page
@@ -294,11 +290,6 @@ def load(app):
 
     
 
-    # Zerotier admin views (8 routes) live in hikari_zerotier.views.
-    # Keeping them in their own module makes the load() entrypoint scannable
-    # and lets the URL surface evolve without churning this file.
-    from . import hikari_zerotier
-    hikari_zerotier.register(hikariplugin)
 
 
     ##############################################################################

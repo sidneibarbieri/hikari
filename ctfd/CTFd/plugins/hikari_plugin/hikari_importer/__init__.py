@@ -15,7 +15,6 @@ from CTFd.utils import get_app_config, set_config, string_types
 
 import CTFd.plugins.hikari_challenge as hikari_challenge
 from CTFd.utils.uploads import get_uploader
-from ..hikari_models import ZerotierConfig
 
 from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError
@@ -113,9 +112,6 @@ class HikariImporter:
     def import_users(self):
         self.import_data('users.json', Users)
     
-    def import_zerotier_config(self):
-        self.import_data('zerotier_config.json', ZerotierConfig)
-
     def import_uploads(self) -> None:
         members = [m for m in self.backup.namelist() if m.startswith("uploads/")]
         uploader = get_uploader()
@@ -158,7 +154,6 @@ class HikariImporter:
         self.import_challenges()
         self.import_dynamic_challenge()
         self.import_hikari_challenge_model()
-        self.import_zerotier_config()
         self.import_flags()
         self.import_hints()
         self.import_unlocks()

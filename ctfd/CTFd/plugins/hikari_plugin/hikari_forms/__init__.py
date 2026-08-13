@@ -35,16 +35,6 @@ def NotifyMultipleCompetitorsForm(*args, **kwargs):
 
 
 
-# Form for registering zerotiers
-def ZerotierForm(*args, **kwargs):
-    class _ZerotierForm(BaseForm):
-        network_id = StringField('Network ID', validators=[DataRequired()])
-        name = StringField('Name', validators=[DataRequired()])
-        submit = SubmitField('Submit')
-
-    return _ZerotierForm(*args, **kwargs)
-
-
 def SetupFirstChallengeForm(*args, **kwargs):
     challs = hikari_models.HikariChallengeModel.query.all()
     chall_choices = [(str(c.id), c.name) for c in challs]

@@ -49,7 +49,8 @@ for path in \
     /admin/hikari/research/export.jsonl \
     /admin/hikari/research/feedback.jsonl \
     /admin/hikari/add-challenge \
-    /admin/hikari-zerotier-setup \
+    /admin/hikari/competitions \
+    /admin/hikari/challenge-library \
     /admin/hikari-notify \
     /admin/import-hikari-ctf
 do
@@ -129,25 +130,20 @@ echo "PASS: 9 admin endpoints reject authenticated non-admin"
 
 echo
 echo "== Alice POST to destructive admin route =="
+destructive_route="/admin/hikari/reset-competition"
 nonce=$(grep -oE "'csrfNonce':\s*\"[0-9a-f]+\"" /tmp/hkiso-reg.html \
     | head -1 | sed -E "s/.*\"([0-9a-f]+)\".*/\1/" || true)
 post_code=$(curl -sS -b "$alice_cookies" -c "$alice_cookies" \
     -o /dev/null -w '%{http_code}' \
-    -X POST "$CTFD_URL/admin/delete-all-zerotiers" \
+    -X POST "$CTFD_URL$destructive_route" \
     --data-urlencode "nonce=${nonce:-bogus}")
-case "$post_code" in
-    302|403|404)
-        echo "PASS: POST to /admin/delete-all-zerotiers blocked ($post_code)"
-        ;;
-    200)
-        echo "FAIL: destructive admin POST allowed for non-admin (200)"
-        exit 1
-        ;;
-    *)
-        # CSRF check may fire first — anything that isn't 200 is fine here.
-        echo "PASS: POST to /admin/delete-all-zerotiers blocked ($post_code)"
-        ;;
-esac
+# Anything other than 200 means the request never reached the handler:
+# admins_only redirects, CTFd's CSRF check rejects, or the method is refused.
+if [[ "$post_code" == "200" ]]; then
+    echo "FAIL: destructive admin POST allowed for non-admin (200)"
+    exit 1
+fi
+echo "PASS: POST to $destructive_route blocked ($post_code)"
 
 
 # ---------------------------------------------------------------------------

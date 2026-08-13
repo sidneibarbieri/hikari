@@ -1,51 +1,54 @@
-# Architecture
+# Arquitetura
 
-Hikari runs a CTFd competition interface beside a hunting surface backed by
-Elasticsearch and Kibana. CTFd owns identity, teams, challenges, scoring,
-feedback and research exports. Kafka carries injected challenge logs and
-activity events to Elasticsearch for search and analysis.
+O Hikari executa uma interface de competição do CTFd ao lado de uma superfície
+de investigação apoiada em Elasticsearch e Kibana. O CTFd é dono de identidade,
+equipes, desafios, pontuação, feedback e exportações de pesquisa. O Kafka leva
+os logs injetados pelos desafios e os eventos de atividade até o Elasticsearch
+para busca e análise.
 
-## Runtime layout
+## Disposição em execução
 
-    browser
-      |-- CTFd pages, challenges, teams, feedback, live board
-      |-- /hikari/siem authenticated gateway
+    navegador
+      |-- páginas do CTFd: desafios, equipes, feedback, placar ao vivo
+      |-- /hikari/siem, gateway autenticado
               |
               v
-    CTFd + Hikari plugin
-      |-- MariaDB: users, teams, challenges, solves, activity, feedback
-      |-- Redis: cache and rate-limit state
-      |-- Kafka: competition logs and activity stream
+    CTFd + plugin Hikari
+      |-- MariaDB: pessoas, equipes, desafios, solves, atividade, feedback
+      |-- Redis: cache e estado do limite de requisições
+      |-- Kafka: logs da competição e fluxo de atividade
               |
               v
     Logstash -> Elasticsearch -> Kibana
 
-## Competition flow
+## Fluxo da competição
 
-Competitors register in CTFd, join or create teams, open the Hikari SIEM
-surface and submit flags through CTFd challenges. Hikari challenge records
-hold the log files activated by each challenge. When a challenge is solved,
-dependent logs can be streamed into Elasticsearch through Kafka. The hunting
-dataset changes during the competition, so time to solve affects how much
-noise later competitors must inspect.
+Os competidores se cadastram no CTFd, criam ou entram em equipes, abrem a
+superfície SIEM e submetem flags pelos desafios do CTFd. Os registros de
+desafio do Hikari guardam os arquivos de log que cada desafio ativa. Quando um
+desafio é resolvido, os logs dependentes podem ser transmitidos ao
+Elasticsearch pelo Kafka. O conjunto de dados investigado muda durante a
+competição, então o tempo até o solve afeta quanto ruído os competidores
+seguintes precisam examinar.
 
-An administrator creates a named execution before it starts. Its key is
-stored with Hikari activity and feedback records, its schedule is applied to
-CTFd, and its timed state can be extended, paused, resumed or closed from the
-administrative interface. CTFd's identities, scoring and challenges are
-global tables, so one deployment hosts one active competition. Independent
-concurrent competitions require separate Compose projects and volumes.
+Um administrador cria uma execução nomeada antes do início. A chave dessa
+execução é gravada junto aos registros de atividade e de feedback, o
+cronograma é aplicado ao CTFd, e o estado cronometrado pode ser estendido,
+pausado, retomado ou encerrado pela interface administrativa. As identidades,
+a pontuação e os desafios do CTFd são tabelas globais, portanto uma instalação
+hospeda uma competição ativa. Competições simultâneas e independentes exigem
+projetos Compose e volumes separados.
 
-## Research flow
+## Fluxo de pesquisa
 
-The plugin records observed CTFd and Kibana actions in `hikari_activity`.
-Kibana traffic goes through the authenticated gateway, which classifies each
-request once and stores structured facts with the activity record. The
-research dashboard reads those records and exports JSONL for external
-analysis.
+O plugin registra em `hikari_activity` as ações observadas no CTFd e no Kibana.
+O tráfego do Kibana passa pelo gateway autenticado, que classifica cada
+requisição uma vez e guarda fatos estruturados junto ao registro de atividade.
+O painel de análise científica lê esses registros e exporta JSONL para análise
+externa.
 
-## Boundaries
+## Limites
 
-The local artifact is the reviewer and development target. Production
-deployment uses the same application components with deployment-owned TLS,
-hostnames, secrets, backup policy and access-control settings.
+O artefato local é o alvo de revisão e de desenvolvimento. A instalação em
+produção usa os mesmos componentes de aplicação, com TLS, nomes de host,
+segredos, política de backup e controle de acesso definidos pela implantação.

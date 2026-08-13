@@ -148,7 +148,10 @@ class FeedbackForm(FlaskForm):
 
     tlx_mental_demand = _score7("Esforço mental exigido pelos desafios (1 = baixo, 7 = alto)")
     tlx_temporal_demand = _score7("Pressão de tempo durante a competição (1 = baixa, 7 = alta)")
-    tlx_performance = _score7("Dificuldade para chegar à solução (1 = baixa, 7 = alta)")
+    tlx_performance = _score7(
+        "Quanto você conseguiu do que se propôs a fazer nos desafios "
+        "(1 = consegui muito pouco, 7 = consegui tudo)"
+    )
     tlx_effort = _score7("Esforço geral para concluir os desafios (1 = baixo, 7 = alto)")
     tlx_frustration = _score7("Frustração sentida durante a execução (1 = baixa, 7 = alta)")
 

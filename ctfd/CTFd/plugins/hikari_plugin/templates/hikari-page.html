@@ -22,7 +22,8 @@
             <li class="list-group-item"><a href="{{ url_for('hikariplugin.hikari_import_ctf') }}">Importar instância do CTFd HIKARI</a></li>
             <li class="list-group-item"><a href="{{ url_for('admin.export_ctf') }}">Exportar competição atual</a></li>
             <li class="list-group-item"><a href="{{ url_for('hikariplugin.hikari_notify') }}">Enviar e-mail aos competidores</a></li>
-            <li class="list-group-item"><a href="{{ url_for('hikariplugin.hikari_zerotier_setup') }}">Configuração de zerotiers</a></li>
+            <li class="list-group-item"><a href="{{ url_for('hikariplugin.hikari_competitions_dashboard') }}">Controle da execução</a></li>
+            <li class="list-group-item"><a href="{{ url_for('hikariplugin.hikari_challenge_library') }}">Biblioteca de desafios</a></li>
             <li class="list-group-item"><a href="{{ url_for('hikariplugin.hikari_research_dashboard') }}">Análise científica</a></li>
         </ul>
     </div>
@@ -32,24 +33,19 @@
         <div id="status-items">
             <div class="d-flex justify-content-between align-items-center mb-3 status-item-entry">
                 <div class="item-text">
-                    <span>Status dos zerotiers</span>
+                    <span>Desafios cadastrados</span>
                 </div>
-                <div class="item-status {{stats['zerotier']['class']}}">
-                    <span>{{stats['zerotier']['label']}}</span>
+                <div class="item-status {{stats['challenges']['class']}}">
+                    <span>{{stats['challenges']['label']}}</span>
                 </div>
             </div>
-            {% if stats['zerotier']['status'] == 'error' %}
-                <p class="alert alert-danger">{{stats['zerotier']['message']}}</p>
+            {% if stats['challenges']['status'] == 'warning' %}
+                <p class="alert alert-warning">{{stats['challenges']['message']}}</p>
             {% endif %}
-
-            {% if stats['zerotier']['status'] == 'warning' %}
-                <p class="alert alert-warning">{{stats['zerotier']['message']}}</p>
-            {% endif %}
-
 
             <div class="d-flex justify-content-between align-items-center mb-3 status-item-entry">
                 <div class="item-text">
-                    <span>Status dos times</span>
+                    <span>Equipes cadastradas</span>
                 </div>
                 <div class="item-status {{stats['teams']['class']}}">
                     <span>{{stats['teams']['label']}}</span>

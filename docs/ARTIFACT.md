@@ -1,118 +1,124 @@
-# Artifact guide
+# Guia do artefato
 
-This document describes how to run the Hikari artifact and what the current
-automation proves. It is limited to execution scope, captured data and
-evidence.
+Este documento descreve como executar o artefato Hikari e o que a automação
+atual comprova. Ele se limita ao escopo de execução, aos dados capturados e às
+evidências.
 
-## Scope
+## Escopo
 
-The artifact provides a local training and research stack:
+O artefato entrega uma stack local de treinamento e pesquisa:
 
-- CTFd with the Hikari plugin and Hikari challenge type.
-- MariaDB and Redis for CTFd state.
-- Kafka, Logstash, Elasticsearch, and Kibana for log ingestion and hunting.
-- A Hikari SIEM surface that summarizes the active Elasticsearch index and
-  opens the Hikari Kibana dashboard and Discover through the authenticated
-  gateway.
-- A live competition board for projector use, backed by CTFd solves and
-  refreshed through a JSON feed.
-- Activity logging for observed CTFd and Kibana actions.
-- A local feedback questionnaire stored in the Hikari database.
-- A read-only research surface for activity summaries, event filters, and
-  JSONL export.
+- CTFd com o plugin Hikari e o tipo de desafio Hikari.
+- MariaDB e Redis para o estado do CTFd.
+- Kafka, Logstash, Elasticsearch e Kibana para ingestão de logs e investigação.
+- Uma superfície SIEM que resume o índice ativo do Elasticsearch e abre o painel
+  Hikari e o Discover do Kibana pelo gateway autenticado.
+- Um placar ao vivo para projeção, alimentado pelos solves do CTFd e atualizado
+  por um feed JSON.
+- Registro de atividade das ações observadas no CTFd e no Kibana.
+- Um questionário local de feedback armazenado no banco do Hikari.
+- Uma superfície de pesquisa somente leitura com resumos de atividade, filtros
+  por evento e exportação em JSONL.
 
-The artifact preserves the competitive mechanic used by Hikari: when a
-challenge is solved, dependent challenge logs may be activated and streamed
-into Elasticsearch. This produces a measurable change in the hunting dataset
-over time.
+O artefato preserva a mecânica competitiva do Hikari: quando um desafio é
+resolvido, os logs dos desafios dependentes podem ser ativados e transmitidos ao
+Elasticsearch. Isso produz uma mudança mensurável no conjunto de dados
+investigado ao longo do tempo.
 
-## Run
+## Execução
 
-From a clean checkout:
-
-```bash
-cd deploy/local
-make -C ../.. review
-```
-
-The acceptance script is the main executable claim. It verifies service
-health, CTFd setup, branding, plugin loading, Kafka-to-Elasticsearch ingestion,
-SIEM data view and dashboard import, activity logging, SIEM query attribution,
-local feedback, player and team flows, admin challenge creation, progressive
-log activation, the live competition board, research filters, and JSONL
-export.
-
-## Legacy data
-
-Past competition backups can be imported locally into an operator stack:
+A partir de um clone limpo:
 
 ```bash
 cd deploy/local
-bash scripts/import_backup.sh /path/to/data_backup.zip --yes
+bash bootstrap.sh
 ```
 
-The import script writes a database snapshot before replacing the local CTFd
-database and uploads. Generated snapshots and dry-run files stay under
-`deploy/local/artifacts/`, which is ignored by Git.
+O `bootstrap.sh` confere os pré-requisitos do host, executa a suíte de
+verificação em um projeto Compose descartável e sobe a stack de operação. A
+suíte é a principal afirmação executável: verifica a saúde dos serviços, a
+configuração do CTFd, a identidade visual, o carregamento do plugin, a ingestão
+do Kafka ao Elasticsearch, a data view e o painel do SIEM, o registro de
+atividade, a atribuição das consultas no SIEM, o feedback local, os fluxos de
+competidor e de equipe, a criação de desafios pelo administrador, a ativação
+progressiva de logs, o placar ao vivo, o isolamento de autorização, o controle
+da execução cronometrada, os filtros de pesquisa e a exportação em JSONL.
 
-To test a backup without changing the active local stack:
+## Dados anteriores
+
+Backups de competições passadas podem ser importados na stack de operação:
 
 ```bash
 cd deploy/local
-bash tests/verify_backup_import.sh /path/to/data_backup.zip
+bash scripts/import_backup.sh /caminho/para/data_backup.zip --yes
 ```
 
-The isolated verification starts a separate Compose project, imports the
-backup, reapplies the current admin account and theme, verifies the Hikari
-plugin, and checks users, teams, challenges, solves, Hikari challenges, upload
-files, the activity table, and the Elasticsearch reconstruction from active
-challenge log files.
+O script grava um snapshot do banco antes de substituir o banco e os uploads do
+CTFd local. Snapshots gerados e arquivos de simulação ficam em
+`deploy/local/artifacts/`, que é ignorado pelo Git.
 
-## Research data
+Para testar um backup sem alterar a stack local ativa:
 
-Hikari stores operational data that can support later analysis:
+```bash
+cd deploy/local
+bash tests/verify_backup_import.sh /caminho/para/data_backup.zip
+```
 
-- CTFd login, registration, team, challenge view, and submission outcome
-  events.
-- Kibana access and query requests routed through the Hikari gateway. Each
-  request is classified once and the structured facts stored alongside the
-  record: query kind (search, bsearch, console, saved-object), indices
-  touched, boolean clause counts (must, should, must_not, filter), result
-  size, time-range field with gte/lte bounds, and a KQL or query_string
-  excerpt when present.
-- Local feedback responses linked to user, team, and competition context.
-- Actor identifiers, team identifiers, timestamps, request metadata, and
-  bounded event payloads. Submission text remains in the CTFd submission
-  record, while the activity record captures the interaction outcome.
-- Competition logs streamed into Elasticsearch through Kafka.
-- Exportable activity records in JSONL format from the research dashboard.
+A verificação isolada sobe um projeto Compose separado, importa o backup,
+reaplica a conta administrativa e o tema atuais, verifica o plugin Hikari e
+confere pessoas, equipes, desafios, solves, desafios Hikari, arquivos enviados,
+a tabela de atividade e a reconstrução no Elasticsearch a partir dos arquivos de
+log dos desafios ativos.
 
-Researchers decide how to anonymize or aggregate exported data before
-publication. The artifact retains identifiable operational records locally so
-the operator can attribute activity during and after a competition.
+## Dados de pesquisa
 
-Historical backups created before the activity recorder retain the competition
-state and challenge logs available at the time of the backup. The import flow
-reconstructs the Elasticsearch hunting dataset from active challenge log
-files. Interaction telemetry begins when the recorder is active.
+O Hikari guarda dados operacionais que sustentam análises posteriores:
 
-## Production deployment
+- Eventos de login, cadastro, equipe, visualização de desafio e resultado de
+  submissão no CTFd.
+- Acessos e consultas ao Kibana roteados pelo gateway Hikari. Cada requisição é
+  classificada uma vez e os fatos estruturados ficam junto ao registro: tipo da
+  consulta (search, bsearch, console, objeto salvo), índices tocados, contagem
+  de cláusulas booleanas (must, should, must_not, filter), tamanho do resultado,
+  campo de intervalo de tempo com limites gte/lte e um trecho de KQL ou
+  query_string quando presente.
+- Respostas locais de feedback ligadas à pessoa, à equipe e ao contexto da
+  competição.
+- Identificadores de ator e de equipe, marcações de tempo, metadados da
+  requisição e payloads de evento delimitados. O texto da submissão permanece no
+  registro de submissão do CTFd, enquanto o registro de atividade captura o
+  resultado da interação.
+- Logs de competição transmitidos ao Elasticsearch pelo Kafka.
+- Registros de atividade exportáveis em JSONL pelo painel de análise científica.
 
-The local compose file is an executable artifact and development target. A
-production deployment defines its TLS, hostnames, secrets, backup policy and
-access-control settings for the target environment.
+Cabe a quem pesquisa decidir como anonimizar ou agregar os dados exportados
+antes de publicar. O artefato mantém os registros operacionais identificáveis
+localmente para que o operador consiga atribuir a atividade durante e após uma
+competição.
 
-## Artifact criteria
+Backups anteriores ao gravador de atividade preservam o estado da competição e
+os logs de desafio disponíveis no momento do backup. O fluxo de importação
+reconstrói o conjunto de dados de investigação no Elasticsearch a partir dos
+arquivos de log dos desafios ativos. A telemetria de interação começa quando o
+gravador está ativo.
 
-Mapping to evidence in this repository:
+## Implantação em produção
 
-| Badge | Evidence |
+O arquivo Compose local é um artefato executável e alvo de desenvolvimento. Uma
+instalação de produção define TLS, nomes de host, segredos, política de backup e
+controle de acesso para o ambiente alvo.
+
+## Critérios do artefato
+
+Evidências correspondentes neste repositório:
+
+| Critério | Evidência |
 | --- | --- |
-| Available | Public Git repository with source code, environment examples, installation documentation, and Docker image dependencies declared in Compose files. |
-| Functional | `make review` executes 27 isolated checks covering registration, login, team flow, timed execution control, challenge solve, progressive log unlock, SIEM, live board, research export, and feedback. |
-| Reproducible | `make review` creates a disposable Compose project. `tests/verify_backup_import.sh` proves that a legacy backup restores into a separate project and reconstructs the active challenge log dataset. |
-| Sustainable | Documented module boundaries, pinned infrastructure images, reproducible migration scripts, and checks that reject repository debris. |
+| Disponível | Repositório Git público com código-fonte, exemplos de ambiente, documentação de instalação e dependências de imagem Docker declaradas nos arquivos Compose. |
+| Funcional | `bash bootstrap.sh` executa 28 verificações isoladas cobrindo cadastro, login, fluxo de equipe, controle da execução cronometrada, solve de desafio, liberação progressiva de logs, SIEM, placar ao vivo, isolamento de autorização, exportação de pesquisa e feedback. |
+| Reprodutível | A suíte cria um projeto Compose descartável. O `tests/verify_backup_import.sh` comprova que um backup anterior é restaurado em um projeto separado e reconstrói o conjunto de logs dos desafios ativos. |
+| Sustentável | Fronteiras de módulo documentadas, imagens de infraestrutura fixadas, scripts de migração reproduzíveis e verificações que rejeitam resíduos no repositório. |
 
-See `docs/INSTALL.md` for prerequisites, `docs/PLUGIN.md` for module
-boundaries, `docs/AUTH.md` for authentication options, and
-`docs/PRIVACY.md` for the operator data-handling checklist.
+Consulte `docs/INSTALL.md` para pré-requisitos, `docs/PLUGIN.md` para as
+fronteiras dos módulos, `docs/AUTH.md` para opções de autenticação e
+`docs/PRIVACY.md` para o checklist de tratamento de dados.
