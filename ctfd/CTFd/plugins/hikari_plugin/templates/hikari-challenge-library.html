@@ -27,6 +27,28 @@
   </section>
 
   <section class="hikari-admin-card">
+    <h2>Exportar pacote</h2>
+    <p class="hikari-admin-help">Gera um ZIP no mesmo formato aceito acima, com os desafios Hikari desta instalação, suas flags, pré-requisitos e arquivos de log. Guarde o arquivo antes de zerar a base para reaproveitar os desafios em outra competição.</p>
+    <p class="hikari-admin-help"><strong>{{ preview.exportable | length }}</strong> desafio(s) entram no pacote.</p>
+    {% if preview.skipped %}
+      <p class="alert alert-warning">
+        {{ preview.skipped | length }} desafio(s) ficam de fora porque o pacote exige flag estática e o arquivo de log declarado:
+        {% for item in preview.skipped %}<br><code>{{ item.name }}</code> — {{ item.reason }}{% endfor %}
+      </p>
+    {% endif %}
+    <form class="hikari-admin-form" method="post" action="{{ url_for('hikariplugin.hikari_challenge_library_export') }}">
+      <input name="nonce" type="hidden" value="{{ csrf_nonce }}">
+      <label>Identificador do pacote
+        <input class="form-control" name="package_key" type="text" placeholder="biblioteca-2026" pattern="[a-z0-9][a-z0-9-]{2,63}" title="Use letras minúsculas, números e hífens.">
+      </label>
+      <label>Nome de exibição
+        <input class="form-control" name="display_name" type="text" placeholder="Biblioteca 2026">
+      </label>
+      <button class="btn btn-secondary" type="submit">Exportar desafios</button>
+    </form>
+  </section>
+
+  <section class="hikari-admin-card">
     <h2>Bibliotecas importadas</h2>
     {% if libraries %}
     <div class="table-responsive"><table class="table">
