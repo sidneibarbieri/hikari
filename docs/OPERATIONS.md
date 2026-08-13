@@ -122,6 +122,24 @@ ADMIN_PASSWORD='SuaSenhaForte!' bash scripts/ensure_admin.sh
 O script cria o admin se não existir e atualiza a senha se já existir.
 Idempotente — pode rodar várias vezes.
 
+### Conta administrativa da pessoa responsável
+
+Crie a conta **antes do primeiro acesso dela**, informando os três valores:
+
+```bash
+OWNER_NAME='responsavel' OWNER_EMAIL='responsavel@organizacao.example' \
+  OWNER_PASSWORD='SenhaForte!' bash scripts/ensure_admin.sh
+```
+
+Isso importa quando a organização usa o acesso pelo Google. O login por Google
+procura a conta **pelo endereço de e-mail**: se já existe uma conta com aquele
+e-mail, a sessão assume essa conta, com o perfil que ela tiver. Se não existe,
+o Hikari cria uma conta nova **como competidor**, sem acesso à administração —
+e a pessoa responsável entra sem o menu administrativo.
+
+Se isso já aconteceu, rode o comando acima com o mesmo e-mail: ele encontra a
+conta existente e a promove a administrador, preservando o histórico.
+
 ---
 
 ## 5. Kibana sem dados / dashboard em branco
