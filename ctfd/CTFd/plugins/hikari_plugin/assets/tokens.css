@@ -1,0 +1,41 @@
+/* Canonical Hikari design tokens.
+ *
+ * Single source of truth for both surfaces: theme.css (competitor pages) and
+ * admin.css (administration) import this file. Editing a value here changes
+ * the whole product; there is no second palette to keep in step.
+ */
+
+:root {
+    --hikari-bg: #05080d;
+    --hikari-surface: #0c121b;
+    --hikari-surface-2: #121b27;
+    --hikari-surface-3: #18202e;
+    --hikari-border: #253244;
+    --hikari-border-soft: #1b2534;
+    --hikari-text: #edf3f8;
+    --hikari-text-muted: #9aa7b7;
+    --hikari-text-dim: #6b7990;
+
+    --hikari-primary: #10b981;
+    --hikari-primary-strong: #34d399;
+    --hikari-primary-soft: rgba(16, 185, 129, 0.13);
+    /* Text placed on a primary-filled surface. */
+    --hikari-on-primary: #06101f;
+
+    --hikari-accent: #d4a35a;
+    --hikari-accent-soft: rgba(212, 163, 90, 0.12);
+    --hikari-blue-soft: rgba(93, 222, 255, 0.11);
+
+    --hikari-success: #22c55e;
+    --hikari-success-text: #bbf7d0;
+    --hikari-warning: #f59e0b;
+    --hikari-warning-text: #fde68a;
+    --hikari-danger: #ef4444;
+    --hikari-danger-text: #fecaca;
+
+    --hikari-radius: 6px;
+    --hikari-radius-sm: 4px;
+
+    --hikari-font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --hikari-font-display: 'Space Grotesk', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}

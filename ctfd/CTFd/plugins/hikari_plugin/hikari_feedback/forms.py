@@ -176,7 +176,6 @@ class FeedbackForm(FlaskForm):
     realism_attack_chain = _score5("Realismo da cadeia de ataque")
     realism_telemetry = _score5("Realismo dos logs e eventos disponíveis no SIEM")
     realism_pace = _score5("Realismo do ritmo e da pressão")
-    methodology_coherence = _score5("Coerência metodológica do exercício")
 
     nps_recommend = _score10("Qual é a probabilidade de recomendar o Hikari em treinamentos de defesa cibernética? (0-10)")
 
@@ -186,10 +185,6 @@ class FeedbackForm(FlaskForm):
     )
     biggest_learning_blocker = TextAreaField(
         "Qual foi o principal obstáculo durante a competição e como ele poderia ser reduzido?",
-        validators=[OptionalValidator()],
-    )
-    suggested_scenarios = TextAreaField(
-        "Cenários que você gostaria de enfrentar em próximas execuções",
         validators=[OptionalValidator()],
     )
     other_comments = TextAreaField(
@@ -289,13 +284,12 @@ FIELD_GROUPS: Tuple[Tuple[str, str, str, Tuple[str, ...]], ...] = (
     ),
     (
         "realism",
-        "Realismo e metodologia",
-        "Avalie a fidelidade do exercício. Escala: 1 = pouco realista ou pouco coerente; 5 = compatível com operações reais.",
+        "Realismo",
+        "Avalie a fidelidade do exercício. Escala: 1 = pouco realista; 5 = compatível com operações reais.",
         (
             "realism_attack_chain",
             "realism_telemetry",
             "realism_pace",
-            "methodology_coherence",
         ),
     ),
     (

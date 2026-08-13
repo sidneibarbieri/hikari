@@ -67,7 +67,6 @@ TLX_FIELDS = (
 OPEN_ANSWER_FIELDS = (
     ("most_valuable_technique", "Técnica ou metodologia útil"),
     ("biggest_learning_blocker", "Obstáculo de aprendizagem"),
-    ("suggested_scenarios", "Cenários sugeridos"),
     ("other_comments", "Comentário adicional"),
 )
 

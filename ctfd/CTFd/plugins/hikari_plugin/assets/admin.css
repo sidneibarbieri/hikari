@@ -2,30 +2,30 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap');
 
+@import url('tokens.css');
+
+/* The administration rules were written against --hk-* names. Alias them onto
+   the canonical tokens so both surfaces share one palette. */
 :root {
-    /* Same stacks as the public theme. The admin bundle ships Lato and
-       CTFd applies it to the navbar, which put three different families on
-       one screen: Lato in the menu, system font in the body, Space Grotesk
-       in headings. Offline the stacks fall back together, so both surfaces
-       stay consistent with or without the webfont. */
-    --hk-font:         'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    --hk-font-display: 'Space Grotesk', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    --hk-bg:           #0a1220;
-    --hk-surface:      #0f1a2c;
-    --hk-surface-2:    #142139;
-    --hk-surface-3:    #1a2944;
-    --hk-border:       #1f2f4a;
-    --hk-border-soft:  #18253c;
-    --hk-text:         #edf3f8;
-    --hk-text-muted:   #9aa7b7;
-    --hk-text-dim:     #6b7990;
-    --hk-primary:      #10b981;
-    --hk-primary-soft: rgba(16, 185, 129, 0.18);
-    --hk-primary-strong: #0ea372;
-    --hk-danger:       #ef4444;
-    --hk-warning:      #f59e0b;
-    --hk-radius:       10px;
-    --hk-radius-sm:    6px;
+    --hk-bg:             var(--hikari-bg);
+    --hk-surface:        var(--hikari-surface);
+    --hk-surface-2:      var(--hikari-surface-2);
+    --hk-surface-3:      var(--hikari-surface-3);
+    --hk-border:         var(--hikari-border);
+    --hk-border-soft:    var(--hikari-border-soft);
+    --hk-text:           var(--hikari-text);
+    --hk-text-muted:     var(--hikari-text-muted);
+    --hk-text-dim:       var(--hikari-text-dim);
+    --hk-primary:        var(--hikari-primary);
+    --hk-primary-soft:   var(--hikari-primary-soft);
+    --hk-primary-strong: var(--hikari-primary-strong);
+    --hk-on-primary:     var(--hikari-on-primary);
+    --hk-danger:         var(--hikari-danger);
+    --hk-warning:        var(--hikari-warning);
+    --hk-radius:         var(--hikari-radius);
+    --hk-radius-sm:      var(--hikari-radius-sm);
+    --hk-font:           var(--hikari-font);
+    --hk-font-display:   var(--hikari-font-display);
 }
 
 html, body {
@@ -65,7 +65,7 @@ body .jumbotron {
 body .btn-primary {
     background-color: var(--hk-primary);
     border-color: var(--hk-primary);
-    color: #06101f;
+    color: var(--hikari-on-primary);
 }
 body .table {
     color: var(--hk-text);
@@ -119,7 +119,7 @@ hr {
 .btn-primary {
     background-color: var(--hk-primary);
     border-color: var(--hk-primary);
-    color: #06101f;
+    color: var(--hikari-on-primary);
     font-weight: 600;
 }
 .btn-primary:hover,
@@ -128,7 +128,7 @@ hr {
 .btn-primary:not(:disabled):not(.disabled):active {
     background-color: var(--hk-primary-strong);
     border-color: var(--hk-primary-strong);
-    color: #06101f;
+    color: var(--hikari-on-primary);
     box-shadow: 0 0 0 0.2rem var(--hk-primary-soft);
 }
 .btn-secondary {
@@ -495,7 +495,7 @@ body .dropdown-divider {
 }
 .nav-pills .nav-link.active {
     background-color: var(--hk-primary);
-    color: #06101f;
+    color: var(--hikari-on-primary);
 }
 
 /* ---------------------------------------------------------------- pagination */
@@ -511,7 +511,7 @@ body .dropdown-divider {
 .pagination .page-item.active .page-link {
     background-color: var(--hk-primary);
     border-color: var(--hk-primary);
-    color: #06101f;
+    color: var(--hikari-on-primary);
 }
 .pagination .page-item.disabled .page-link {
     background-color: var(--hk-surface);
@@ -522,7 +522,7 @@ body .dropdown-divider {
 .badge-primary,
 .badge.bg-primary {
     background-color: var(--hk-primary);
-    color: #06101f;
+    color: var(--hikari-on-primary);
 }
 .badge-secondary {
     background-color: var(--hk-surface-3);
@@ -530,14 +530,14 @@ body .dropdown-divider {
 }
 .badge-success {
     background-color: var(--hk-primary);
-    color: #06101f;
+    color: var(--hikari-on-primary);
 }
 .badge-danger {
     background-color: var(--hk-danger);
 }
 .badge-warning {
     background-color: var(--hk-warning);
-    color: #06101f;
+    color: var(--hikari-on-primary);
 }
 .badge-info {
     background-color: var(--hk-surface-3);
@@ -733,7 +733,7 @@ pre {
 /* ---------------------------------------------------------------- update banner */
 .bg-warning.text-center {
     background-color: var(--hk-warning) !important;
-    color: #06101f !important;
+    color: var(--hikari-on-primary) !important;
 }
 
 /* ---------------------------------------------------------------- stats redirect banner */
@@ -763,6 +763,6 @@ pre {
 .hikari-stats-banner .btn {
     flex-shrink: 0;
     white-space: nowrap;
-    color: #06101f !important;
+    color: var(--hikari-on-primary) !important;
     text-decoration: none;
 }

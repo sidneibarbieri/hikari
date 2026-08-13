@@ -117,7 +117,6 @@ class FeedbackPayload(BaseModel):
     realism_attack_chain: Optional[Score5] = None
     realism_telemetry: Optional[Score5] = None
     realism_pace: Optional[Score5] = None
-    methodology_coherence: Optional[Score5] = None
 
     # Recommendation score (0-10)
     nps_recommend: Optional[Score10] = None
@@ -125,7 +124,6 @@ class FeedbackPayload(BaseModel):
     # Qualitative reflections (free text)
     most_valuable_technique: Optional[str] = None
     biggest_learning_blocker: Optional[str] = None
-    suggested_scenarios: Optional[str] = None
     other_comments: Optional[str] = None
 
     @validator("phase")

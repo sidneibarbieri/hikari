@@ -114,11 +114,9 @@ _DTO_FIELDS = (
     "realism_attack_chain",
     "realism_telemetry",
     "realism_pace",
-    "methodology_coherence",
     "nps_recommend",
     "most_valuable_technique",
     "biggest_learning_blocker",
-    "suggested_scenarios",
     "other_comments",
 )
 

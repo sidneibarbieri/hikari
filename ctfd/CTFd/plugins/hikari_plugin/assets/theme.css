@@ -1,27 +1,7 @@
 /* Shared Hikari design tokens for CTFd theme and plugin pages. */
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap');
-
-:root {
-    --hikari-bg: #05080d;
-    --hikari-surface: #0c121b;
-    --hikari-surface-2: #121b27;
-    --hikari-border: #253244;
-    --hikari-text: #edf3f8;
-    --hikari-text-muted: #9aa7b7;
-    --hikari-primary: #10b981;
-    --hikari-primary-strong: #34d399;
-    --hikari-primary-soft: rgba(16, 185, 129, 0.13);
-    --hikari-accent: #d4a35a;
-    --hikari-accent-soft: rgba(212, 163, 90, 0.12);
-    --hikari-blue-soft: rgba(93, 222, 255, 0.11);
-    --hikari-success: #22c55e;
-    --hikari-warning: #f59e0b;
-    --hikari-danger: #ef4444;
-    --hikari-radius: 6px;
-    --hikari-font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    --hikari-font-display: 'Space Grotesk', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-}
+@import url('tokens.css');
 
 body {
     background-color: var(--hikari-bg);
@@ -176,13 +156,13 @@ hr {
 .btn-primary {
     background-color: var(--hikari-primary);
     border-color: var(--hikari-primary);
-    color: #06101f;
+    color: var(--hikari-on-primary);
     font-weight: 600;
 }
 .btn-success {
     background-color: var(--hikari-primary);
     border-color: var(--hikari-primary);
-    color: #06101f;
+    color: var(--hikari-on-primary);
     font-weight: 600;
 }
 .btn-success:hover,
@@ -190,14 +170,14 @@ hr {
 .btn-success:active {
     background-color: var(--hikari-primary-strong) !important;
     border-color: var(--hikari-primary-strong) !important;
-    color: #06101f !important;
+    color: var(--hikari-on-primary) !important;
 }
 .btn-primary:hover,
 .btn-primary:focus,
 .btn-primary:active {
     background-color: var(--hikari-primary-strong) !important;
     border-color: var(--hikari-primary-strong) !important;
-    color: #06101f !important;
+    color: var(--hikari-on-primary) !important;
 }
 
 .btn-outline-primary {
@@ -206,7 +186,7 @@ hr {
 }
 .btn-outline-primary:hover {
     background-color: var(--hikari-primary);
-    color: #06101f;
+    color: var(--hikari-on-primary);
 }
 
 .btn-secondary {
@@ -406,12 +386,12 @@ select option {
 .alert-success {
     background-color: rgba(34, 197, 94, 0.12);
     border-color: rgba(34, 197, 94, 0.4);
-    color: #bbf7d0;
+    color: var(--hikari-success-text);
 }
 .alert-warning {
     background-color: rgba(245, 158, 11, 0.12);
     border-color: rgba(245, 158, 11, 0.4);
-    color: #fde68a;
+    color: var(--hikari-warning-text);
 }
 .alert-info,
 .alert-primary,
@@ -424,7 +404,7 @@ select option {
 .alert-danger {
     background-color: rgba(239, 68, 68, 0.12);
     border-color: rgba(239, 68, 68, 0.4);
-    color: #fecaca;
+    color: var(--hikari-danger-text);
 }
 .alert .btn-close {
     filter: invert(1) brightness(1.35);
@@ -504,7 +484,7 @@ select option {
     border: 1px solid var(--hikari-primary);
     border-radius: var(--hikari-radius);
     background-color: var(--hikari-primary);
-    color: #06101f;
+    color: var(--hikari-on-primary);
     font-weight: 700;
     letter-spacing: 0.01em;
 }
@@ -557,7 +537,7 @@ select option {
 .nav-pills .nav-link.active {
     background-color: var(--hikari-primary);
     border-color: var(--hikari-primary);
-    color: #06101f;
+    color: var(--hikari-on-primary);
 }
 .hikari-settings-tabs .nav-link {
     box-shadow: 0 1px 0 rgba(0, 0, 0, 0.18);
@@ -818,7 +798,7 @@ select option {
     text-decoration: none;
 }
 .jchallenge-actions .jchallenge-button-primary {
-    color: #06101f;
+    color: var(--hikari-on-primary);
     background: var(--hikari-primary);
     border-color: var(--hikari-primary);
 }
@@ -909,7 +889,7 @@ select option {
     height: 46px;
     min-height: 46px;
     padding: 0 1.05rem;
-    color: #06101f;
+    color: var(--hikari-on-primary);
     background-color: var(--hikari-primary);
     border: 1px solid var(--hikari-primary);
     border-radius: 7px;
@@ -1230,11 +1210,11 @@ select option {
    template changes. */
 .hikari-success {
     background-color: var(--hikari-primary);
-    color: #06101f;
+    color: var(--hikari-on-primary);
 }
 .hikari-warning {
     background-color: var(--hikari-warning);
-    color: #06101f;
+    color: var(--hikari-on-primary);
 }
 .hikari-error {
     background-color: var(--hikari-danger);
@@ -1775,7 +1755,7 @@ select option {
 }
 .login-container .jbtn {
     background-color: var(--hikari-primary) !important;
-    color: #06101f !important;
+    color: var(--hikari-on-primary) !important;
     font-weight: 600;
     border: 0;
 }

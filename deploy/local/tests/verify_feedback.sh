@@ -123,7 +123,6 @@ code=$(curl -sS -c "$cookie_jar" -b "$cookie_jar" \
   --data-urlencode "realism_attack_chain=4" \
   --data-urlencode "realism_telemetry=4" \
   --data-urlencode "realism_pace=4" \
-  --data-urlencode "methodology_coherence=4" \
   --data-urlencode "nps_recommend=9" \
   --data-urlencode "most_valuable_technique=Pivoting on user agent + process tree." \
   --data-urlencode "biggest_learning_blocker=Documentation drift between scenarios.")
