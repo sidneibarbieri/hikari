@@ -13,6 +13,7 @@ fail() { printf '[error] %s\n' "$*" >&2; exit 1; }
 
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 PLATFORM_DIR=$(cd "$SCRIPT_DIR/../.." && pwd)
+BASE_COMPOSE_FILE="$PLATFORM_DIR/deploy/local/docker-compose.yml"
 ENV_FILE=${HIKARI_PRODUCTION_ENV:-"$SCRIPT_DIR/.env.production"}
 COMPOSE_PROJECT_NAME=${HIKARI_COMPOSE_PROJECT:-hikari}
 HIKARI_BACKUP_DIR=${HIKARI_BACKUP_DIR:-/opt/hikari/backups}
@@ -219,6 +220,7 @@ info "Subindo serviços Hikari (primeira inicialização pode levar 3-5 min)..."
 cd "$SCRIPT_DIR"
 source "$PLATFORM_DIR/deploy/local/lib/compose.sh"
 hikari_compose \
+  -f "$BASE_COMPOSE_FILE" \
   -f docker-compose.production.yml \
   --env-file "$COMPOSE_ENV" \
   -p "$COMPOSE_PROJECT_NAME" \
@@ -238,6 +240,7 @@ info "Concluindo a configuração inicial e aplicando a identidade visual..."
 cd "$PLATFORM_DIR/deploy/local"
 export COMPOSE_PROJECT_NAME
 export COMPOSE_FILE="$SCRIPT_DIR/docker-compose.production.yml"
+export HIKARI_COMPOSE_BASE_FILE="$BASE_COMPOSE_FILE"
 export CTFD_URL="http://localhost:${CTFD_INTERNAL_PORT:-8000}"
 ADMIN_EMAIL="${ADMIN_EMAIL}" ADMIN_PASSWORD="${ADMIN_PASSWORD}" bash scripts/setup_ctfd.sh
 ADMIN_EMAIL="${ADMIN_EMAIL}" ADMIN_PASSWORD="${ADMIN_PASSWORD}" bash scripts/ensure_admin.sh
@@ -290,5 +293,6 @@ else
   printf 'URL: https://%s\n' "$HIKARI_DOMAIN"
 fi
 printf 'Administrador: %s\n' "$ADMIN_EMAIL"
-printf 'Logs: docker-compose -p %s -f %s/docker-compose.production.yml logs -f\n' "$COMPOSE_PROJECT_NAME" "$SCRIPT_DIR"
+printf 'Logs: docker compose -p %s -f %s -f %s/docker-compose.production.yml logs -f\n' \
+  "$COMPOSE_PROJECT_NAME" "$BASE_COMPOSE_FILE" "$SCRIPT_DIR"
 printf 'Backup: %s\n' "$BACKUP_SCRIPT"

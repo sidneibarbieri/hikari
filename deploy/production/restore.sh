@@ -14,9 +14,11 @@ fi
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 source "$SCRIPT_DIR/../local/lib/compose.sh"
 COMPOSE_FILE=${HIKARI_COMPOSE_FILE:-"$SCRIPT_DIR/docker-compose.production.yml"}
+BASE_COMPOSE_FILE=${HIKARI_COMPOSE_BASE_FILE:-"$SCRIPT_DIR/../local/docker-compose.yml"}
 COMPOSE_ENV="$SCRIPT_DIR/.compose.env"
 
 [[ -f "$COMPOSE_ENV" ]] || { echo "compose environment not found: $COMPOSE_ENV" >&2; exit 1; }
+[[ -f "$BASE_COMPOSE_FILE" ]] || { echo "compose base file not found: $BASE_COMPOSE_FILE" >&2; exit 1; }
 set -a
 source "$COMPOSE_ENV"
 set +a
@@ -33,6 +35,7 @@ done
 compose() {
   hikari_compose \
     -p "${COMPOSE_PROJECT_NAME:-hikari}" \
+    -f "$BASE_COMPOSE_FILE" \
     -f "$COMPOSE_FILE" \
     --env-file "$COMPOSE_ENV" \
     "$@"

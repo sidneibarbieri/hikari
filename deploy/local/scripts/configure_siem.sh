@@ -5,11 +5,18 @@ SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 LOCAL_DIR=$(cd "$SCRIPT_DIR/.." && pwd)
 source "$LOCAL_DIR/lib/compose.sh"
 COMPOSE_FILE=${COMPOSE_FILE:-"$LOCAL_DIR/docker-compose.yml"}
+COMPOSE_BASE_FILE=${HIKARI_COMPOSE_BASE_FILE:-}
 DATA_VIEW_TITLE=${DATA_VIEW_TITLE:-competition1}
 TIME_FIELD=${TIME_FIELD:-@timestamp}
 
+[[ -z "$COMPOSE_BASE_FILE" || -f "$COMPOSE_BASE_FILE" ]] \
+  || { echo "compose base file not found: $COMPOSE_BASE_FILE" >&2; exit 1; }
+
 compose() {
-  hikari_compose -f "$COMPOSE_FILE" "$@"
+  local compose_files=()
+  [[ -n "$COMPOSE_BASE_FILE" ]] && compose_files+=(-f "$COMPOSE_BASE_FILE")
+  compose_files+=(-f "$COMPOSE_FILE")
+  hikari_compose "${compose_files[@]}" "$@"
 }
 
 kibana() {

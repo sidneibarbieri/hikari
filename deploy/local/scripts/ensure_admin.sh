@@ -18,13 +18,24 @@ SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 LOCAL_DIR=$(cd "$SCRIPT_DIR/.." && pwd)
 source "$LOCAL_DIR/lib/compose.sh"
 COMPOSE_FILE=${COMPOSE_FILE:-"$LOCAL_DIR/docker-compose.yml"}
+COMPOSE_BASE_FILE=${HIKARI_COMPOSE_BASE_FILE:-}
+
+[[ -z "$COMPOSE_BASE_FILE" || -f "$COMPOSE_BASE_FILE" ]] \
+  || { echo "compose base file not found: $COMPOSE_BASE_FILE" >&2; exit 1; }
+
+compose() {
+  local compose_files=()
+  [[ -n "$COMPOSE_BASE_FILE" ]] && compose_files+=(-f "$COMPOSE_BASE_FILE")
+  compose_files+=(-f "$COMPOSE_FILE")
+  hikari_compose "${compose_files[@]}" "$@"
+}
 
 upsert_admin() {
   local account_name=$1
   local account_email=$2
   local account_password=$3
 
-  hikari_compose -f "$COMPOSE_FILE" exec -T ctfd env \
+  compose exec -T ctfd env \
     ACCOUNT_NAME="$account_name" \
     ACCOUNT_EMAIL="$account_email" \
     ACCOUNT_PASSWORD="$account_password" \

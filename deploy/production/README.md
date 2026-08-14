@@ -331,12 +331,18 @@ checkpoint de produção para transferir o estado de forma recuperável.
 
 ### Ver logs em tempo real
 ```bash
-docker compose -f /opt/hikari/deploy/production/docker-compose.production.yml logs -f ctfd
+docker compose \
+  -f /opt/hikari/deploy/local/docker-compose.yml \
+  -f /opt/hikari/deploy/production/docker-compose.production.yml \
+  logs -f ctfd
 ```
 
 ### Reiniciar um serviço
 ```bash
-docker compose -f /opt/hikari/deploy/production/docker-compose.production.yml restart ctfd
+docker compose \
+  -f /opt/hikari/deploy/local/docker-compose.yml \
+  -f /opt/hikari/deploy/production/docker-compose.production.yml \
+  restart ctfd
 ```
 
 ### Backup manual
@@ -360,7 +366,10 @@ Ele também limpa o cache de execução antes de reiniciar o CTFd.
 cd /opt/hikari
 git pull
 cd deploy/production
-docker compose -f docker-compose.production.yml up -d --build ctfd
+docker compose \
+  -f ../local/docker-compose.yml \
+  -f docker-compose.production.yml \
+  up -d --build ctfd
 ```
 
 ---

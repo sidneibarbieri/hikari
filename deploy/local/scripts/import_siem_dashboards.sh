@@ -5,14 +5,21 @@ SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 LOCAL_DIR=$(cd "$SCRIPT_DIR/.." && pwd)
 source "$LOCAL_DIR/lib/compose.sh"
 COMPOSE_FILE=${COMPOSE_FILE:-"$LOCAL_DIR/docker-compose.yml"}
+COMPOSE_BASE_FILE=${HIKARI_COMPOSE_BASE_FILE:-}
 REBUILD_SCRIPT="$LOCAL_DIR/kibana/rebuild_siem_dashboard.py"
 DATA_VIEW_ID=${DATA_VIEW_ID:-competition1}
 SIEM_DASHBOARD_ID=${SIEM_DASHBOARD_ID:-hikari-siem}
 
 KIBANA_INTERNAL_URL="http://kibana:5601/hikari/kibana"
 
+[[ -z "$COMPOSE_BASE_FILE" || -f "$COMPOSE_BASE_FILE" ]] \
+  || { echo "compose base file not found: $COMPOSE_BASE_FILE" >&2; exit 1; }
+
 compose() {
-  hikari_compose -f "$COMPOSE_FILE" "$@"
+  local compose_files=()
+  [[ -n "$COMPOSE_BASE_FILE" ]] && compose_files+=(-f "$COMPOSE_BASE_FILE")
+  compose_files+=(-f "$COMPOSE_FILE")
+  hikari_compose "${compose_files[@]}" "$@"
 }
 
 kibana() {

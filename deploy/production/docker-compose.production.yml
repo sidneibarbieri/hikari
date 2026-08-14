@@ -3,14 +3,9 @@
 # Sobrescreve apenas o que difere do docker-compose.yml de desenvolvimento:
 # restart policies, portas não expostas externamente, volumes nomeados,
 # e variáveis sensíveis injetadas pelo setup_production.sh.
-# Uso: docker compose -f docker-compose.production.yml --env-file .compose.env up -d
+# Uso: docker compose -f ../local/docker-compose.yml \
+#   -f docker-compose.production.yml --env-file .compose.env up -d
 # =============================================================================
-
-# Reutiliza o compose base de desenvolvimento como âncora
-# (define os serviços, imagens, redes e volumes base)
-include:
-  - path: ../local/docker-compose.yml
-    env_file: .compose.env
 
 services:
   ctfd:
