@@ -266,7 +266,13 @@ BACKUP_SCRIPT="$SCRIPT_DIR/backup.sh"
 chmod +x "$BACKUP_SCRIPT"
 chmod +x "$SCRIPT_DIR/restore.sh"
 CRON_BACKUP="0 2 * * * $BACKUP_SCRIPT >> /var/log/hikari-backup.log 2>&1"
-( crontab -l 2>/dev/null | grep -v hikari-backup; echo "$CRON_BACKUP" ) | crontab -
+cron_file=$(mktemp)
+trap 'rm -f "$cron_file"' EXIT
+crontab -l 2>/dev/null | grep -v hikari-backup > "$cron_file" || true
+printf '%s\n' "$CRON_BACKUP" >> "$cron_file"
+crontab "$cron_file"
+rm -f "$cron_file"
+trap - EXIT
 ok "Backup diário agendado às 02:00 (retenção: ${RETENTION_DAYS:-14} dias)."
 
 # ---- Firewall ---------------------------------------------------------------
