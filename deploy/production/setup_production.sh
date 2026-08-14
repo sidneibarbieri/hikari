@@ -16,6 +16,7 @@ PLATFORM_DIR=$(cd "$SCRIPT_DIR/../.." && pwd)
 ENV_FILE=${HIKARI_PRODUCTION_ENV:-"$SCRIPT_DIR/.env.production"}
 COMPOSE_PROJECT_NAME=${HIKARI_COMPOSE_PROJECT:-hikari}
 HIKARI_BACKUP_DIR=${HIKARI_BACKUP_DIR:-/opt/hikari/backups}
+HIKARI_SKIP_TLS=${HIKARI_SKIP_TLS:-false}
 
 # ---- 1. Verificar pré-requisitos --------------------------------------------
 info "Verificando pré-requisitos..."
@@ -30,6 +31,7 @@ source "$ENV_FILE"
 # on environment inherited by sudo.
 COMPOSE_PROJECT_NAME=${HIKARI_COMPOSE_PROJECT:-"$COMPOSE_PROJECT_NAME"}
 HIKARI_BACKUP_DIR=${HIKARI_BACKUP_DIR:-/opt/hikari/backups}
+HIKARI_SKIP_TLS=${HIKARI_SKIP_TLS:-"$HIKARI_SKIP_TLS"}
 
 [[ -n "${HIKARI_DOMAIN:-}" ]] || fail "HIKARI_DOMAIN não definido em $ENV_FILE"
 [[ "$HIKARI_DOMAIN" =~ ^[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?(\.[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?)+$ ]] \
@@ -51,10 +53,12 @@ if ! command -v docker-compose >/dev/null 2>&1 && ! docker compose version >/dev
   fail "Docker Compose não instalado. Siga o Passo 1 do README."
 fi
 command -v curl >/dev/null 2>&1 || fail "curl não instalado."
-command -v certbot >/dev/null 2>&1 || {
-  info "Instalando certbot..."
-  apt-get update -qq && apt-get install -y -qq certbot python3-certbot-nginx
-}
+if [[ "$HIKARI_SKIP_TLS" != "true" ]]; then
+  command -v certbot >/dev/null 2>&1 || {
+    info "Instalando certbot..."
+    apt-get update -qq && apt-get install -y -qq certbot python3-certbot-nginx
+  }
+fi
 command -v crontab >/dev/null 2>&1 || {
   info "Instalando serviço de agendamento..."
   apt-get update -qq && apt-get install -y -qq cron
@@ -64,6 +68,7 @@ systemctl enable --now cron
 ok "Pré-requisitos verificados."
 
 # ---- 2. Instalar Nginx ------------------------------------------------------
+if [[ "$HIKARI_SKIP_TLS" != "true" ]]; then
 info "Instalando/configurando Nginx..."
 command -v nginx >/dev/null 2>&1 || apt-get install -y -qq nginx
 
@@ -169,6 +174,9 @@ info "Configurando renovação automática do certificado..."
 CRON_RENEW="0 3 * * * certbot renew --quiet --nginx && systemctl reload nginx"
 ( crontab -l 2>/dev/null | grep -v certbot; echo "$CRON_RENEW" ) | crontab -
 ok "Renovação agendada diariamente às 03:00."
+else
+  info "TLS adiado: a plataforma será preparada apenas em localhost."
+fi
 
 # ---- 5. Construir .env de produção para o Compose ---------------------------
 info "Gerando variáveis de ambiente para o Compose..."
@@ -192,6 +200,7 @@ MAIL_PASSWORD=${MAIL_PASSWORD:-}
 MAIL_TLS=${MAIL_TLS:-false}
 MAIL_SSL=${MAIL_SSL:-false}
 CTFD_PORT=${CTFD_INTERNAL_PORT:-8000}
+CTFD_WORKERS=${CTFD_WORKERS:-4}
 HIKARI_BACKUP_DIR=${HIKARI_BACKUP_DIR}
 COMPOSE_PROJECT_NAME=${COMPOSE_PROJECT_NAME}
 RETENTION_DAYS=${RETENTION_DAYS:-14}
@@ -243,8 +252,10 @@ bash scripts/import_siem_dashboards.sh
 ok "Dashboard SIEM importado."
 
 # ---- 9. Recarregar Nginx com SSL -------------------------------------------
-systemctl reload nginx
-ok "Nginx recarregado com SSL."
+if [[ "$HIKARI_SKIP_TLS" != "true" ]]; then
+  systemctl reload nginx
+  ok "Nginx recarregado com SSL."
+fi
 
 # ---- 10. Configurar backup diário ------------------------------------------
 info "Configurando backup automático diário..."
@@ -258,20 +269,26 @@ ok "Backup diário agendado às 02:00 (retenção: ${RETENTION_DAYS:-14} dias)."
 # ---- Firewall ---------------------------------------------------------------
 # Firewalls em nuvem e hosts já estabelecidos podem pertencer à infraestrutura.
 # Altere UFW somente quando o operador optar explicitamente por isso.
-if [[ "${HIKARI_MANAGE_UFW:-false}" == "true" ]] && command -v ufw >/dev/null 2>&1; then
+if [[ "$HIKARI_SKIP_TLS" != "true" && "${HIKARI_MANAGE_UFW:-false}" == "true" ]] && command -v ufw >/dev/null 2>&1; then
   info "Configurando firewall (ufw)..."
   ufw allow 22/tcp  comment 'SSH'   >/dev/null || fail "Não foi possível liberar SSH no firewall."
   ufw allow 80/tcp  comment 'HTTP'  >/dev/null || fail "Não foi possível liberar HTTP no firewall."
   ufw allow 443/tcp comment 'HTTPS' >/dev/null || fail "Não foi possível liberar HTTPS no firewall."
   ufw --force enable >/dev/null || fail "Não foi possível ativar o firewall."
   ok "Firewall configurado (22/80/443 abertos)."
-else
+elif [[ "$HIKARI_SKIP_TLS" != "true" ]]; then
   info "Firewall do host preservado; valide as portas 22, 80 e 443 no provedor ou com a equipe de infraestrutura."
 fi
 
 # ---- Resumo -----------------------------------------------------------------
 printf '\nInstalação concluída.\n'
-printf 'URL: https://%s\n' "$HIKARI_DOMAIN"
+if [[ "$HIKARI_SKIP_TLS" == "true" ]]; then
+  printf 'Acesso temporário: ssh -L 8000:127.0.0.1:%s USUARIO@SERVIDOR\n' "${CTFD_INTERNAL_PORT:-8000}"
+  printf 'Depois acesse: http://localhost:8000\n'
+  printf 'Para publicar, configure o DNS e execute novamente sem HIKARI_SKIP_TLS=true.\n'
+else
+  printf 'URL: https://%s\n' "$HIKARI_DOMAIN"
+fi
 printf 'Administrador: %s\n' "$ADMIN_EMAIL"
 printf 'Logs: docker-compose -p %s -f %s/docker-compose.production.yml logs -f\n' "$COMPOSE_PROJECT_NAME" "$SCRIPT_DIR"
 printf 'Backup: %s\n' "$BACKUP_SCRIPT"

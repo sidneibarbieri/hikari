@@ -33,6 +33,11 @@ Para a última linha, execute um ensaio com consultas simultâneas no SIEM antes
 de abrir a competição. A capacidade efetiva depende do volume de eventos, da
 complexidade das consultas e da concorrência real.
 
+Uma VM menor pode servir para preparar desafios e validar o fluxo com poucos
+administradores. Não abra uma competição nela. Em 2 vCPU, defina
+`CTFD_WORKERS=2`; com 4 ou mais vCPU, comece com `CTFD_WORKERS=4` e ajuste
+somente após um ensaio operacional.
+
 ### De onde vêm esses números
 
 Os dados do Hikari são pequenos. Uma competição inteira com 51 competidores,
@@ -131,6 +136,24 @@ anteriores:
 HIKARI_COMPOSE_PROJECT=hikari-reseg2026
 HIKARI_BACKUP_DIR=/home/ubuntu/hikari-reseg-2026/backups
 ```
+
+Enquanto o DNS ainda não apontar para o servidor, prepare a stack sem publicar
+uma porta HTTP e sem alterar o Nginx existente:
+
+```bash
+HIKARI_SKIP_TLS=true
+```
+
+Execute o instalador normalmente. O acesso administrativo temporário é por
+túnel SSH:
+
+```bash
+ssh -L 8000:127.0.0.1:8000 USUARIO@SERVIDOR
+```
+
+Depois, abra `http://localhost:8000`. Quando o registro DNS estiver
+propagado, altere `HIKARI_SKIP_TLS=false` e execute o instalador novamente
+para configurar Nginx e HTTPS.
 
 ### Variáveis opcionais — Google OAuth
 
