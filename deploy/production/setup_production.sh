@@ -43,9 +43,9 @@ HIKARI_SKIP_TLS=${HIKARI_SKIP_TLS:-"$HIKARI_SKIP_TLS"}
 [[ "$DATABASE_PASSWORD" =~ ^[A-Za-z0-9._~-]+$ ]] \
   || fail "DATABASE_PASSWORD deve usar somente letras, números, ponto, sublinhado, hífen ou til."
 
-[[ ${#KIBANA_ENCRYPTION_KEY:-} -eq 32 ]] \
+[[ -n "${KIBANA_ENCRYPTION_KEY:-}" && ${#KIBANA_ENCRYPTION_KEY} -eq 32 ]] \
   || fail "KIBANA_ENCRYPTION_KEY deve ter exatamente 32 caracteres"
-[[ ${#ES_ENCRYPTION_KEY:-} -eq 32 ]] \
+[[ -n "${ES_ENCRYPTION_KEY:-}" && ${#ES_ENCRYPTION_KEY} -eq 32 ]] \
   || fail "ES_ENCRYPTION_KEY deve ter exatamente 32 caracteres"
 
 command -v docker  >/dev/null 2>&1 || fail "Docker não instalado. Siga o Passo 1 do README."
