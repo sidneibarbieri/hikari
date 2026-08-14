@@ -179,5 +179,5 @@ Hikari está disponível.
   SIEM:  http://localhost:${ctfd_port}/hikari/siem
   Login: admin ou admin@hikari.local / hikari_comp@2026
 
-Change the administrator password before exposing the service. See SECURITY.md.
+Altere a senha do administrador antes de expor o serviço. Consulte SECURITY.md.
 EOF

@@ -115,7 +115,7 @@ Evidências correspondentes neste repositório:
 | Critério | Evidência |
 | --- | --- |
 | Disponível | Repositório Git público com código-fonte, exemplos de ambiente, documentação de instalação e dependências de imagem Docker declaradas nos arquivos Compose. |
-| Funcional | `bash bootstrap.sh` executa 28 verificações isoladas cobrindo cadastro, login, fluxo de equipe, controle da execução cronometrada, solve de desafio, liberação progressiva de logs, SIEM, placar ao vivo, isolamento de autorização, exportação de pesquisa e feedback. |
+| Funcional | `bash bootstrap.sh` executa 31 verificações isoladas cobrindo cadastro, login, fluxo de equipe, controle da execução cronometrada, solve de desafio, liberação progressiva de logs, SIEM, placar ao vivo, isolamento de autorização, exportação de pesquisa e feedback. |
 | Reprodutível | A suíte cria um projeto Compose descartável. O `tests/verify_backup_import.sh` comprova que um backup anterior é restaurado em um projeto separado e reconstrói o conjunto de logs dos desafios ativos. |
 | Sustentável | Fronteiras de módulo documentadas, imagens de infraestrutura fixadas, scripts de migração reproduzíveis e verificações que rejeitam resíduos no repositório. |
 
