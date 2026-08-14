@@ -244,8 +244,8 @@ export HIKARI_COMPOSE_BASE_FILE="$BASE_COMPOSE_FILE"
 export CTFD_URL="http://localhost:${CTFD_INTERNAL_PORT:-8000}"
 ADMIN_EMAIL="${ADMIN_EMAIL}" ADMIN_PASSWORD="${ADMIN_PASSWORD}" bash scripts/setup_ctfd.sh
 ADMIN_EMAIL="${ADMIN_EMAIL}" ADMIN_PASSWORD="${ADMIN_PASSWORD}" bash scripts/ensure_admin.sh
-bash scripts/apply_theme.sh
-bash scripts/apply_branding.sh
+ADMIN_EMAIL="${ADMIN_EMAIL}" ADMIN_PASSWORD="${ADMIN_PASSWORD}" bash scripts/apply_theme.sh
+ADMIN_EMAIL="${ADMIN_EMAIL}" ADMIN_PASSWORD="${ADMIN_PASSWORD}" bash scripts/apply_branding.sh
 ok "Instância, administrador e identidade visual configurados."
 
 # ---- 8. Importar dashboard SIEM ---------------------------------------------
