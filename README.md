@@ -52,7 +52,8 @@ A stack local é o caminho suportado para desenvolvimento e revisão do artefato
 
 O `bootstrap.sh` verifica o sistema operacional, os recursos da máquina (memória,
 disco e porta), a presença do Docker, prepara o arquivo `.env`, executa a suíte
-de verificação e sobe a stack.
+de verificação, sobe a stack e configura a própria instância: assistente inicial
+do CTFd, conta técnica, identidade visual, data view e painel do SIEM.
 
 Para quem já tem o ambiente preparado, o `Makefile` expõe os mesmos passos:
 

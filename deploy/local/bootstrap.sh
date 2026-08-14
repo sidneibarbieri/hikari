@@ -18,7 +18,7 @@ step()  { printf '\n\033[1m%s\033[0m\n' "$1"; }
 # 1. Detect OS
 # ---------------------------------------------------------------------------
 
-step '1/6 Verificando o ambiente'
+step '1/7 Verificando o ambiente'
 
 uname_s=$(uname -s)
 case "$uname_s" in
@@ -42,7 +42,7 @@ ok "Sistema operacional: $os_distro"
 # 2. Resource sanity (RAM, disk, ports)
 # ---------------------------------------------------------------------------
 
-step '2/6 Verificando recursos do sistema'
+step '2/7 Verificando recursos do sistema'
 
 # RAM — Elasticsearch alone needs ~2 GB, we target 8 GB total for comfort.
 case "$os_family" in
@@ -86,7 +86,7 @@ fi
 # 3. Docker + docker compose
 # ---------------------------------------------------------------------------
 
-step '3/6 Verificando Docker'
+step '3/7 Verificando Docker'
 
 if ! command -v docker >/dev/null 2>&1; then
     fail 'Docker não está instalado.'
@@ -125,7 +125,7 @@ ok 'Docker Compose disponível'
 # 4. .env file
 # ---------------------------------------------------------------------------
 
-step '4/6 Preparando o arquivo de ambiente'
+step '4/7 Preparando o arquivo de ambiente'
 
 if [[ -f .env ]]; then
     skip '.env já existe e foi preservado'
@@ -139,7 +139,7 @@ fi
 # 5. Acceptance suite
 # ---------------------------------------------------------------------------
 
-step '5/6 Executando a suíte isolada de aceitação'
+step '5/7 Executando a suíte isolada de aceitação'
 
 bash tests/acceptance_isolated.sh
 
@@ -148,9 +148,28 @@ bash tests/acceptance_isolated.sh
 # 6. Build and start the stack
 # ---------------------------------------------------------------------------
 
-step '6/6 Iniciando a plataforma (a primeira execução pode levar alguns minutos)'
+step '6/7 Iniciando a plataforma (a primeira execução pode levar alguns minutos)'
 
 hikari_compose up -d --build
+CTFD_URL="http://localhost:${ctfd_port}" bash tests/smoke.sh --wait
+
+
+# ---------------------------------------------------------------------------
+# 7. Configure the operator stack itself
+# ---------------------------------------------------------------------------
+
+step '7/7 Configurando a instância Hikari'
+
+CTFD_URL="http://localhost:${ctfd_port}" bash scripts/setup_ctfd.sh
+ADMIN_PASSWORD="${ADMIN_PASSWORD:-hikari_comp@2026}" bash scripts/ensure_admin.sh
+CTFD_URL="http://localhost:${ctfd_port}" \
+  ADMIN_PASSWORD="${ADMIN_PASSWORD:-hikari_comp@2026}" \
+  bash scripts/apply_theme.sh
+CTFD_URL="http://localhost:${ctfd_port}" \
+  ADMIN_PASSWORD="${ADMIN_PASSWORD:-hikari_comp@2026}" \
+  bash scripts/apply_branding.sh
+bash scripts/configure_siem.sh
+bash scripts/import_siem_dashboards.sh
 
 
 cat <<EOF

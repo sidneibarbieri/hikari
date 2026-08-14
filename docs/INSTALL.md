@@ -56,10 +56,12 @@ essa situação e se recusa a começar, explicando o que fazer.
 
 O `bootstrap.sh` verifica o sistema operacional, a memória, o disco e a porta
 do CTFd, confere a presença do Docker, prepara o arquivo `.env`, executa a
-suíte de verificação em um projeto Compose descartável e então sobe a stack de
-operação. Essa ordem evita duas instâncias do Elasticsearch competindo por
-memória em um host de 8 GB. Cada etapa imprime suas próprias asserções e o
-orquestrador imprime um resumo final.
+suíte de verificação em um projeto Compose descartável e então sobe e configura
+a stack de operação. A configuração aplica o assistente inicial do CTFd, a
+conta técnica, a identidade visual, a data view e o painel do SIEM. Essa ordem
+evita duas instâncias do Elasticsearch competindo por memória em um host de 8
+GB. Cada etapa imprime suas próprias asserções e o orquestrador imprime um
+resumo final.
 
 ### Contas administrativas
 

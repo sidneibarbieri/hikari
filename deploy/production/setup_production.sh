@@ -42,6 +42,7 @@ source "$ENV_FILE"
   || fail "ES_ENCRYPTION_KEY deve ter exatamente 32 caracteres"
 
 command -v docker  >/dev/null 2>&1 || fail "Docker não instalado. Siga o Passo 1 do README."
+docker compose version >/dev/null 2>&1 || fail "Docker Compose v2 não instalado. Siga o Passo 1 do README."
 command -v curl >/dev/null 2>&1 || fail "curl não instalado."
 command -v certbot >/dev/null 2>&1 || {
   info "Instalando certbot..."
@@ -213,16 +214,17 @@ for i in $(seq 1 30); do
 done
 ok "CTFd está rodando."
 
-# ---- 7. Configurar admin e branding -----------------------------------------
-info "Configurando administrador e branding..."
+# ---- 7. Configurar a instância, o administrador e a identidade visual -------
+info "Concluindo a configuração inicial e aplicando a identidade visual..."
 cd "$PLATFORM_DIR/deploy/local"
 export COMPOSE_PROJECT_NAME
 export COMPOSE_FILE="$SCRIPT_DIR/docker-compose.production.yml"
 export CTFD_URL="http://localhost:${CTFD_INTERNAL_PORT:-8000}"
+ADMIN_EMAIL="${ADMIN_EMAIL}" ADMIN_PASSWORD="${ADMIN_PASSWORD}" bash scripts/setup_ctfd.sh
 ADMIN_EMAIL="${ADMIN_EMAIL}" ADMIN_PASSWORD="${ADMIN_PASSWORD}" bash scripts/ensure_admin.sh
 bash scripts/apply_theme.sh
 bash scripts/apply_branding.sh
-ok "Admin e branding configurados."
+ok "Instância, administrador e identidade visual configurados."
 
 # ---- 8. Importar dashboard SIEM ---------------------------------------------
 info "Importando dashboard SIEM..."
