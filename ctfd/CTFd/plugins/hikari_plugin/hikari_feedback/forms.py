@@ -149,7 +149,7 @@ class FeedbackForm(FlaskForm):
     tlx_mental_demand = _score7("Esforço mental exigido pelos desafios (1 = baixo, 7 = alto)")
     tlx_temporal_demand = _score7("Pressão de tempo durante a competição (1 = baixa, 7 = alta)")
     tlx_performance = _score7(
-        "Quanto você conseguiu do que se propôs a fazer nos desafios "
+        "Quanto você conseguiu fazer do que pretendia nos desafios "
         "(1 = consegui muito pouco, 7 = consegui tudo)"
     )
     tlx_effort = _score7("Esforço geral para concluir os desafios (1 = baixo, 7 = alto)")
@@ -166,12 +166,12 @@ class FeedbackForm(FlaskForm):
     sus_felt_confident = _score5("Senti confiança ao usar o Hikari")
     sus_needed_to_learn_a_lot = _score5("Precisei aprender muitas coisas antes de conseguir usar o Hikari")
 
-    learning_log_analysis = _score5("Melhoria percebida: análise de logs")
-    learning_pattern_correlation = _score5("Melhoria percebida: correlação entre fontes")
-    learning_hypothesis_generation = _score5("Melhoria percebida: geração de hipóteses")
-    learning_tool_fluency = _score5("Melhoria percebida: fluência em Kibana e KQL")
-    learning_time_to_detect = _score5("Melhoria percebida: tempo até detecção")
-    learning_documentation = _score5("Melhoria percebida: documentação da investigação")
+    learning_log_analysis = _score5("Análise de logs")
+    learning_pattern_correlation = _score5("Correlação entre fontes de dados")
+    learning_hypothesis_generation = _score5("Geração de hipóteses")
+    learning_tool_fluency = _score5("Uso do Kibana e da linguagem KQL")
+    learning_time_to_detect = _score5("Rapidez para detectar um ataque")
+    learning_documentation = _score5("Registro do que foi investigado")
 
     realism_attack_chain = _score5("Realismo da cadeia de ataque")
     realism_telemetry = _score5("Realismo dos logs e eventos disponíveis no SIEM")
@@ -202,7 +202,7 @@ FIELD_GROUPS: Tuple[Tuple[str, str, str, Tuple[str, ...]], ...] = (
     (
         "background",
         "Perfil e exposição prévia",
-        "Informe sua experiência para permitir análise por perfil. Responda este questionário após a competição.",
+        "Conte sua experiência anterior. Isso ajuda a comparar respostas de pessoas com trajetórias diferentes.",
         (
             "years_cyber_experience",
             "primary_role",
@@ -214,7 +214,7 @@ FIELD_GROUPS: Tuple[Tuple[str, str, str, Tuple[str, ...]], ...] = (
     (
         "nice_self",
         "Autoavaliação de competência",
-        "Avalie sua aptidão para executar tarefas de defesa cibernética. Escala: 1 = não consigo executar; 5 = consigo executar com autonomia.",
+        "Avalie o quanto você consegue fazer cada tarefa. Escala: 1 = não consigo fazer; 5 = consigo fazer sozinho.",
         (
             "self_cyber_defense_analyst",
             "self_incident_responder",
@@ -226,7 +226,7 @@ FIELD_GROUPS: Tuple[Tuple[str, str, str, Tuple[str, ...]], ...] = (
     (
         "tool_fluency",
         "Fluência em ferramentas",
-        "Informe sua familiaridade com ferramentas e conceitos usados na investigação. Escala: 1 = nunca usei; 5 = consigo orientar outras pessoas.",
+        "Diga o quanto você conhece cada ferramenta. Escala: 1 = nunca usei; 5 = consigo ensinar outra pessoa.",
         (
             "tool_kibana",
             "tool_kql",
@@ -243,7 +243,7 @@ FIELD_GROUPS: Tuple[Tuple[str, str, str, Tuple[str, ...]], ...] = (
     (
         "tlx",
         "Carga de trabalho percebida",
-        "Responda sobre o esforço exigido pela competição. Escala: 1 = muito baixo; 7 = muito alto. No item de dificuldade, 1 significa baixa dificuldade e 7 significa alta dificuldade.",
+        "Responda sobre o esforço que a competição exigiu de você. Cada item mostra o que significam o 1 e o 7.",
         (
             "tlx_mental_demand",
             "tlx_temporal_demand",
@@ -272,7 +272,7 @@ FIELD_GROUPS: Tuple[Tuple[str, str, str, Tuple[str, ...]], ...] = (
     (
         "learning",
         "Melhoria percebida de habilidades",
-        "Compare sua percepção antes e depois da competição. Escala: 1 = sem melhora percebida; 5 = melhora alta.",
+        "Compare o quanto você sabia antes e depois da competição. Escala: 1 = não melhorei; 5 = melhorei muito.",
         (
             "learning_log_analysis",
             "learning_pattern_correlation",
@@ -285,7 +285,7 @@ FIELD_GROUPS: Tuple[Tuple[str, str, str, Tuple[str, ...]], ...] = (
     (
         "realism",
         "Realismo",
-        "Avalie a fidelidade do exercício. Escala: 1 = pouco realista; 5 = compatível com operações reais.",
+        "Avalie o quanto o exercício se parece com o trabalho real. Escala: 1 = pouco parecido; 5 = muito parecido.",
         (
             "realism_attack_chain",
             "realism_telemetry",
@@ -295,7 +295,7 @@ FIELD_GROUPS: Tuple[Tuple[str, str, str, Tuple[str, ...]], ...] = (
     (
         "advocacy",
         "Recomendação",
-        "Use 0 para nenhuma chance de recomendação e 10 para recomendação muito provável.",
+        "Use 0 se você não recomendaria e 10 se recomendaria com certeza.",
         ("nps_recommend",),
     ),
     (

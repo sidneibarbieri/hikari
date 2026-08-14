@@ -36,6 +36,18 @@
     --hikari-radius: 6px;
     --hikari-radius-sm: 4px;
 
+    /* Shared type scale. */
+    --hikari-size-2xs: 0.72rem;
+    --hikari-size-xs: 0.8rem;
+    --hikari-size-sm: 0.875rem;
+    --hikari-size-base: 0.95rem;
+    --hikari-size-md: 1rem;
+    --hikari-size-lg: 1.125rem;
+    --hikari-size-xl: 1.3rem;
+    --hikari-size-2xl: 2.1rem;
+
+    --hikari-radius-pill: 999px;
+
     --hikari-font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     --hikari-font-display: 'Space Grotesk', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }

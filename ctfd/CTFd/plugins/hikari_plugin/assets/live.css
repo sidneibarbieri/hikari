@@ -27,14 +27,14 @@
     max-width: 78ch;
     margin: 0;
     color: var(--hikari-text-muted);
-    font-size: 1rem;
+    font-size: var(--hikari-size-md);
 }
 
 .live-clock {
     min-width: 14rem;
     padding: 1rem 1.15rem;
     border: 1px solid var(--hikari-border);
-    border-radius: 10px;
+    border-radius: var(--hikari-radius);
     background: linear-gradient(180deg, rgba(18, 27, 39, 0.9), rgba(12, 18, 27, 0.9));
 }
 
@@ -43,7 +43,7 @@
 .live-panel header span {
     display: block;
     color: var(--hikari-text-muted);
-    font-size: 0.74rem;
+    font-size: var(--hikari-size-2xs);
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.08em;
@@ -54,7 +54,7 @@
     margin-top: 0.4rem;
     color: var(--hikari-primary-strong);
     font-family: var(--hikari-font-display);
-    font-size: 1.15rem;
+    font-size: var(--hikari-size-lg);
 }
 
 .live-metrics,
@@ -71,7 +71,7 @@
 .live-metrics article,
 .live-panel {
     border: 1px solid var(--hikari-border);
-    border-radius: 10px;
+    border-radius: var(--hikari-radius);
     background:
         radial-gradient(500px 240px at 86% 0%, rgba(16, 185, 129, 0.08), transparent 62%),
         var(--hikari-surface);
@@ -114,7 +114,7 @@
 
 .live-panel h2 {
     margin: 0;
-    font-size: 1.12rem;
+    font-size: var(--hikari-size-lg);
 }
 
 .live-bars {
@@ -163,7 +163,7 @@
 .live-track {
     height: 0.62rem;
     overflow: hidden;
-    border-radius: 999px;
+    border-radius: var(--hikari-radius-pill);
     background: rgba(154, 167, 183, 0.12);
 }
 
@@ -177,7 +177,7 @@
 
 .live-rank-meta {
     color: var(--hikari-text-muted);
-    font-size: 0.82rem;
+    font-size: var(--hikari-size-xs);
     text-align: right;
 }
 
@@ -192,7 +192,7 @@
     display: block;
     width: 100%;
     height: clamp(22rem, 38vw, 30rem);
-    border-radius: 8px;
+    border-radius: var(--hikari-radius);
     background:
         linear-gradient(rgba(154, 167, 183, 0.06) 1px, transparent 1px),
         linear-gradient(90deg, rgba(154, 167, 183, 0.06) 1px, transparent 1px);
@@ -214,7 +214,7 @@
 .live-chart text {
     fill: var(--hikari-text);
     font-family: var(--hikari-font-body);
-    font-size: 0.86rem;
+    font-size: var(--hikari-size-sm);
     font-weight: 700;
     paint-order: stroke;
     stroke: rgba(3, 7, 13, 0.86);
@@ -223,7 +223,7 @@
 
 .live-chart text.live-axis-label {
     fill: var(--hikari-text-muted);
-    font-size: 0.72rem;
+    font-size: var(--hikari-size-2xs);
     font-weight: 800;
     stroke: none;
 }
@@ -242,14 +242,14 @@
     align-items: center;
     padding: 0.8rem 0.85rem;
     border: 1px solid rgba(154, 167, 183, 0.15);
-    border-radius: 8px;
+    border-radius: var(--hikari-radius);
     background: rgba(8, 13, 21, 0.68);
 }
 
 .live-legend-swatch {
     width: 0.72rem;
     height: 0.72rem;
-    border-radius: 999px;
+    border-radius: var(--hikari-radius-pill);
     background: var(--live-line, var(--hikari-primary-strong));
     box-shadow: 0 0 0 4px color-mix(in srgb, var(--live-line, var(--hikari-primary-strong)) 16%, transparent);
 }
@@ -270,7 +270,7 @@
 .live-legend-main span,
 .live-legend-score {
     color: var(--hikari-text-muted);
-    font-size: 0.78rem;
+    font-size: var(--hikari-size-xs);
 }
 
 .live-legend-score {
@@ -306,7 +306,7 @@
 .live-solve p {
     margin: 0.2rem 0 0;
     color: var(--hikari-text-muted);
-    font-size: 0.85rem;
+    font-size: var(--hikari-size-sm);
 }
 
 /* First blood. A quiet marker: it should read as a fact on the board, not as
@@ -323,9 +323,9 @@
     color: var(--hikari-accent);
     background-color: var(--hikari-accent-soft);
     border: 1px solid var(--hikari-accent-soft);
-    border-radius: 999px;
+    border-radius: var(--hikari-radius-pill);
     font-family: var(--hikari-font);
-    font-size: 0.68rem;
+    font-size: var(--hikari-size-2xs);
     font-weight: 700;
     letter-spacing: 0.04em;
     vertical-align: middle;

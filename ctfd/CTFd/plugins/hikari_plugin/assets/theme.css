@@ -77,7 +77,7 @@ hr {
     color: var(--hikari-text);
     font-family: var(--hikari-font-display);
     font-weight: 700;
-    font-size: 1.02rem;
+    font-size: var(--hikari-size-md);
     letter-spacing: 0;
 }
 .navbar-collapse {
@@ -88,7 +88,7 @@ hr {
 }
 .navbar .nav-link {
     padding: 0.45rem 0.52rem !important;
-    font-size: 0.9rem;
+    font-size: var(--hikari-size-sm);
     font-weight: 600;
     line-height: 1.2;
     white-space: nowrap;
@@ -204,7 +204,7 @@ textarea.form-control {
     color: var(--hikari-text);
     border-radius: var(--hikari-radius);
     font-family: var(--hikari-font);
-    font-size: 0.95rem;
+    font-size: var(--hikari-size-base);
     line-height: 1.4;
 }
 .form-control:focus {
@@ -226,7 +226,7 @@ select option {
     background-color: var(--hikari-surface);
     color: var(--hikari-text);
     font-family: var(--hikari-font);
-    font-size: 0.95rem;
+    font-size: var(--hikari-size-base);
 }
 .form-select {
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='%23edf3f8' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3E%3C/svg%3E");
@@ -252,7 +252,7 @@ select option {
 .hikari-field-hint {
     margin: 0.45rem 0 0;
     color: var(--hikari-text-muted);
-    font-size: 0.82rem;
+    font-size: var(--hikari-size-xs);
     line-height: 1.4;
 }
 
@@ -316,7 +316,7 @@ select option {
 }
 .hikari-settings-section h2 {
     margin: 0;
-    font-size: 1.25rem;
+    font-size: var(--hikari-size-xl);
     line-height: 1.2;
 }
 .hikari-settings-section p {
@@ -341,7 +341,7 @@ select option {
     color: var(--hikari-text);
     font-family: var(--hikari-font-display);
     font-weight: 600;
-    font-size: 0.92rem;
+    font-size: var(--hikari-size-base);
     margin: 0;
 }
 .hikari-field .form-control,
@@ -349,8 +349,8 @@ select option {
 .hikari-field textarea {
     width: 100%;
     padding: 0.6rem 0.75rem;
-    border-radius: 6px;
-    font-size: 0.95rem;
+    border-radius: var(--hikari-radius);
+    font-size: var(--hikari-size-base);
     transition: border-color 140ms ease, box-shadow 140ms ease;
 }
 .hikari-field .form-control:focus,
@@ -431,7 +431,7 @@ select option {
 .table thead th {
     color: var(--hikari-text);
     border-bottom: 1px solid var(--hikari-border);
-    font-size: 0.82rem;
+    font-size: var(--hikari-size-xs);
     font-weight: 700;
     letter-spacing: 0;
 }
@@ -468,7 +468,7 @@ select option {
     border-radius: var(--hikari-radius);
     color: var(--hikari-text);
     padding: 0 0.9rem;
-    font-size: 0.95rem;
+    font-size: var(--hikari-size-base);
 }
 .jsearch-form select,
 .page-select {
@@ -584,7 +584,7 @@ select option {
     max-width: 46rem;
     margin: 0;
     color: var(--hikari-text-muted);
-    font-size: 1rem;
+    font-size: var(--hikari-size-md);
     line-height: 1.55;
 }
 .hikari-challenges-actions {
@@ -609,14 +609,14 @@ select option {
 .category-header span,
 .category-header strong {
     color: var(--hikari-text-muted);
-    font-size: 0.78rem;
+    font-size: var(--hikari-size-xs);
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0;
 }
 .category-header h2 {
     margin: 0.1rem 0 0;
-    font-size: 1.35rem;
+    font-size: var(--hikari-size-xl);
     line-height: 1.15;
 }
 .hikari-challenge-grid {
@@ -651,7 +651,7 @@ select option {
 .hikari-challenge-card strong {
     display: block;
     color: var(--hikari-text);
-    font-size: 1rem;
+    font-size: var(--hikari-size-md);
     font-weight: 700;
     line-height: 1.25;
     overflow-wrap: anywhere;
@@ -664,8 +664,8 @@ select option {
     color: var(--hikari-text-muted);
     background-color: var(--hikari-surface-2);
     border: 1px solid var(--hikari-border);
-    border-radius: 999px;
-    font-size: 0.72rem;
+    border-radius: var(--hikari-radius-pill);
+    font-size: var(--hikari-size-2xs);
     font-weight: 700;
 }
 .jchallenge-solved .hikari-challenge-status {
@@ -684,7 +684,7 @@ select option {
 .hikari-challenge-points small {
     color: var(--hikari-text-muted);
     font-family: var(--hikari-font);
-    font-size: 0.75rem;
+    font-size: var(--hikari-size-2xs);
 }
 .jchallenge-solved {
     border-color: rgba(16, 185, 129, 0.8);
@@ -755,7 +755,7 @@ select option {
 .jchallenge-kicker {
     margin: 0 0 0.35rem;
     color: var(--hikari-primary-strong);
-    font-size: 0.76rem;
+    font-size: var(--hikari-size-2xs);
     font-weight: 800;
     text-transform: uppercase;
     letter-spacing: 0.06em;
@@ -775,8 +775,8 @@ select option {
     color: var(--hikari-accent);
     background: rgba(212, 163, 90, 0.09);
     border: 1px solid rgba(212, 163, 90, 0.22);
-    border-radius: 999px;
-    font-size: 0.82rem;
+    border-radius: var(--hikari-radius-pill);
+    font-size: var(--hikari-size-xs);
     font-weight: 800;
     white-space: nowrap;
 }
@@ -799,7 +799,7 @@ select option {
     color: var(--hikari-text);
     background: transparent;
     border: 1px solid rgba(154, 167, 183, 0.24);
-    border-radius: 7px;
+    border-radius: var(--hikari-radius);
     font-weight: 800;
     text-align: center;
     text-decoration: none;
@@ -820,8 +820,8 @@ select option {
     padding: 0.24rem 0.5rem;
     color: var(--hikari-text-muted);
     border: 1px solid rgba(154, 167, 183, 0.22);
-    border-radius: 999px;
-    font-size: 0.75rem;
+    border-radius: var(--hikari-radius-pill);
+    font-size: var(--hikari-size-2xs);
     font-weight: 700;
 }
 .jchall-description {
@@ -860,12 +860,12 @@ select option {
 .jchallenge-submit-panel h3 {
     margin: 0 0 0.35rem;
     color: var(--hikari-text);
-    font-size: 1rem;
+    font-size: var(--hikari-size-md);
 }
 .jchallenge-submit-panel p {
     margin: 0 0 0.85rem;
     color: var(--hikari-text-muted);
-    font-size: 0.86rem;
+    font-size: var(--hikari-size-sm);
     line-height: 1.45;
 }
 .jchall-input-form {
@@ -899,7 +899,7 @@ select option {
     color: var(--hikari-on-primary);
     background-color: var(--hikari-primary);
     border: 1px solid var(--hikari-primary);
-    border-radius: 7px;
+    border-radius: var(--hikari-radius);
     font-weight: 800;
     line-height: 1;
 }
@@ -942,7 +942,7 @@ select option {
     margin: 0 0 0.5rem;
     padding: 0;
     color: var(--hikari-text-muted);
-    font-size: 0.78rem;
+    font-size: var(--hikari-size-xs);
     font-weight: 700;
     list-style: none;
 }
@@ -964,7 +964,7 @@ select option {
 }
 .team-join-panel p {
     color: var(--hikari-text-muted);
-    font-size: 1rem;
+    font-size: var(--hikari-size-md);
     line-height: 1.55;
 }
 .team-join-actions {
@@ -1018,7 +1018,7 @@ select option {
     border-left: 3px solid var(--hikari-accent);
     background-color: var(--hikari-accent-soft);
     color: var(--hikari-text-muted);
-    font-size: 0.9rem;
+    font-size: var(--hikari-size-sm);
     line-height: 1.5;
 }
 .hikari-team-captain-actions {
@@ -1050,7 +1050,7 @@ select option {
     border: 1px solid var(--hikari-border);
     border-radius: var(--hikari-radius);
     color: var(--hikari-text-muted);
-    font-size: 0.93rem;
+    font-size: var(--hikari-size-base);
     line-height: 1.5;
     counter-increment: guide-step;
 }
@@ -1067,7 +1067,7 @@ select option {
     border: 1px solid rgba(16, 185, 129, 0.45);
     border-radius: 50%;
     color: var(--hikari-primary-strong);
-    font-size: 0.78rem;
+    font-size: var(--hikari-size-xs);
     font-weight: 700;
 }
 .hikari-guide-steps strong {
@@ -1080,7 +1080,7 @@ select option {
 }
 .hikari-guide-rules h2 {
     margin: 0 0 0.6rem;
-    font-size: 1.1rem;
+    font-size: var(--hikari-size-lg);
 }
 .hikari-guide-rules ul {
     display: grid;
@@ -1131,7 +1131,7 @@ select option {
 .hikari-team-card h3,
 .hikari-request-card h3 {
     margin: 0;
-    font-size: 1.1rem;
+    font-size: var(--hikari-size-lg);
 }
 .hikari-team-card p,
 .hikari-request-card p {
@@ -1295,7 +1295,7 @@ select option {
 .hikari-eyebrow {
     color: var(--hikari-primary);
     font-family: var(--hikari-font-display);
-    font-size: 0.78rem;
+    font-size: var(--hikari-size-xs);
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0;
@@ -1342,7 +1342,7 @@ select option {
     border: 1px solid var(--hikari-border);
     border-radius: var(--hikari-radius);
     color: var(--hikari-text);
-    font-size: 0.92rem;
+    font-size: var(--hikari-size-base);
     font-weight: 700;
     transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease, transform 160ms ease;
 }
@@ -1390,14 +1390,14 @@ select option {
 .hikari-support-item span {
     display: block;
     color: var(--hikari-primary-strong);
-    font-size: 0.86rem;
+    font-size: var(--hikari-size-sm);
     font-weight: 700;
     margin-bottom: 0.45rem;
 }
 .hikari-support-item p {
     max-width: 18rem;
     color: var(--hikari-text-muted);
-    font-size: 0.9rem;
+    font-size: var(--hikari-size-sm);
     line-height: 1.45;
     margin: 0;
 }
@@ -1493,7 +1493,7 @@ select option {
     }
     .navbar .nav-link {
         padding: 0.25rem 0 !important;
-        font-size: 0.86rem;
+        font-size: var(--hikari-size-sm);
     }
     .navbar .d-sm-inline.d-md-none.d-lg-inline {
         display: inline !important;
@@ -1503,7 +1503,7 @@ select option {
     }
 }
 
-@media (min-width: 768px) and (max-width: 84rem) {
+@media (min-width: 768px) and (max-width: 55rem) {
     .navbar-expand-md > .container,
     .navbar-expand-md > .container-fluid,
     .navbar-expand-md > .container-md,
@@ -1521,7 +1521,7 @@ select option {
     .navbar-expand-md .navbar-nav .nav-link {
         padding-right: 0.5rem;
         padding-left: 0.5rem;
-        font-size: 0.84rem;
+        font-size: var(--hikari-size-sm);
     }
 }
 
@@ -1592,7 +1592,7 @@ select option {
     }
 }
 
-@media (min-width: 768px) and (max-width: 96rem) {
+@media (min-width: 768px) and (max-width: 55rem) {
     .navbar-expand-md > .container,
     .navbar-expand-md > .container-fluid,
     .navbar-expand-md > .container-md,
@@ -1624,7 +1624,7 @@ select option {
     .navbar-expand-md .navbar-nav .nav-link {
         padding-right: 0.48rem;
         padding-left: 0.48rem;
-        font-size: 0.84rem;
+        font-size: var(--hikari-size-sm);
     }
     .navbar .d-sm-inline.d-md-none.d-lg-inline {
         display: none !important;
@@ -1759,7 +1759,7 @@ select option {
     height: auto;
     margin: 0;
     padding: 0.75rem 1rem !important;
-    font-size: 0.95rem;
+    font-size: var(--hikari-size-base);
     line-height: 1.5;
     border-radius: var(--hikari-radius);
 }
@@ -1836,7 +1836,7 @@ select option {
     gap: 0.75rem;
     margin: 1.1rem 0 0.85rem;
     color: var(--hikari-text-muted);
-    font-size: 0.78rem;
+    font-size: var(--hikari-size-xs);
     letter-spacing: 0.18em;
     text-transform: uppercase;
 }
@@ -1859,7 +1859,7 @@ select option {
     color: var(--hikari-text);
     font-family: var(--hikari-font-display);
     font-weight: 600;
-    font-size: 0.95rem;
+    font-size: var(--hikari-size-base);
     letter-spacing: 0.02em;
     text-decoration: none;
     border-radius: var(--hikari-radius);
@@ -1875,4 +1875,12 @@ select option {
 .login-container .hikari-auth-google svg {
     width: 1.15rem;
     height: 1.15rem;
+}
+
+/* Separate brand from navigation on wide screens. */
+@media (min-width: 55.0625rem) {
+    .navbar .navbar-brand {
+        padding-right: 1.1rem;
+        border-right: 1px solid var(--hikari-border);
+    }
 }

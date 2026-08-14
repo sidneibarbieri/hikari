@@ -16,14 +16,14 @@
 
 .research-header h1 {
     margin: 0;
-    font-size: 1.5rem;
+    font-size: var(--hikari-size-xl);
 }
 
 .research-subtitle {
     grid-column: 1;
     margin: 0;
     color: var(--hikari-text-muted);
-    font-size: 0.9rem;
+    font-size: var(--hikari-size-sm);
 }
 
 .research-actions {
@@ -61,7 +61,7 @@
     display: flex;
     align-items: center;
     color: var(--hikari-text-muted);
-    font-size: 0.74rem;
+    font-size: var(--hikari-size-2xs);
     font-weight: 700;
     line-height: 1.05rem;
     text-transform: uppercase;
@@ -73,7 +73,7 @@
     width: 100%;
     min-height: 2.65rem;
     border: 1px solid var(--hikari-border);
-    border-radius: 6px;
+    border-radius: var(--hikari-radius);
     background-color: var(--hikari-surface-2);
     color: var(--hikari-text);
     padding: 0.55rem 0.7rem;
@@ -118,7 +118,7 @@
 }
 
 .research-card h2 {
-    font-size: 1rem;
+    font-size: var(--hikari-size-md);
     margin-bottom: 0.75rem;
     color: var(--hikari-text-muted);
     text-transform: uppercase;
@@ -127,7 +127,7 @@
 .research-card-help {
     margin: -0.4rem 0 0.85rem;
     color: var(--hikari-text-muted);
-    font-size: 0.82rem;
+    font-size: var(--hikari-size-xs);
     line-height: 1.45;
 }
 .research-card-help strong {
@@ -143,14 +143,14 @@
 
 .metric-label {
     color: var(--hikari-text-muted);
-    font-size: 0.85rem;
+    font-size: var(--hikari-size-sm);
     text-transform: uppercase;
     letter-spacing: 0;
 }
 
 .metric-value {
     color: var(--hikari-primary);
-    font-size: 2.5rem;
+    font-size: var(--hikari-size-2xl);
     font-weight: 700;
     line-height: 1.1;
     font-variant-numeric: tabular-nums;
@@ -177,14 +177,14 @@
 }
 .research-kpi .kpi-label {
     color: var(--hikari-text-muted);
-    font-size: 0.74rem;
+    font-size: var(--hikari-size-2xs);
     text-transform: uppercase;
     letter-spacing: 0.04em;
     font-weight: 600;
 }
 .research-kpi .kpi-value {
     color: var(--hikari-text);
-    font-size: 2.1rem;
+    font-size: var(--hikari-size-2xl);
     font-weight: 700;
     font-variant-numeric: tabular-nums;
     line-height: 1;
@@ -192,7 +192,7 @@
 }
 .research-kpi .kpi-hint {
     color: var(--hikari-text-dim, var(--hikari-text-muted));
-    font-size: 0.78rem;
+    font-size: var(--hikari-size-xs);
     line-height: 1.35;
 }
 
@@ -225,7 +225,7 @@
 
 .feedback-key-form label span {
     color: var(--hikari-text-muted);
-    font-size: 0.74rem;
+    font-size: var(--hikari-size-2xs);
     font-weight: 700;
     line-height: 1.05rem;
     text-transform: uppercase;
@@ -236,7 +236,7 @@
     min-width: 12rem;
     min-height: 2.65rem;
     border: 1px solid var(--hikari-border);
-    border-radius: 6px;
+    border-radius: var(--hikari-radius);
     background-color: var(--hikari-surface-2);
     color: var(--hikari-text);
     padding: 0.55rem 0.7rem;
@@ -266,7 +266,7 @@
 
 .feedback-overview-card > span {
     color: var(--hikari-text-muted);
-    font-size: 0.74rem;
+    font-size: var(--hikari-size-2xs);
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.04em;
@@ -274,7 +274,7 @@
 
 .feedback-overview-card strong {
     color: var(--hikari-text);
-    font-size: 2rem;
+    font-size: var(--hikari-size-2xl);
     line-height: 1.05;
     font-variant-numeric: tabular-nums;
 }
@@ -284,14 +284,14 @@
 .feedback-open-list small,
 .feedback-stat-list dt {
     color: var(--hikari-text-muted);
-    font-size: 0.8rem;
+    font-size: var(--hikari-size-xs);
     line-height: 1.35;
 }
 
 .feedback-progress {
     width: 100%;
     height: 0.45rem;
-    border-radius: 999px;
+    border-radius: var(--hikari-radius-pill);
     overflow: hidden;
     background-color: var(--hikari-surface-2);
 }
@@ -299,7 +299,7 @@
 .feedback-progress span {
     display: block;
     height: 100%;
-    border-radius: 999px;
+    border-radius: var(--hikari-radius-pill);
     background: linear-gradient(90deg, var(--hikari-primary), var(--hikari-accent, #d4a35a));
 }
 
@@ -312,7 +312,7 @@
 .feedback-panel h3 {
     margin: 0 0 0.8rem;
     color: var(--hikari-text);
-    font-size: 1rem;
+    font-size: var(--hikari-size-md);
 }
 
 .feedback-team-list,
@@ -380,7 +380,7 @@
 
 .feedback-open-list span {
     color: var(--hikari-primary);
-    font-size: 0.78rem;
+    font-size: var(--hikari-size-xs);
     font-weight: 700;
     text-transform: uppercase;
 }
@@ -409,7 +409,7 @@
     grid-template-columns: minmax(8rem, 14rem) 1fr 3rem;
     align-items: center;
     gap: 0.75rem;
-    font-size: 0.88rem;
+    font-size: var(--hikari-size-sm);
 }
 .bar-label {
     color: var(--hikari-text);
@@ -421,11 +421,11 @@
     background-color: transparent;
     padding: 0;
     color: var(--hikari-primary);
-    font-size: 0.85rem;
+    font-size: var(--hikari-size-sm);
 }
 .bar-track {
     background-color: var(--hikari-surface-2);
-    border-radius: 999px;
+    border-radius: var(--hikari-radius-pill);
     height: 0.5rem;
     overflow: hidden;
 }
@@ -433,7 +433,7 @@
     display: block;
     height: 100%;
     background: linear-gradient(90deg, var(--hikari-primary), rgba(16, 185, 129, 0.6));
-    border-radius: 999px;
+    border-radius: var(--hikari-radius-pill);
     transition: width 220ms ease;
 }
 .bar-value {
@@ -441,7 +441,7 @@
     font-weight: 600;
     font-variant-numeric: tabular-nums;
     text-align: right;
-    font-size: 0.9rem;
+    font-size: var(--hikari-size-sm);
 }
 
 .bar-overflow {
@@ -452,7 +452,7 @@
 .bar-overflow > summary {
     cursor: pointer;
     color: var(--hikari-text-muted);
-    font-size: 0.82rem;
+    font-size: var(--hikari-size-xs);
     list-style: none;
     padding: 0.25rem 0;
     user-select: none;
@@ -474,7 +474,7 @@
 
 .research-empty {
     color: var(--hikari-text-muted);
-    font-size: 0.88rem;
+    font-size: var(--hikari-size-sm);
     font-style: italic;
     margin: 0.5rem 0 0;
 }
@@ -493,7 +493,7 @@
     border-bottom: 1px solid var(--hikari-border);
     color: var(--hikari-text-muted);
     font-weight: 600;
-    font-size: 0.8rem;
+    font-size: var(--hikari-size-xs);
     text-transform: uppercase;
     letter-spacing: 0;
 }
@@ -509,8 +509,8 @@
     background-color: var(--hikari-surface-2);
     color: var(--hikari-primary);
     padding: 0.1rem 0.4rem;
-    border-radius: 3px;
-    font-size: 0.85rem;
+    border-radius: var(--hikari-radius-sm);
+    font-size: var(--hikari-size-sm);
 }
 
 .text-right { text-align: right; }
@@ -543,7 +543,7 @@
     }
     .bar-row {
         grid-template-columns: minmax(6rem, 9rem) 1fr 2.5rem;
-        font-size: 0.84rem;
+        font-size: var(--hikari-size-sm);
     }
     .research-header,
     .research-grid,
@@ -583,7 +583,7 @@
 .hikari-questionnaire-header p {
     max-width: 70ch;
     color: var(--hikari-text-muted);
-    font-size: 0.97rem;
+    font-size: var(--hikari-size-base);
     line-height: 1.65;
 }
 .hikari-questionnaire-form {
@@ -593,7 +593,7 @@
 .hikari-question-group {
     background-color: var(--hikari-surface);
     border: 1px solid var(--hikari-border);
-    border-radius: 12px;
+    border-radius: var(--hikari-radius);
     padding: 1.5rem 1.5rem 1.75rem;
 }
 .hikari-question-group > header {
@@ -603,12 +603,12 @@
 }
 .hikari-question-group > header h2 {
     font-family: var(--hikari-font-display);
-    font-size: 1.18rem;
+    font-size: var(--hikari-size-lg);
     margin: 0 0 0.35rem;
 }
 .hikari-question-group > header p {
     color: var(--hikari-text-muted);
-    font-size: 0.88rem;
+    font-size: var(--hikari-size-sm);
     margin: 0;
 }
 .hikari-question-grid {
@@ -622,7 +622,7 @@
     gap: 0.45rem;
 }
 .hikari-question label {
-    font-size: 0.86rem;
+    font-size: var(--hikari-size-sm);
     color: var(--hikari-text);
     font-weight: 500;
     line-height: 1.4;
@@ -631,10 +631,10 @@
     background-color: var(--hikari-surface-2);
     color: var(--hikari-text);
     border: 1px solid var(--hikari-border);
-    border-radius: 6px;
+    border-radius: var(--hikari-radius);
     padding: 0.6rem 0.7rem;
     font: inherit;
-    font-size: 0.95rem;
+    font-size: var(--hikari-size-base);
     transition: border-color 140ms ease, box-shadow 140ms ease;
 }
 .hikari-input:focus {
@@ -665,7 +665,7 @@
     display: flex;
     align-items: center;
     gap: 0.55rem;
-    font-size: 0.92rem;
+    font-size: var(--hikari-size-base);
     color: var(--hikari-text);
 }
 .hikari-checkboxes input[type="checkbox"] {
@@ -683,7 +683,7 @@
     margin: 0.25rem 0 0;
     padding-left: 1rem;
     color: var(--hikari-danger);
-    font-size: 0.82rem;
+    font-size: var(--hikari-size-xs);
 }
 .hikari-questionnaire-submit {
     display: flex;
@@ -714,7 +714,7 @@
 .siem-subtitle {
     max-width: 68ch;
     color: var(--hikari-text-muted);
-    font-size: 0.98rem;
+    font-size: var(--hikari-size-md);
 }
 .siem-actions {
     display: flex;
@@ -737,7 +737,7 @@
         radial-gradient(circle at top right, rgba(82, 196, 133, 0.1), transparent 35%),
         var(--hikari-surface);
     border: 1px solid var(--hikari-border);
-    border-radius: 8px;
+    border-radius: var(--hikari-radius);
 }
 .siem-metrics article {
     padding: 1rem 1.15rem;
@@ -745,7 +745,7 @@
 .siem-metrics span {
     display: block;
     color: var(--hikari-text-muted);
-    font-size: 0.78rem;
+    font-size: var(--hikari-size-xs);
     text-transform: uppercase;
     letter-spacing: 0.08em;
 }
@@ -753,7 +753,7 @@
     display: block;
     color: var(--hikari-primary-strong);
     font-family: var(--hikari-font-display);
-    font-size: 2.2rem;
+    font-size: var(--hikari-size-2xl);
     line-height: 1.1;
     margin-top: 0.35rem;
 }
@@ -762,7 +762,7 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    font-size: 1.45rem;
+    font-size: var(--hikari-size-xl);
 }
 .siem-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -785,12 +785,12 @@
     margin-bottom: 1rem;
 }
 .siem-panel h2 {
-    font-size: 1.05rem;
+    font-size: var(--hikari-size-md);
     margin: 0;
 }
 .siem-panel-heading span {
     color: var(--hikari-text-muted);
-    font-size: 0.78rem;
+    font-size: var(--hikari-size-xs);
     letter-spacing: 0.08em;
     text-transform: uppercase;
 }
@@ -830,7 +830,7 @@
 .siem-bar-track {
     height: 0.55rem;
     overflow: hidden;
-    border-radius: 999px;
+    border-radius: var(--hikari-radius-pill);
     background: rgba(255, 255, 255, 0.08);
 }
 .siem-bar-track span {
@@ -849,7 +849,7 @@
     gap: 0.5rem;
     padding: 0.85rem;
     border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 8px;
+    border-radius: var(--hikari-radius);
     background: rgba(3, 7, 18, 0.42);
 }
 .siem-message span {
@@ -858,7 +858,7 @@
 }
 .siem-message strong {
     color: var(--hikari-primary-strong);
-    font-size: 1.1rem;
+    font-size: var(--hikari-size-lg);
 }
 .siem-panel--wide {
     overflow: hidden;
@@ -896,7 +896,7 @@
 .siem-shortcuts {
     background-color: var(--hikari-surface);
     border: 1px solid var(--hikari-border);
-    border-radius: 10px;
+    border-radius: var(--hikari-radius);
     padding: 1.2rem 1.4rem 1.4rem;
     margin-bottom: 1.25rem;
 }
@@ -905,14 +905,14 @@
 }
 .siem-shortcuts > header h2 {
     font-family: var(--hikari-font-display);
-    font-size: 1.05rem;
+    font-size: var(--hikari-size-md);
     margin: 0 0 0.2rem;
     color: var(--hikari-text);
 }
 .siem-shortcuts > header p {
     color: var(--hikari-text-muted);
     margin: 0;
-    font-size: 0.86rem;
+    font-size: var(--hikari-size-sm);
 }
 .siem-shortcut-grid {
     list-style: none;
@@ -926,7 +926,7 @@
     display: block;
     padding: 0.75rem 0.95rem;
     border: 1px solid var(--hikari-border);
-    border-radius: 8px;
+    border-radius: var(--hikari-radius);
     background-color: var(--hikari-surface-2);
     color: var(--hikari-text);
     text-decoration: none;
@@ -935,22 +935,22 @@
 .siem-shortcut strong {
     display: block;
     font-family: var(--hikari-font-display);
-    font-size: 0.95rem;
+    font-size: var(--hikari-size-base);
     color: var(--hikari-text);
     margin-bottom: 0.2rem;
 }
 .siem-shortcut span {
     display: block;
     color: var(--hikari-text-muted);
-    font-size: 0.82rem;
+    font-size: var(--hikari-size-xs);
     line-height: 1.4;
 }
 .siem-shortcut code {
     background-color: var(--hikari-surface);
     color: var(--hikari-accent);
     padding: 0.05rem 0.32rem;
-    border-radius: 3px;
-    font-size: 0.82rem;
+    border-radius: var(--hikari-radius-sm);
+    font-size: var(--hikari-size-xs);
 }
 .siem-shortcut:hover {
     border-color: var(--hikari-primary);
