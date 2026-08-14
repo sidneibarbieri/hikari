@@ -44,6 +44,7 @@ compose() {
 restore_id=$(date -u +%Y%m%dT%H%M%SZ)
 restore_path="$BACKUP_DIR/elasticsearch/restore/$restore_id"
 restore_repository="hikari_restore_$restore_id"
+snapshot_indices="competition1,hikari-activity"
 mkdir -p "$restore_path"
 tar -C "$restore_path" -xf "$workdir/elasticsearch-repository.tar"
 chown -R 1000:0 "$restore_path"
@@ -69,11 +70,11 @@ compose exec -T elasticsearch curl -fsS -X PUT \
   "http://localhost:9200/_snapshot/$restore_repository" \
   -d "{\"type\":\"fs\",\"settings\":{\"location\":\"restore/$restore_id\"}}" >/dev/null
 compose exec -T elasticsearch curl -fsS -X DELETE \
-  'http://localhost:9200/competition1,hikari_activity?ignore_unavailable=true' >/dev/null
+  "http://localhost:9200/$snapshot_indices?ignore_unavailable=true" >/dev/null
 compose exec -T elasticsearch curl -fsS -X POST \
   -H 'Content-Type: application/json' \
   "http://localhost:9200/_snapshot/$restore_repository/snapshot/_restore?wait_for_completion=true" \
-  -d '{"indices":"competition1,hikari_activity","include_global_state":false}' >/dev/null
+  -d "{\"indices\":\"$snapshot_indices\",\"include_global_state\":false}" >/dev/null
 
 compose up -d ctfd
 compose exec -T elasticsearch curl -fsS -X DELETE \

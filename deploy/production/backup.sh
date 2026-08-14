@@ -47,6 +47,9 @@ echo "  - copying uploaded evidence"
 compose exec -T ctfd tar -C /var/uploads -cf - . > "$workdir/uploads.tar"
 
 echo "  - snapshotting Elasticsearch indices"
+snapshot_indices="competition1,hikari-activity"
+compose exec -T elasticsearch curl -fsS \
+  "http://localhost:9200/_resolve/index/$snapshot_indices" >/dev/null
 compose exec -T elasticsearch curl -fsS -X PUT \
   -H 'Content-Type: application/json' \
   "http://localhost:9200/_snapshot/$repository" \
@@ -54,7 +57,7 @@ compose exec -T elasticsearch curl -fsS -X PUT \
 compose exec -T elasticsearch curl -fsS -X PUT \
   -H 'Content-Type: application/json' \
   "http://localhost:9200/_snapshot/$repository/snapshot?wait_for_completion=true" \
-  -d '{"indices":"competition1,hikari_activity","include_global_state":false}' \
+  -d "{\"indices\":\"$snapshot_indices\",\"include_global_state\":false}" \
   > "$workdir/elasticsearch-snapshot.json"
 tar -C "$BACKUP_DIR/elasticsearch/checkpoints/$snapshot" -cf \
   "$workdir/elasticsearch-repository.tar" .
