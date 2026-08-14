@@ -18,6 +18,29 @@
 | Docker Compose | v2.20+ |
 | Domínio | Ex.: `hikari.sua-instituicao.br` apontando para o IP do servidor |
 
+### De onde vêm esses números
+
+Os dados do Hikari são pequenos. Uma competição inteira com 51 competidores,
+3.185 submissões e 114 desafios ocupa **menos de 1 MB** em cópia do banco; o
+índice que os competidores investigam, com 45.768 eventos, ocupa **8 MB**. Uma
+edição arquivada — telemetria, feedback, acervo e banco — fica na casa das
+dezenas de megabytes.
+
+O disco é consumido pelas **imagens Docker**, cerca de 10 GB numa instalação
+que não reconstrói imagens, e por eventuais reconstruções. Os 40 GB acima dão
+margem para isso, para várias edições arquivadas e para os checkpoints de
+backup.
+
+A **RAM é o recurso que aperta**, não o disco. Elasticsearch, Kafka e Logstash
+são processos Java: cada um reserva seu heap independentemente do volume de
+dados. Um heap pequeno demais não produz mensagem de erro — produz lentidão
+crescente e pausas de coleta de lixo no meio da competição. Ajuste
+`ES_JAVA_OPTS`, `LS_JAVA_OPTS` e `KAFKA_HEAP_OPTS` no `.env.production` à RAM
+do servidor; o arquivo de exemplo traz os valores sugeridos para 8 e 16 GB.
+
+Não dimensione a RAM pelo tamanho dos dados. Dimensione pelo número de pessoas
+consultando o SIEM ao mesmo tempo.
+
 ---
 
 ## Passo 1 — Preparar o servidor

@@ -23,7 +23,26 @@ Linux com Docker Engine. Os itens abaixo são necessários.
 
 O host precisa de aproximadamente 8 GB de memória livre e 20 GB de disco livre
 para as imagens dos contêineres, o MariaDB, os índices do Elasticsearch e os
-tópicos do Kafka.
+tópicos do Kafka. Uma stack em operação consome cerca de 2,5 GB de memória.
+
+### Memória da máquina virtual do Docker
+
+No macOS e no Windows o Docker roda dentro de uma máquina virtual com memória
+própria, e o valor padrão costuma ficar **abaixo** do mínimo acima, mesmo num
+computador com bastante RAM. Confira antes de instalar:
+
+    docker info --format '{{.MemTotal}}' | awk '{printf "%.1f GiB\n", $1/1024/1024/1024}'
+
+Se o resultado for menor que 8 GiB, aumente a memória da máquina virtual nas
+preferências do Docker Desktop ou, no Colima, recriando a instância:
+
+    colima stop && colima start --memory 16 --disk 60 --cpu 4
+
+**Reserve 16 GiB se você pretende rodar a suíte de verificação com a stack de
+operação no ar.** São duas stacks completas, cada uma com seu Elasticsearch, e
+num host que não alimenta as duas o núcleo recupera memória de uma delas — em
+geral a que guarda os dados reais. O `tests/acceptance_isolated.sh` detecta
+essa situação e se recusa a começar, explicando o que fazer.
 
 ## Obter o código
 
