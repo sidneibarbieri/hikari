@@ -133,8 +133,8 @@ de backup exclusivos para esta instalação. Isso evita colisões com stacks
 anteriores:
 
 ```bash
-HIKARI_COMPOSE_PROJECT=hikari-reseg2026
-HIKARI_BACKUP_DIR=/home/ubuntu/hikari-reseg-2026/backups
+HIKARI_COMPOSE_PROJECT=hikari
+HIKARI_BACKUP_DIR=/opt/hikari/backups
 ```
 
 Enquanto o DNS ainda não apontar para o servidor, prepare a stack sem publicar

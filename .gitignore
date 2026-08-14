@@ -44,3 +44,6 @@ build/
 # Archived editions: database copies and competitor telemetry. Personal data,
 # never versioned.
 deploy/local/arquivo/
+
+# Production backups are operational data, not source code.
+backups/
