@@ -18,6 +18,21 @@
 | Docker Compose | v2.20+ |
 | Domínio | Ex.: `hikari.sua-instituicao.br` apontando para o IP do servidor |
 
+### Referências de dimensionamento
+
+Use estas configurações como ponto de partida. Elas não substituem um ensaio
+operacional com o conjunto de desafios e o número esperado de participantes.
+
+| Cenário | CPU | RAM | Disco livre |
+|---|---:|---:|---:|
+| Ensaio ou turma pequena | 4 vCPU | 8 GB | 40 GB |
+| Competição com até 50 equipes | 4 vCPU | 16 GB | 80 GB |
+| Competição com cerca de 100 equipes | 8 vCPU | 32 GB | 100 GB |
+
+Para a última linha, execute um ensaio com consultas simultâneas no SIEM antes
+de abrir a competição. A capacidade efetiva depende do volume de eventos, da
+complexidade das consultas e da concorrência real.
+
 ### De onde vêm esses números
 
 Os dados do Hikari são pequenos. Uma competição inteira com 51 competidores,
@@ -108,6 +123,15 @@ KIBANA_ENCRYPTION_KEY=00112233445566778899aabbccddeeff
 ES_ENCRYPTION_KEY=ffeeddccbbaa99887766554433221100
 ```
 
+Em host compartilhado, também defina um nome de projeto Docker e um diretório
+de backup exclusivos para esta instalação. Isso evita colisões com stacks
+anteriores:
+
+```bash
+HIKARI_COMPOSE_PROJECT=hikari-reseg2026
+HIKARI_BACKUP_DIR=/home/ubuntu/hikari-reseg-2026/backups
+```
+
 ### Variáveis opcionais — Google OAuth
 
 Se quiser que os competidores façam login com Google:
@@ -170,6 +194,12 @@ sudo ./setup_production.sh
 ```
 
 > O script verifica cada etapa e para com uma mensagem clara se algo der errado.
+
+Em servidor que já hospeda outros serviços, o instalador preserva os blocos
+existentes do Nginx e adiciona apenas o virtual host do domínio configurado em
+`HIKARI_DOMAIN`. A política de firewall também é preservada por padrão. Em
+infraestrutura de nuvem, configure as regras no provedor; use
+`HIKARI_MANAGE_UFW=true` somente em host dedicado sob sua administração.
 
 ## Endereços e portas
 

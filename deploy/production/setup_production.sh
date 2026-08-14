@@ -26,6 +26,11 @@ info "Verificando pré-requisitos..."
 
 source "$ENV_FILE"
 
+# The deployment file may select a project and backup location without relying
+# on environment inherited by sudo.
+COMPOSE_PROJECT_NAME=${HIKARI_COMPOSE_PROJECT:-"$COMPOSE_PROJECT_NAME"}
+HIKARI_BACKUP_DIR=${HIKARI_BACKUP_DIR:-/opt/hikari/backups}
+
 [[ -n "${HIKARI_DOMAIN:-}" ]] || fail "HIKARI_DOMAIN não definido em $ENV_FILE"
 [[ "$HIKARI_DOMAIN" =~ ^[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?(\.[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?)+$ ]] \
   || fail "HIKARI_DOMAIN deve ser um domínio válido, sem protocolo ou caminho."
@@ -62,8 +67,8 @@ ok "Pré-requisitos verificados."
 info "Instalando/configurando Nginx..."
 command -v nginx >/dev/null 2>&1 || apt-get install -y -qq nginx
 
-# Desativar o site default para liberar a porta 80
-rm -f /etc/nginx/sites-enabled/default
+# Preserve os sites existentes. O bloco com server_name específico abaixo pode
+# compartilhar as portas 80 e 443 com o site default do Nginx.
 
 # A configuração inicial usa apenas HTTP. Um host novo ainda não tem os
 # arquivos do certificado; testar uma configuração TLS antes da emissão falha.
@@ -251,13 +256,17 @@ CRON_BACKUP="0 2 * * * $BACKUP_SCRIPT >> /var/log/hikari-backup.log 2>&1"
 ok "Backup diário agendado às 02:00 (retenção: ${RETENTION_DAYS:-14} dias)."
 
 # ---- Firewall ---------------------------------------------------------------
-if command -v ufw >/dev/null 2>&1; then
+# Firewalls em nuvem e hosts já estabelecidos podem pertencer à infraestrutura.
+# Altere UFW somente quando o operador optar explicitamente por isso.
+if [[ "${HIKARI_MANAGE_UFW:-false}" == "true" ]] && command -v ufw >/dev/null 2>&1; then
   info "Configurando firewall (ufw)..."
   ufw allow 22/tcp  comment 'SSH'   >/dev/null || fail "Não foi possível liberar SSH no firewall."
   ufw allow 80/tcp  comment 'HTTP'  >/dev/null || fail "Não foi possível liberar HTTP no firewall."
   ufw allow 443/tcp comment 'HTTPS' >/dev/null || fail "Não foi possível liberar HTTPS no firewall."
   ufw --force enable >/dev/null || fail "Não foi possível ativar o firewall."
   ok "Firewall configurado (22/80/443 abertos)."
+else
+  info "Firewall do host preservado; valide as portas 22, 80 e 443 no provedor ou com a equipe de infraestrutura."
 fi
 
 # ---- Resumo -----------------------------------------------------------------
