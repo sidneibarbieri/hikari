@@ -42,7 +42,9 @@ source "$ENV_FILE"
   || fail "ES_ENCRYPTION_KEY deve ter exatamente 32 caracteres"
 
 command -v docker  >/dev/null 2>&1 || fail "Docker não instalado. Siga o Passo 1 do README."
-docker compose version >/dev/null 2>&1 || fail "Docker Compose v2 não instalado. Siga o Passo 1 do README."
+if ! command -v docker-compose >/dev/null 2>&1 && ! docker compose version >/dev/null 2>&1; then
+  fail "Docker Compose não instalado. Siga o Passo 1 do README."
+fi
 command -v curl >/dev/null 2>&1 || fail "curl não instalado."
 command -v certbot >/dev/null 2>&1 || {
   info "Instalando certbot..."
