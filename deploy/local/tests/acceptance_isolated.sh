@@ -70,11 +70,21 @@ fi
 # picks, and the loser is usually the stack holding real data. Say so before
 # starting rather than leaving the operator to discover a dead index later.
 REQUIRED_MEMORY_GIB=${HIKARI_ACCEPTANCE_MEMORY_GIB:-10}
-operating_containers=$(hikari_compose -f "$COMPOSE_FILE" -p local ps -q --status running 2>/dev/null | wc -l | tr -d ' ')
-if [[ "$operating_containers" != "0" ]]; then
-  available_gib=$(docker info --format '{{.MemTotal}}' 2>/dev/null \
-    | awk '{printf "%d", $1 / 1024 / 1024 / 1024}')
-  if [[ -n "$available_gib" && "$available_gib" -lt "$REQUIRED_MEMORY_GIB" ]]; then
+
+# Both readings let a real failure surface. Silencing them would turn a broken
+# Docker into "nothing is running, plenty of memory" and disable this guard at
+# the exact moment it is needed.
+operating_container_count() {
+  hikari_compose -f "$COMPOSE_FILE" -p local ps -q --status running | wc -l | tr -d ' '
+}
+
+docker_memory_gib() {
+  docker info --format '{{.MemTotal}}' | awk '{printf "%d", $1 / 1024 / 1024 / 1024}'
+}
+
+if [[ "$(operating_container_count)" != "0" ]]; then
+  available_gib=$(docker_memory_gib)
+  if [[ "$available_gib" -lt "$REQUIRED_MEMORY_GIB" ]]; then
     cat >&2 <<TXT
 A stack de operação está no ar e o Docker tem ${available_gib} GiB, abaixo dos
 ${REQUIRED_MEMORY_GIB} GiB necessários para as duas ao mesmo tempo. Rodar assim

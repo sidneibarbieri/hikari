@@ -39,6 +39,19 @@ trap 'rm -rf "$workspace"' EXIT
 pass() { echo "PASS: $*"; }
 fail() { echo "FAIL: $*"; exit 1; }
 
+# grep leaves with 1 when nothing matched and with 2 when it could not read the
+# file. Only the first is a zero count; the second has to surface.
+count_lines_matching() {
+  local pattern=$1 file=$2
+  local matches grep_status
+  matches=$(grep -c "$pattern" "$file") && grep_status=0 || grep_status=$?
+  case $grep_status in
+    0) printf '%s' "$matches" ;;
+    1) printf '0' ;;
+    *) fail "could not read $file while counting occurrences of '$pattern'" ;;
+  esac
+}
+
 extract_nonce() {
   grep -oE 'name="nonce"[^>]*value="[^"]+"' "$1" \
     | head -1 | sed -E 's/.*value="([^"]+)".*/\1/'
@@ -535,9 +548,9 @@ echo "== ATO 9. os dados da edição sobrevivem =="
 # ===========================================================================
 
 export_file="$workspace/export.jsonl"
-curl -sS -c "$admin_jar" -b "$admin_jar" -o "$export_file" \
+curl -fsS -c "$admin_jar" -b "$admin_jar" -o "$export_file" \
   "$CTFD_URL/admin/hikari/research/export.jsonl?competition_key=$run_key"
-records=$(grep -c "$run_key" "$export_file" || true)
+records=$(count_lines_matching "$run_key" "$export_file")
 [[ "$records" -gt 0 ]] || fail "the research export carries no record of this run"
 head -1 "$export_file" | python3 -c 'import json,sys; json.loads(sys.stdin.read())' \
   || fail "the research export is not readable as JSON"

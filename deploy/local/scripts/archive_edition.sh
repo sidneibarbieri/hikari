@@ -118,12 +118,12 @@ report_edition_data() {
     "$(sql "SELECT COUNT(*) FROM users WHERE type = 'admin';" | tr -d '[:space:]')"
 }
 
-archive_edition() {
-  local destination=$1
-  mkdir "$destination"
-
-  echo "Exportando o registro científico..."
-  hikari_compose exec -T ctfd python - <<'PY' > "$destination/atividade.jsonl"
+# Each export names the one thing it writes. Two constraints shape all three:
+# the CTFd imports need an application context while they are imported, so they
+# sit inside it, and the plugin loader writes to stdout while the app is built,
+# which would otherwise land in the middle of the exported data.
+export_activity() {
+  hikari_compose exec -T ctfd python - <<'PY' > "$1"
 import contextlib
 import sys
 
@@ -139,8 +139,10 @@ with app.app_context():
     for line in jsonl_lines(ResearchFilters()):
         sys.stdout.write(line)
 PY
+}
 
-  hikari_compose exec -T ctfd python - <<'PY' > "$destination/feedback.jsonl"
+export_feedback() {
+  hikari_compose exec -T ctfd python - <<'PY' > "$1"
 import contextlib
 import sys
 
@@ -155,9 +157,10 @@ with app.app_context():
     for line in feedback_jsonl_lines():
         sys.stdout.write(line)
 PY
+}
 
-  echo "Exportando o acervo de desafios..."
-  hikari_compose exec -T ctfd python - <<'PY' > "$destination/acervo-desafios.zip"
+export_challenge_collection() {
+  hikari_compose exec -T ctfd python - <<'PY' > "$1"
 import contextlib
 import sys
 
@@ -171,10 +174,26 @@ with app.app_context():
 
     sys.stdout.buffer.write(export_library("acervo", "Acervo de desafios"))
 PY
+}
+
+dump_database() {
+  hikari_compose exec -T db mariadb-dump -uctfd -pctfd --single-transaction ctfd > "$1"
+}
+
+# The order is the contract: everything is written before anything is removed.
+archive_edition() {
+  local destination=$1
+  mkdir "$destination"
+
+  echo "Exportando o registro científico..."
+  export_activity "$destination/atividade.jsonl"
+  export_feedback "$destination/feedback.jsonl"
+
+  echo "Exportando o acervo de desafios..."
+  export_challenge_collection "$destination/acervo-desafios.zip"
 
   echo "Copiando o banco de dados..."
-  hikari_compose exec -T db mariadb-dump -uctfd -pctfd --single-transaction ctfd \
-    > "$destination/banco.sql"
+  dump_database "$destination/banco.sql"
 
   write_manifest "$destination" "$(exported_challenge_count "$destination/acervo-desafios.zip")"
 }
