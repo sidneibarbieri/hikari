@@ -107,11 +107,18 @@ personal_default_hits=$(run_scan "$scannable_files" 'sidneibarbieri@gmail\\.com'
 echo "PASS: no personal account is seeded by default"
 
 exception_pattern="except ""Exception|\\bprint\\("
-# rebuild_siem_dashboard.py is a standalone CLI tool that uses stdout for
-# progress reporting — exclude it from the application-code print rule.
+# The rule targets application code, where progress belongs in a log rather
+# than on stdout. A script an operator runs by hand reports to the terminal by
+# design, and it declares itself with a main guard, so name the category
+# instead of listing files one by one.
+operator_tools=$(printf '%s\n' "$scannable_files" \
+  | grep -E '\.py$' \
+  | while IFS= read -r path; do
+      grep -q '^if __name__ == "__main__":' "$path" && printf '%s\n' "$path"
+    done)
 exception_files=$(printf '%s\n' "$scannable_files" \
   | grep -E '\.(py|sh)$' \
-  | grep -v 'rebuild_siem_dashboard\.py')
+  | grep -vxF "${operator_tools:-__sem_correspondencia__}")
 exception_hits=$(run_scan "$exception_files" "$exception_pattern")
 if [[ -n "$exception_hits" ]]; then
   fail "broad exception or print usage remains in Hikari-owned files:

@@ -1,6 +1,6 @@
 /* Shared Hikari design tokens for CTFd theme and plugin pages. */
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap');
+@import url('fonts.css');
 @import url('tokens.css');
 
 body {
@@ -1503,7 +1503,7 @@ select option {
     }
 }
 
-@media (min-width: 768px) and (max-width: 55rem) {
+@media (min-width: 768px) and (max-width: 70rem) {
     .navbar-expand-md > .container,
     .navbar-expand-md > .container-fluid,
     .navbar-expand-md > .container-md,
@@ -1592,7 +1592,7 @@ select option {
     }
 }
 
-@media (min-width: 768px) and (max-width: 55rem) {
+@media (min-width: 768px) and (max-width: 70rem) {
     .navbar-expand-md > .container,
     .navbar-expand-md > .container-fluid,
     .navbar-expand-md > .container-md,
@@ -1878,7 +1878,7 @@ select option {
 }
 
 /* Separate brand from navigation on wide screens. */
-@media (min-width: 55.0625rem) {
+@media (min-width: 70.0625rem) {
     .navbar .navbar-brand {
         padding-right: 1.1rem;
         border-right: 1px solid var(--hikari-border);
