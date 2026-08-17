@@ -625,6 +625,11 @@ select option {
     gap: 0.85rem;
 }
 .jchallenge-button {
+    /* A button inherits neither family nor size, so without this the whole
+       challenge grid falls back to the browser default. */
+    font-family: var(--hikari-font);
+    font-size: var(--hikari-size-base);
+    line-height: 1.45;
     min-height: 9.25rem;
     padding: 1rem;
     background:
