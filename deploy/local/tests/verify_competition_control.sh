@@ -8,6 +8,7 @@ ADMIN_EMAIL=${ADMIN_EMAIL:-admin@hikari.local}
 ADMIN_PASSWORD=${ADMIN_PASSWORD:-hikari_comp@2026}
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 LOCAL_DIR=$(cd "$SCRIPT_DIR/.." && pwd)
+source "$LOCAL_DIR/lib/compose.sh"
 COMPOSE_FILE=${COMPOSE_FILE:-"$LOCAL_DIR/docker-compose.yml"}
 stamp=$(date +%s)
 run_key="acceptance-${stamp}"
@@ -22,31 +23,31 @@ extract_nonce() {
 }
 
 run_duration_minutes() {
-  docker-compose -f "$COMPOSE_FILE" exec -T db mariadb -N -uctfd -pctfd ctfd \
+  docker-compose -f "$COMPOSE_FILE" exec -T db mariadb -N -u"$HIKARI_DB_USER" -p"$HIKARI_DB_PASSWORD" "$HIKARI_DB_NAME" \
     -e "SELECT TIMESTAMPDIFF(MINUTE, starts_at, ends_at) FROM hikari_competition_runs WHERE \`key\` = '$run_key';" \
     | tr -d '\r\n'
 }
 
 run_status() {
-  docker-compose -f "$COMPOSE_FILE" exec -T db mariadb -N -uctfd -pctfd ctfd \
+  docker-compose -f "$COMPOSE_FILE" exec -T db mariadb -N -u"$HIKARI_DB_USER" -p"$HIKARI_DB_PASSWORD" "$HIKARI_DB_NAME" \
     -e "SELECT status FROM hikari_competition_runs WHERE \`key\` = '$run_key';" \
     | tr -d '\r\n'
 }
 
 configured_start() {
-  docker-compose -f "$COMPOSE_FILE" exec -T db mariadb -N -uctfd -pctfd ctfd \
+  docker-compose -f "$COMPOSE_FILE" exec -T db mariadb -N -u"$HIKARI_DB_USER" -p"$HIKARI_DB_PASSWORD" "$HIKARI_DB_NAME" \
     -e "SELECT value FROM config WHERE \`key\` = 'start';" \
     | tr -d '\r\n'
 }
 
 remaining_seconds() {
-  docker-compose -f "$COMPOSE_FILE" exec -T db mariadb -N -uctfd -pctfd ctfd \
+  docker-compose -f "$COMPOSE_FILE" exec -T db mariadb -N -u"$HIKARI_DB_USER" -p"$HIKARI_DB_PASSWORD" "$HIKARI_DB_NAME" \
     -e "SELECT COALESCE(paused_remaining_seconds, '') FROM hikari_competition_runs WHERE \`key\` = '$run_key';" \
     | tr -d '\r\n'
 }
 
 active_test_run() {
-  docker-compose -f "$COMPOSE_FILE" exec -T db mariadb -N -uctfd -pctfd ctfd \
+  docker-compose -f "$COMPOSE_FILE" exec -T db mariadb -N -u"$HIKARI_DB_USER" -p"$HIKARI_DB_PASSWORD" "$HIKARI_DB_NAME" \
     -e "SELECT id, \`key\` FROM hikari_competition_runs WHERE status IN ('scheduled', 'running', 'paused') ORDER BY id DESC LIMIT 1;" \
     | tr -d '\r'
 }
@@ -190,7 +191,7 @@ code=$(curl -sS -c "$cookie_jar" -b "$cookie_jar" -o /dev/null -w '%{http_code}'
   -X POST "$CTFD_URL/admin/hikari/competitions/$cancel_id/cancel" \
   --data-urlencode "nonce=$(extract_nonce "$dashboard")")
 [[ "$code" == "302" ]] || { echo "FAIL: cancellation returned $code"; exit 1; }
-cancelled_status=$(docker-compose -f "$COMPOSE_FILE" exec -T db mariadb -N -uctfd -pctfd ctfd \
+cancelled_status=$(docker-compose -f "$COMPOSE_FILE" exec -T db mariadb -N -u"$HIKARI_DB_USER" -p"$HIKARI_DB_PASSWORD" "$HIKARI_DB_NAME" \
   -e "SELECT status FROM hikari_competition_runs WHERE \`key\` = '$cancel_key';" | tr -d '\r\n')
 [[ "$cancelled_status" == "cancelled" ]] || { echo "FAIL: scheduled execution was not cancelled"; exit 1; }
 [[ "$(configured_start)" -gt "$(date +%s)" ]] \

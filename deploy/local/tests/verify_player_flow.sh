@@ -12,6 +12,7 @@ set -euo pipefail
 CTFD_URL=${CTFD_URL:-http://localhost:8000}
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 LOCAL_DIR=$(cd "$SCRIPT_DIR/.." && pwd)
+source "$LOCAL_DIR/lib/compose.sh"
 COMPOSE_FILE=${COMPOSE_FILE:-"$LOCAL_DIR/docker-compose.yml"}
 
 stamp=$(date +%s)
@@ -41,7 +42,7 @@ db_count() {
   local query=$1
   local result
   result=$(docker-compose -f "$COMPOSE_FILE" exec -T db \
-    mariadb -uctfd -pctfd ctfd -N -B -e "$query")
+    mariadb -u"$HIKARI_DB_USER" -p"$HIKARI_DB_PASSWORD" "$HIKARI_DB_NAME" -N -B -e "$query")
   echo "${result//[[:space:]]/}"
 }
 

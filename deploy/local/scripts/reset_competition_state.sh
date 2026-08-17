@@ -56,8 +56,7 @@ with app.app_context():
     sys.stdout.write("competition schedule cleared\n")
 PY
 
-hikari_compose -f "$COMPOSE_FILE" exec -T db \
-  mariadb -uctfd -pctfd ctfd -N -B -e \
+hikari_mariadb -N -B -e \
   "UPDATE hikari_competition_runs
       SET status = 'cancelled'
     WHERE status IN ('scheduled', 'running', 'paused');

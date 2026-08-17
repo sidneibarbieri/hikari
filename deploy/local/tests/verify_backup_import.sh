@@ -33,7 +33,7 @@ trap cleanup EXIT
 
 query_db() {
   compose exec -T db \
-    mariadb -uctfd -pctfd ctfd -N -B -e "$1" | tr -d '[:space:]'
+    mariadb -u"$HIKARI_DB_USER" -p"$HIKARI_DB_PASSWORD" "$HIKARI_DB_NAME" -N -B -e "$1" | tr -d '[:space:]'
 }
 
 require_positive() {

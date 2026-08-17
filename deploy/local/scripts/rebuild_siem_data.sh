@@ -15,7 +15,7 @@ source "$LOCAL_DIR/lib/compose.sh"
 
 CONTAINER_SCRIPT=/tmp/rebuild_competition_data.py
 
-running=$(hikari_compose exec -T db mariadb -uctfd -pctfd ctfd -N -e \
+running=$(hikari_mariadb -N -e \
   "SELECT COUNT(*) FROM hikari_competition_runs WHERE status IN ('scheduled','running','paused');" \
   | tr -d '[:space:]')
 if [[ "$running" != "0" ]]; then

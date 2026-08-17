@@ -52,7 +52,7 @@ fail() {
 }
 
 sql() {
-  hikari_compose exec -T db mariadb -uctfd -pctfd ctfd -N -e "$1"
+  hikari_mariadb -N -e "$1"
 }
 
 count() {
@@ -177,7 +177,7 @@ PY
 }
 
 dump_database() {
-  hikari_compose exec -T db mariadb-dump -uctfd -pctfd --single-transaction ctfd > "$1"
+  hikari_mariadb_dump > "$1"
 }
 
 # The order is the contract: everything is written before anything is removed.

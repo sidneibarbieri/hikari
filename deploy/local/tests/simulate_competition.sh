@@ -52,7 +52,7 @@ extract_csrf() {
 
 db_query() {
   hikari_compose -f "$COMPOSE_FILE" exec -T db \
-    mariadb -uctfd -pctfd ctfd -N -B -e "$1"
+    mariadb -u"$HIKARI_DB_USER" -p"$HIKARI_DB_PASSWORD" "$HIKARI_DB_NAME" -N -B -e "$1"
 }
 
 flush_rate_limit() {

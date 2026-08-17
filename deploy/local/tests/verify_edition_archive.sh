@@ -26,7 +26,7 @@ restore_database=""
 
 cleanup() {
   if [[ -n "$restore_database" ]]; then
-    hikari_compose exec -T db mariadb -uroot -pctfd \
+    hikari_mariadb_root \
       -e "DROP DATABASE IF EXISTS \`$restore_database\`;" >/dev/null
   fi
   rm -rf "$workspace"
@@ -36,7 +36,7 @@ trap cleanup EXIT
 # Only the client's password notice is dropped. A real SQL error has to reach
 # the operator instead of turning into an empty result.
 sql() {
-  hikari_compose exec -T db mariadb -uctfd -pctfd ctfd -N -e "$1" \
+  hikari_mariadb -N -e "$1" \
     2> >(grep -v 'Using a password on the command line' >&2) | tr -d '[:space:]'
 }
 
@@ -88,13 +88,13 @@ unzip -l "$destination/acervo-desafios.zip" > /dev/null \
 grep -q "Edição arquivada" "$destination/MANIFESTO.md" \
   || fail "the manifest fails to describe the archive"
 restore_database="hikari_archive_restore_check"
-hikari_compose exec -T db mariadb -uroot -pctfd \
+hikari_mariadb_root \
   -e "CREATE DATABASE \`$restore_database\`;"
-hikari_compose exec -T db mariadb -uroot -pctfd "$restore_database" \
+hikari_mariadb_root "$restore_database" \
   < "$destination/banco.sql"
 # information_schema only reveals tables the connected user may touch, and the
 # application user has no rights on the scratch database, so ask as root.
-restored_tables=$(hikari_compose exec -T db mariadb -uroot -pctfd -N -e \
+restored_tables=$(hikari_mariadb_root -N -e \
   "SELECT COUNT(*) FROM information_schema.tables
     WHERE table_schema = '$restore_database' AND table_name = 'challenges';" \
   2> >(grep -v 'Using a password on the command line' >&2) | tr -d '[:space:]')

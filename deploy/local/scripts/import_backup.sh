@@ -59,8 +59,8 @@ cleanup() {
 trap cleanup EXIT
 
 echo "==> snapshotting current database to $snapshot_file"
-compose exec -T db \
-  mariadb-dump -uctfd -pctfd --routines --events --triggers ctfd \
+hikari_compose exec -T db mariadb-dump -u"$HIKARI_DB_USER" -p"$HIKARI_DB_PASSWORD" \
+  --routines --events --triggers "$HIKARI_DB_NAME" \
   > "$snapshot_file"
 
 # Extract under the project directory rather than /tmp because on macOS+Colima
@@ -120,16 +120,14 @@ echo "==> stopping sidecar"
 docker rm -f "$SIDECAR" >/dev/null
 
 echo "==> dropping and recreating ctfd database in the running mariadb"
-compose exec -T db \
-  mariadb -uctfd -pctfd -e "DROP DATABASE IF EXISTS ctfd; CREATE DATABASE ctfd CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+hikari_compose exec -T db mariadb -u"$HIKARI_DB_USER" -p"$HIKARI_DB_PASSWORD" \
+  -e "DROP DATABASE IF EXISTS \`$HIKARI_DB_NAME\`; CREATE DATABASE \`$HIKARI_DB_NAME\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
 
 echo "==> restoring dump into ctfd"
-compose exec -T db \
-  mariadb -uctfd -pctfd ctfd < "$dump_file"
+hikari_mariadb < "$dump_file"
 
 echo "==> marking imported CTFd instance as already set up"
-compose exec -T db \
-  mariadb -uctfd -pctfd ctfd -e \
+hikari_mariadb -e \
   "INSERT INTO config (\`key\`, value)
    SELECT 'setup', '1'
    WHERE NOT EXISTS (SELECT 1 FROM config WHERE \`key\` = 'setup');
@@ -162,16 +160,11 @@ compose cp "$rebuild_script" "ctfd:$container_script"
 compose exec -T ctfd python "$container_script"
 
 echo "==> verifying imported state"
-users=$(compose exec -T db \
-  mariadb -uctfd -pctfd ctfd -N -B -e "SELECT COUNT(*) FROM users;" | tr -d '[:space:]')
-teams=$(compose exec -T db \
-  mariadb -uctfd -pctfd ctfd -N -B -e "SELECT COUNT(*) FROM teams;" | tr -d '[:space:]')
-challenges=$(compose exec -T db \
-  mariadb -uctfd -pctfd ctfd -N -B -e "SELECT COUNT(*) FROM challenges;" | tr -d '[:space:]')
-solves=$(compose exec -T db \
-  mariadb -uctfd -pctfd ctfd -N -B -e "SELECT COUNT(*) FROM solves;" | tr -d '[:space:]')
-activity=$(compose exec -T db \
-  mariadb -uctfd -pctfd ctfd -N -B -e \
+users=$(hikari_mariadb -N -B -e "SELECT COUNT(*) FROM users;" | tr -d '[:space:]')
+teams=$(hikari_mariadb -N -B -e "SELECT COUNT(*) FROM teams;" | tr -d '[:space:]')
+challenges=$(hikari_mariadb -N -B -e "SELECT COUNT(*) FROM challenges;" | tr -d '[:space:]')
+solves=$(hikari_mariadb -N -B -e "SELECT COUNT(*) FROM solves;" | tr -d '[:space:]')
+activity=$(hikari_mariadb -N -B -e \
   "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='ctfd' AND table_name='hikari_activity';" \
   | tr -d '[:space:]')
 competition_events=$(compose exec -T elasticsearch \
@@ -194,5 +187,5 @@ Backup dump kept at: $dump_file
 To recover the previous state:
   source "$LOCAL_DIR/lib/compose.sh"
   hikari_compose -f "$COMPOSE_FILE" -p "$PROJECT" exec -T db \\
-    mariadb -uctfd -pctfd ctfd < $snapshot_file
+    mariadb -u"$HIKARI_DB_USER" -p"$HIKARI_DB_PASSWORD" "$HIKARI_DB_NAME" < $snapshot_file
 EOF

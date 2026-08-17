@@ -63,7 +63,7 @@ extract_csrf() {
 }
 
 db_query() {
-  hikari_compose exec -T db mariadb -uctfd -pctfd ctfd -N -B -e "$1" | tr -d '\r'
+  hikari_mariadb -N -B -e "$1" | tr -d '\r'
 }
 
 flush_rate_limit() {
