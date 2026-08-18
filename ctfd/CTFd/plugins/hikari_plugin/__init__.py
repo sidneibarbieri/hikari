@@ -33,6 +33,8 @@ from CTFd.plugins.hikari_plugin import hikari_guidance
 from CTFd.plugins.hikari_plugin import hikari_kibana_gateway
 from CTFd.plugins.hikari_plugin import hikari_live
 from CTFd.plugins.hikari_plugin import hikari_research
+from CTFd.plugins.hikari_plugin.settings import settings
+
 from CTFd.plugins.hikari_plugin import hikari_competitions
 from CTFd.plugins.hikari_plugin import hikari_challenge_library
 
@@ -338,8 +340,7 @@ def load(app):
 
 
     def _kibana_provisioning_enabled():
-        flag = os.environ.get("HIKARI_KIBANA_PROVISIONING", "").lower()
-        return flag in {"true", "1", "yes", "on"}
+        return settings().kibana_provisioning
 
     @event.listens_for(Users, 'after_update')
     def provision_kibana_user_on_team_change(mapper, connection, target):

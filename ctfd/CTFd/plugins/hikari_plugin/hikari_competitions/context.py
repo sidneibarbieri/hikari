@@ -1,11 +1,10 @@
 """Resolve the identifier of the execution active in this installation."""
 
-import os
 
 from CTFd.utils import get_config
 
 
-DEFAULT_COMPETITION_KEY = "local"
+from CTFd.plugins.hikari_plugin.settings import settings
 
 
 def current_competition_key() -> str:
@@ -13,4 +12,4 @@ def current_competition_key() -> str:
     configured_key = get_config("hikari_competition_key")
     if configured_key:
         return configured_key
-    return os.environ.get("HIKARI_COMPETITION_KEY", DEFAULT_COMPETITION_KEY)
+    return settings().competition_key

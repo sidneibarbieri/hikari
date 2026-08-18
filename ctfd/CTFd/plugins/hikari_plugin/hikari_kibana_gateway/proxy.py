@@ -1,4 +1,3 @@
-import os
 from typing import Dict
 from urllib.parse import urljoin
 
@@ -19,6 +18,8 @@ HOP_BY_HOP_HEADERS = {
     "transfer-encoding",
     "upgrade",
 }
+
+from CTFd.plugins.hikari_plugin.settings import settings
 
 
 def proxy_to_kibana(proxy_path: str, body: bytes) -> Response:
@@ -48,8 +49,8 @@ def proxy_to_kibana(proxy_path: str, body: bytes) -> Response:
 
 
 def kibana_url(proxy_path: str) -> str:
-    internal_url = os.environ.get("KIBANA_INTERNAL_URL", "http://kibana:5601").rstrip("/")
-    base_path = os.environ.get("HIKARI_KIBANA_BASE_PATH", "/hikari/kibana").strip("/")
+    internal_url = settings().kibana_internal_url.rstrip("/")
+    base_path = settings().kibana_base_path.strip("/")
     path = f"{base_path}/{proxy_path.lstrip('/')}" if proxy_path else base_path
     return urljoin(internal_url + "/", path)
 
@@ -81,6 +82,6 @@ def response_headers(upstream_headers: Dict[str, str]) -> Dict[str, str]:
 def rewrite_header(key: str, value: str) -> str:
     if key.lower() != "location":
         return value
-    internal_url = os.environ.get("KIBANA_INTERNAL_URL", "http://kibana:5601").rstrip("/")
-    external_base = os.environ.get("HIKARI_KIBANA_BASE_PATH", "/hikari/kibana")
+    internal_url = settings().kibana_internal_url.rstrip("/")
+    external_base = settings().kibana_base_path
     return value.replace(internal_url, external_base)

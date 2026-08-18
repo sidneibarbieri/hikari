@@ -6,7 +6,6 @@ Errors are surfaced through CTFd's flash messages; we never silently
 fall back to a different identity.
 """
 
-import os
 import secrets
 from typing import Dict, Optional
 from urllib.parse import urlencode
@@ -26,6 +25,8 @@ USERINFO_ENDPOINT = "https://www.googleapis.com/oauth2/v3/userinfo"
 SCOPE = "openid email profile"
 STATE_SESSION_KEY = "hikari_google_oauth_state"
 
+from CTFd.plugins.hikari_plugin.settings import settings
+
 
 def _provider_config() -> Optional[Dict[str, str]]:
     """Return Google OAuth config only when fully provisioned.
@@ -34,8 +35,8 @@ def _provider_config() -> Optional[Dict[str, str]]:
     disabled; callers (template helpers and views) use it to hide UI
     affordances and reject inbound requests.
     """
-    client_id = os.environ.get("HIKARI_GOOGLE_CLIENT_ID", "").strip()
-    client_secret = os.environ.get("HIKARI_GOOGLE_CLIENT_SECRET", "").strip()
+    client_id = settings().google_client_id
+    client_secret = settings().google_client_secret
     if not client_id or not client_secret:
         return None
     return {"client_id": client_id, "client_secret": client_secret}
@@ -50,7 +51,7 @@ def _redirect_uri() -> str:
     this Compose stack). Setting ``HIKARI_OAUTH_REDIRECT_BASE``
     overrides the inference for split-host setups.
     """
-    override = os.environ.get("HIKARI_OAUTH_REDIRECT_BASE", "").strip()
+    override = settings().oauth_redirect_base
     if override:
         return override.rstrip("/") + "/auth/google/callback"
     return url_for("hikariplugin.auth_google_callback", _external=True)

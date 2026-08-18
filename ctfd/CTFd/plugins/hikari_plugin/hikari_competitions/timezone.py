@@ -1,13 +1,14 @@
 """Operator-facing time conversion for competition schedules."""
 
-import os
 from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
+
+from CTFd.plugins.hikari_plugin.settings import settings
 
 
 def operator_time_zone() -> ZoneInfo:
     """Return the deployment time zone configured for schedule entry."""
-    return ZoneInfo(os.environ.get("HIKARI_TIME_ZONE", "America/Sao_Paulo"))
+    return ZoneInfo(settings().time_zone)
 
 
 def parse_local_schedule(value: str) -> datetime:

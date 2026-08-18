@@ -1,21 +1,21 @@
-import os
 import requests
 import json
 import secrets
 import logging
 
+from CTFd.plugins.hikari_plugin.settings import settings
 
 logger = logging.getLogger(__name__)
 
 
 class KibanaHelper:
 
-    ELASTIC_URL = os.environ.get("ELASTIC_URL", "http://elastic:9200")
-    ELASTIC_USERNAME = os.environ.get("ELASTIC_USERNAME", "elastic")
-    ELASTIC_PASSWORD = os.environ.get("ELASTIC_PASSWORD", "")
-    KIBANA_URL = os.environ.get("KIBANA_URL", "http://kibana:5601")
-    KIBANA_USERNAME = os.environ.get("KIBANA_USERNAME", "elastic")
-    KIBANA_PASSWORD = os.environ.get("KIBANA_PASSWORD", "")
+    ELASTIC_URL = settings().elastic_url
+    ELASTIC_USERNAME = settings().elastic_username
+    ELASTIC_PASSWORD = settings().elastic_password
+    KIBANA_URL = settings().kibana_url
+    KIBANA_USERNAME = settings().kibana_username
+    KIBANA_PASSWORD = settings().kibana_password
 
     @staticmethod
     def create_space(space_name):

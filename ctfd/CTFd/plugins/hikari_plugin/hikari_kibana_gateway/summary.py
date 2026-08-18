@@ -1,6 +1,5 @@
 """Elasticsearch summary for the Hikari SIEM entrypoint."""
 
-import os
 from typing import Any, Dict, List, Optional
 
 import requests
@@ -38,6 +37,7 @@ class SiemSummary(BaseModel):
     destination_ports: List[TermBucket]
     recent: List[RecentEvent]
 
+from CTFd.plugins.hikari_plugin.settings import settings
 
 def build_siem_summary(index_name: str = "competition1") -> SiemSummary:
     summary_response = requests.post(
@@ -94,7 +94,7 @@ def empty_summary(index_name: str) -> SiemSummary:
 
 
 def elastic_url() -> str:
-    return os.environ.get("ELASTIC_URL", "http://elasticsearch:9200").rstrip("/")
+    return settings().elastic_url.rstrip("/")
 
 
 def summary_query() -> Dict[str, Any]:

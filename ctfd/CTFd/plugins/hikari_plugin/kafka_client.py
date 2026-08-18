@@ -12,20 +12,20 @@ from typing import Dict, Optional
 from confluent_kafka import Producer
 
 
-_TRUE_VALUES = frozenset({"true", "1", "yes", "on"})
+from CTFd.plugins.hikari_plugin.settings import settings
 
 
 def build_producer_config() -> Dict[str, str]:
     """Return the librdkafka configuration derived from environment variables."""
-    bootstrap_servers = os.environ.get("KAFKA_BOOTSTRAP_SERVERS", "kafka:9092")
+    bootstrap_servers = settings().kafka_bootstrap_servers
     config: Dict[str, str] = {"bootstrap.servers": bootstrap_servers}
 
-    if os.environ.get("KAFKA_USE_SASL", "").lower() not in _TRUE_VALUES:
+    if not settings().kafka_use_sasl:
         return config
 
     config.update({
         "security.protocol": "SASL_SSL",
-        "sasl.mechanisms": os.environ.get("KAFKA_SASL_MECHANISM", "SCRAM-SHA-512"),
+        "sasl.mechanisms": settings().kafka_sasl_mechanism,
         "sasl.username": os.environ["KAFKA_SASL_USERNAME"],
         "sasl.password": os.environ["KAFKA_SASL_PASSWORD"],
     })
