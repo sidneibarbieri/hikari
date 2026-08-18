@@ -44,14 +44,20 @@
           <option value="users">Competidores individuais</option>
         </select>
       </label>
-      <label>Duração inicial
-        <select class="form-select" name="duration_minutes" required>
-          <option value="240">4 horas</option>
-          <option value="120">2 horas</option>
-          <option value="360">6 horas</option>
-          <option value="480">8 horas</option>
-        </select>
-      </label>
+      <fieldset class="hikari-duration-field">
+        <legend>Duração inicial</legend>
+        <div class="hikari-inline-control">
+          <label for="duration-hours">Horas
+            <input class="form-control" id="duration-hours" name="duration_hours"
+                   type="number" min="0" max="168" step="1" value="4" required>
+          </label>
+          <label for="duration-minutes">Minutos
+            <input class="form-control" id="duration-minutes" name="duration_minutes"
+                   type="number" min="0" max="59" step="1" value="0" required>
+          </label>
+        </div>
+        <p class="hikari-field-hint">Exemplo: 5h30. De 15 minutos a 7 dias.</p>
+      </fieldset>
       <button class="btn btn-primary" type="submit">Criar execução</button>
     </form>
   </section>
@@ -60,13 +66,14 @@
     <h2>Histórico</h2>
     {% if runs %}
     <div class="table-responsive"><table class="table">
-      <thead><tr><th>Execução</th><th>Modalidade</th><th>Estado</th><th>Início</th><th>Término</th><th>Ações</th></tr></thead>
+      <thead><tr><th>Execução</th><th>Modalidade</th><th>Estado</th><th>Duração</th><th>Início</th><th>Término</th><th>Ações</th></tr></thead>
       <tbody>
       {% for run in runs %}
       <tr>
         <td><strong>{{ run.name }}</strong><br><code>{{ run.key }}</code></td>
         <td>{{ "Equipes" if run.scoring_mode == "teams" else "Individual" }}</td>
         <td><span class="hikari-status-chip hikari-status-chip--{{ run.status }}">{{ status_labels.get(run.status, run.status) }}</span></td>
+        <td>{{ describe_duration(run.duration_minutes) }}</td>
         <td>{{ format_schedule_time(run.starts_at) }}</td>
         <td>{{ format_schedule_time(run.ends_at) }}</td>
         <td>

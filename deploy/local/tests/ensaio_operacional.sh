@@ -298,7 +298,8 @@ code=$(admin_post "/admin/hikari/competitions" \
   --data-urlencode "key=$run_key" \
   --data-urlencode "name=Ensaio operacional $stamp" \
   --data-urlencode "scoring_mode=teams" \
-  --data-urlencode "duration_minutes=240")
+  --data-urlencode "duration_hours=4" \
+  --data-urlencode "duration_minutes=0")
 [[ "$code" == "302" ]] || fail "creating the run returned $code"
 admin_get "$workspace/dashboard.html" "/admin/hikari/competitions"
 run_id=$(grep -oE "/admin/hikari/competitions/[0-9]+/start" "$workspace/dashboard.html" \

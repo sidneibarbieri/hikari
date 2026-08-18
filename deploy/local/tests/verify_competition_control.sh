@@ -97,7 +97,8 @@ code=$(curl -sS -c "$cookie_jar" -b "$cookie_jar" -o /dev/null -w '%{http_code}'
   --data-urlencode "key=$run_key" \
   --data-urlencode "name=Acceptance Run $stamp" \
   --data-urlencode "scoring_mode=teams" \
-  --data-urlencode "duration_minutes=240")
+  --data-urlencode "duration_hours=4" \
+  --data-urlencode "duration_minutes=0")
 [[ "$code" == "302" ]] || { echo "FAIL: create run returned $code"; exit 1; }
 
 dashboard=$(mktemp)
@@ -184,7 +185,8 @@ code=$(curl -sS -c "$cookie_jar" -b "$cookie_jar" -o /dev/null -w '%{http_code}'
   --data-urlencode "key=$cancel_key" \
   --data-urlencode "name=Cancelled Run $stamp" \
   --data-urlencode "scoring_mode=teams" \
-  --data-urlencode "duration_minutes=240")
+  --data-urlencode "duration_hours=4" \
+  --data-urlencode "duration_minutes=0")
 [[ "$code" == "302" ]] || { echo "FAIL: cancellation test run creation returned $code"; exit 1; }
 
 curl -sS -c "$cookie_jar" -b "$cookie_jar" -o "$dashboard" "$CTFD_URL/admin/hikari/competitions"
@@ -220,7 +222,8 @@ code=$(curl -sS -c "$cookie_jar" -b "$cookie_jar" -o /dev/null -w '%{http_code}'
   --data-urlencode "key=$revert_key" \
   --data-urlencode "name=Revert Run $stamp" \
   --data-urlencode "scoring_mode=teams" \
-  --data-urlencode "duration_minutes=240")
+  --data-urlencode "duration_hours=4" \
+  --data-urlencode "duration_minutes=0")
 [[ "$code" == "302" ]] || { echo "FAIL: revert test run creation returned $code"; exit 1; }
 
 revert_status() {

@@ -9,6 +9,7 @@ from CTFd.models import db
 from CTFd.utils.decorators import admins_only
 
 from .dto import CompetitionDraft
+from .formatting import describe_duration
 from .models import CompetitionRun
 from . import service
 from .timezone import format_schedule_time, operator_time_zone, parse_local_schedule
@@ -33,6 +34,7 @@ def dashboard():
         active_run=service.active_run(),
         csrf_nonce=session.get("nonce"),
         format_schedule_time=format_schedule_time,
+        describe_duration=describe_duration,
         operator_time_zone=operator_time_zone().key,
     )
 
@@ -43,6 +45,7 @@ def _create_run():
             key=request.form.get("key", ""),
             name=request.form.get("name", ""),
             scoring_mode=request.form.get("scoring_mode", ""),
+            duration_hours=request.form.get("duration_hours", ""),
             duration_minutes=request.form.get("duration_minutes", ""),
         )
     except ValidationError as error:
@@ -55,9 +58,9 @@ def _create_run():
 
     run = CompetitionRun(
         key=draft.key,
-        name=draft.name.strip(),
+        name=draft.name,
         scoring_mode=draft.scoring_mode,
-        duration_minutes=draft.duration_minutes,
+        duration_minutes=draft.total_minutes,
     )
     db.session.add(run)
     db.session.commit()

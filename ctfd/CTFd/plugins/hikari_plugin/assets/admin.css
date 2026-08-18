@@ -436,6 +436,29 @@ body .dropdown-menu {
 .hikari-admin-form .btn {
     min-height: 2.65rem;
 }
+/* A fieldset defaults to min-width: min-content, which refuses to shrink and
+   breaks the surrounding grid, so the reset is what makes it a grid item. */
+.hikari-duration-field {
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+}
+.hikari-duration-field legend {
+    float: none;
+    width: auto;
+    margin: 0 0 0.4rem;
+    padding: 0;
+    color: var(--hk-text-muted);
+    font-size: var(--hikari-size-xs);
+    font-weight: 700;
+}
+.hikari-duration-field .hikari-inline-control .form-control {
+    min-width: 0;
+}
+.hikari-duration-field label {
+    flex: 1;
+}
 .hikari-admin-actions {
     display: flex;
     flex-wrap: wrap;

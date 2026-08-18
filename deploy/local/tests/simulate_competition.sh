@@ -114,7 +114,8 @@ code=$(curl -sS -c "$admin_jar" -b "$admin_jar" -o /dev/null -w '%{http_code}' \
   --data-urlencode "key=$run_key" \
   --data-urlencode "name=Simulacao $stamp" \
   --data-urlencode "scoring_mode=teams" \
-  --data-urlencode "duration_minutes=240")
+  --data-urlencode "duration_hours=4" \
+  --data-urlencode "duration_minutes=0")
 [[ "$code" == "302" ]] || { echo "FAIL: creating the run returned $code"; exit 1; }
 curl -sS -c "$admin_jar" -b "$admin_jar" -o "$dashboard" "$CTFD_URL/admin/hikari/competitions"
 run_id=$(grep -oE "/admin/hikari/competitions/[0-9]+/start" "$dashboard" | head -1 | grep -oE '[0-9]+')
