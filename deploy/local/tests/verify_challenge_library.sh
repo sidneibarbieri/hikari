@@ -7,7 +7,6 @@ CTFD_URL=${CTFD_URL:-http://localhost:8000}
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 LOCAL_DIR=$(cd "$SCRIPT_DIR/.." && pwd)
 source "$LOCAL_DIR/lib/compose.sh"
-COMPOSE_FILE=${COMPOSE_FILE:-"$LOCAL_DIR/docker-compose.yml"}
 ADMIN_EMAIL=${ADMIN_EMAIL:-admin@hikari.local}
 ADMIN_PASSWORD=${ADMIN_PASSWORD:-hikari_comp@2026}
 FIXTURE_DIR="$SCRIPT_DIR/fixtures/challenge-library"
@@ -19,7 +18,7 @@ extract_nonce() {
 }
 
 db_query() {
-  docker-compose -f "$COMPOSE_FILE" exec -T db \
+  hikari_compose exec -T db \
     mariadb -u"$HIKARI_DB_USER" -p"$HIKARI_DB_PASSWORD" "$HIKARI_DB_NAME" -N -B -e "$1"
 }
 

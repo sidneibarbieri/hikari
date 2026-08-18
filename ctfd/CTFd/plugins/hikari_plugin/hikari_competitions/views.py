@@ -142,6 +142,18 @@ def finish(run_id: int):
 
 
 @admins_only
+def revert(run_id: int):
+    run = _run_or_404(run_id)
+    try:
+        service.revert_to_draft(run, _now())
+    except ValueError as error:
+        flash(str(error), "danger")
+    else:
+        flash("Execução devolvida a rascunho. O jogo voltou a ficar fechado.", "success")
+    return redirect(url_for("hikariplugin.hikari_competitions_dashboard"))
+
+
+@admins_only
 def cancel(run_id: int):
     run = _run_or_404(run_id)
     try:

@@ -30,7 +30,6 @@ if [[ "${HIKARI_ACCEPTANCE_CONTEXT:-}" != "1" \
   echo "Run: bash tests/acceptance_isolated.sh" >&2
   exit 2
 fi
-COMPOSE_FILE=${COMPOSE_FILE:-"$LOCAL_DIR/docker-compose.yml"}
 ADMIN_EMAIL=${ADMIN_EMAIL:-admin@hikari.local}
 ADMIN_PASSWORD=${ADMIN_PASSWORD:-hikari_comp@2026}
 

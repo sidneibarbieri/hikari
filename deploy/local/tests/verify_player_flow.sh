@@ -13,7 +13,6 @@ CTFD_URL=${CTFD_URL:-http://localhost:8000}
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 LOCAL_DIR=$(cd "$SCRIPT_DIR/.." && pwd)
 source "$LOCAL_DIR/lib/compose.sh"
-COMPOSE_FILE=${COMPOSE_FILE:-"$LOCAL_DIR/docker-compose.yml"}
 
 stamp=$(date +%s)
 PLAYER_NAME="jogador_ação_${stamp}"
@@ -41,13 +40,13 @@ assert_status() {
 db_count() {
   local query=$1
   local result
-  result=$(docker-compose -f "$COMPOSE_FILE" exec -T db \
+  result=$(hikari_compose exec -T db \
     mariadb -u"$HIKARI_DB_USER" -p"$HIKARI_DB_PASSWORD" "$HIKARI_DB_NAME" -N -B -e "$query")
   echo "${result//[[:space:]]/}"
 }
 
 open_challenge_window() {
-  docker-compose -f "$COMPOSE_FILE" exec -T ctfd python - <<'PY'
+  hikari_compose exec -T ctfd python - <<'PY'
 from time import time
 
 from CTFd import create_app

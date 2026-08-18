@@ -9,7 +9,6 @@ ADMIN_PASSWORD=${ADMIN_PASSWORD:-hikari_comp@2026}
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 LOCAL_DIR=$(cd "$SCRIPT_DIR/.." && pwd)
 source "$LOCAL_DIR/lib/compose.sh"
-COMPOSE_FILE=${COMPOSE_FILE:-"$LOCAL_DIR/docker-compose.yml"}
 stamp=$(date +%s)
 run_key="acceptance-${stamp}"
 
@@ -23,31 +22,31 @@ extract_nonce() {
 }
 
 run_duration_minutes() {
-  docker-compose -f "$COMPOSE_FILE" exec -T db mariadb -N -u"$HIKARI_DB_USER" -p"$HIKARI_DB_PASSWORD" "$HIKARI_DB_NAME" \
+  hikari_compose exec -T db mariadb -N -u"$HIKARI_DB_USER" -p"$HIKARI_DB_PASSWORD" "$HIKARI_DB_NAME" \
     -e "SELECT TIMESTAMPDIFF(MINUTE, starts_at, ends_at) FROM hikari_competition_runs WHERE \`key\` = '$run_key';" \
     | tr -d '\r\n'
 }
 
 run_status() {
-  docker-compose -f "$COMPOSE_FILE" exec -T db mariadb -N -u"$HIKARI_DB_USER" -p"$HIKARI_DB_PASSWORD" "$HIKARI_DB_NAME" \
+  hikari_compose exec -T db mariadb -N -u"$HIKARI_DB_USER" -p"$HIKARI_DB_PASSWORD" "$HIKARI_DB_NAME" \
     -e "SELECT status FROM hikari_competition_runs WHERE \`key\` = '$run_key';" \
     | tr -d '\r\n'
 }
 
 configured_start() {
-  docker-compose -f "$COMPOSE_FILE" exec -T db mariadb -N -u"$HIKARI_DB_USER" -p"$HIKARI_DB_PASSWORD" "$HIKARI_DB_NAME" \
+  hikari_compose exec -T db mariadb -N -u"$HIKARI_DB_USER" -p"$HIKARI_DB_PASSWORD" "$HIKARI_DB_NAME" \
     -e "SELECT value FROM config WHERE \`key\` = 'start';" \
     | tr -d '\r\n'
 }
 
 remaining_seconds() {
-  docker-compose -f "$COMPOSE_FILE" exec -T db mariadb -N -u"$HIKARI_DB_USER" -p"$HIKARI_DB_PASSWORD" "$HIKARI_DB_NAME" \
+  hikari_compose exec -T db mariadb -N -u"$HIKARI_DB_USER" -p"$HIKARI_DB_PASSWORD" "$HIKARI_DB_NAME" \
     -e "SELECT COALESCE(paused_remaining_seconds, '') FROM hikari_competition_runs WHERE \`key\` = '$run_key';" \
     | tr -d '\r\n'
 }
 
 active_test_run() {
-  docker-compose -f "$COMPOSE_FILE" exec -T db mariadb -N -u"$HIKARI_DB_USER" -p"$HIKARI_DB_PASSWORD" "$HIKARI_DB_NAME" \
+  hikari_compose exec -T db mariadb -N -u"$HIKARI_DB_USER" -p"$HIKARI_DB_PASSWORD" "$HIKARI_DB_NAME" \
     -e "SELECT id, \`key\` FROM hikari_competition_runs WHERE status IN ('scheduled', 'running', 'paused') ORDER BY id DESC LIMIT 1;" \
     | tr -d '\r'
 }
@@ -191,10 +190,94 @@ code=$(curl -sS -c "$cookie_jar" -b "$cookie_jar" -o /dev/null -w '%{http_code}'
   -X POST "$CTFD_URL/admin/hikari/competitions/$cancel_id/cancel" \
   --data-urlencode "nonce=$(extract_nonce "$dashboard")")
 [[ "$code" == "302" ]] || { echo "FAIL: cancellation returned $code"; exit 1; }
-cancelled_status=$(docker-compose -f "$COMPOSE_FILE" exec -T db mariadb -N -u"$HIKARI_DB_USER" -p"$HIKARI_DB_PASSWORD" "$HIKARI_DB_NAME" \
+cancelled_status=$(hikari_compose exec -T db mariadb -N -u"$HIKARI_DB_USER" -p"$HIKARI_DB_PASSWORD" "$HIKARI_DB_NAME" \
   -e "SELECT status FROM hikari_competition_runs WHERE \`key\` = '$cancel_key';" | tr -d '\r\n')
 [[ "$cancelled_status" == "cancelled" ]] || { echo "FAIL: scheduled execution was not cancelled"; exit 1; }
 [[ "$(configured_start)" -gt "$(date +%s)" ]] \
   || { echo "FAIL: cancellation reopened the CTFd play window"; exit 1; }
 
+# An execution opened by mistake has to be reversible, and the undo has to stop
+# being available the moment the competition becomes real history.
+revert_key="${run_key}-revert"
+dashboard=$(mktemp)
+curl -sS -c "$cookie_jar" -b "$cookie_jar" -o "$dashboard" "$CTFD_URL/admin/hikari/competitions"
+code=$(curl -sS -c "$cookie_jar" -b "$cookie_jar" -o /dev/null -w '%{http_code}' \
+  -X POST "$CTFD_URL/admin/hikari/competitions" \
+  --data-urlencode "nonce=$(extract_nonce "$dashboard")" \
+  --data-urlencode "key=$revert_key" \
+  --data-urlencode "name=Revert Run $stamp" \
+  --data-urlencode "scoring_mode=teams" \
+  --data-urlencode "duration_minutes=240")
+[[ "$code" == "302" ]] || { echo "FAIL: revert test run creation returned $code"; exit 1; }
+
+revert_status() {
+  hikari_mariadb -N \
+    -e "SELECT status FROM hikari_competition_runs WHERE \`key\` = '$revert_key';" \
+    | tr -d '\r\n'
+}
+
+curl -sS -c "$cookie_jar" -b "$cookie_jar" -o "$dashboard" "$CTFD_URL/admin/hikari/competitions"
+revert_id=$(grep -oE "/admin/hikari/competitions/[0-9]+/schedule" "$dashboard" | tail -1 | grep -oE '[0-9]+')
+[[ -n "$revert_id" ]] || { echo "FAIL: revert test run lacks schedule action"; exit 1; }
+
+# A draft offers no undo, because there is nothing to undo.
+grep -q "/admin/hikari/competitions/$revert_id/revert" "$dashboard" \
+  && { echo "FAIL: draft execution offers a revert action"; exit 1; }
+
+code=$(curl -sS -c "$cookie_jar" -b "$cookie_jar" -o /dev/null -w '%{http_code}' \
+  -X POST "$CTFD_URL/admin/hikari/competitions/$revert_id/start" \
+  --data-urlencode "nonce=$(extract_nonce "$dashboard")")
+[[ "$code" == "302" ]] || { echo "FAIL: revert test start returned $code"; exit 1; }
+[[ "$(revert_status)" == "running" ]] || { echo "FAIL: revert test run did not start"; exit 1; }
+
+curl -sS -c "$cookie_jar" -b "$cookie_jar" -o "$dashboard" "$CTFD_URL/admin/hikari/competitions"
+grep -q "/admin/hikari/competitions/$revert_id/revert" "$dashboard" \
+  || { echo "FAIL: running execution offers no revert action"; exit 1; }
+grep -q "Voltar para rascunho" "$dashboard" \
+  || { echo "FAIL: revert control is not labelled for the operator"; exit 1; }
+
+started_window=$(configured_start)
+code=$(curl -sS -c "$cookie_jar" -b "$cookie_jar" -o /dev/null -w '%{http_code}' \
+  -X POST "$CTFD_URL/admin/hikari/competitions/$revert_id/revert" \
+  --data-urlencode "nonce=$(extract_nonce "$dashboard")")
+[[ "$code" == "302" ]] || { echo "FAIL: revert returned $code"; exit 1; }
+[[ "$(revert_status)" == "draft" ]] || { echo "FAIL: execution did not return to draft"; exit 1; }
+
+# Returning to draft has to close play again, not leave the started window open.
+[[ "$(configured_start)" != "$started_window" ]] \
+  || { echo "FAIL: revert left the started play window in place"; exit 1; }
+[[ "$(configured_start)" -gt "$(date +%s)" ]] \
+  || { echo "FAIL: revert left the CTFd play window open"; exit 1; }
+
+schedule_cleared=$(hikari_mariadb -N \
+  -e "SELECT COALESCE(starts_at, 'vazio') FROM hikari_competition_runs WHERE \`key\` = '$revert_key';" \
+  | tr -d '\r\n')
+[[ "$schedule_cleared" == "vazio" ]] \
+  || { echo "FAIL: revert kept the previous start time"; exit 1; }
+
+# The undo is refused once the execution has recorded a score.
+code=$(curl -sS -c "$cookie_jar" -b "$cookie_jar" -o /dev/null -w '%{http_code}' \
+  -X POST "$CTFD_URL/admin/hikari/competitions/$revert_id/start" \
+  --data-urlencode "nonce=$(extract_nonce "$dashboard")")
+[[ "$code" == "302" ]] || { echo "FAIL: restart for the submission guard returned $code"; exit 1; }
+
+hikari_mariadb \
+  -e "INSERT INTO submissions (challenge_id, user_id, team_id, ip, provided, type, date)
+      SELECT c.id, u.id, NULL, '127.0.0.1', 'guarda', 'correct', NOW()
+        FROM challenges c, users u WHERE u.type = 'admin' LIMIT 1;" > /dev/null
+
+curl -sS -c "$cookie_jar" -b "$cookie_jar" -o "$dashboard" "$CTFD_URL/admin/hikari/competitions"
+curl -sS -c "$cookie_jar" -b "$cookie_jar" -o "$dashboard" -w '%{http_code}' \
+  -X POST "$CTFD_URL/admin/hikari/competitions/$revert_id/revert" \
+  --data-urlencode "nonce=$(extract_nonce "$dashboard")" > /dev/null
+[[ "$(revert_status)" == "running" ]] \
+  || { echo "FAIL: revert erased an execution that already had a submission"; exit 1; }
+
+hikari_mariadb -e "DELETE FROM submissions WHERE provided = 'guarda';" > /dev/null
+curl -sS -c "$cookie_jar" -b "$cookie_jar" -o "$dashboard" "$CTFD_URL/admin/hikari/competitions"
+curl -sS -c "$cookie_jar" -b "$cookie_jar" -o /dev/null \
+  -X POST "$CTFD_URL/admin/hikari/competitions/$revert_id/finish" \
+  --data-urlencode "nonce=$(extract_nonce "$dashboard")"
+
 echo "PASS: run created, started, extended, paused, resumed, finished, and cancelled safely"
+echo "PASS: an execution opened by mistake returns to draft, and refuses to once it has a score"

@@ -10,7 +10,6 @@ CTFD_URL=${CTFD_URL:-http://localhost:8000}
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 LOCAL_DIR=$(cd "$SCRIPT_DIR/.." && pwd)
 source "$LOCAL_DIR/lib/compose.sh"
-COMPOSE_FILE=${COMPOSE_FILE:-"$LOCAL_DIR/docker-compose.yml"}
 ADMIN_EMAIL=${ADMIN_EMAIL:-admin@hikari.local}
 ADMIN_PASSWORD=${ADMIN_PASSWORD:-hikari_comp@2026}
 
@@ -34,7 +33,7 @@ extract_csrf_nonce_js() {
 }
 
 db_query() {
-  docker-compose -f "$COMPOSE_FILE" exec -T db \
+  hikari_compose exec -T db \
     mariadb -u"$HIKARI_DB_USER" -p"$HIKARI_DB_PASSWORD" "$HIKARI_DB_NAME" -N -B -e "$1"
 }
 
@@ -180,7 +179,7 @@ echo "== assert challenge attempts reached Elasticsearch activity index =="
 deadline=$((SECONDS + 30))
 es_attempts=0
 while (( SECONDS < deadline )); do
-  es_response=$(docker-compose -f "$COMPOSE_FILE" exec -T elasticsearch \
+  es_response=$(hikari_compose exec -T elasticsearch \
     curl -sS "http://localhost:9200/hikari-activity/_search" \
       -H "Content-Type: application/json" \
       -d "$(jq -cn \

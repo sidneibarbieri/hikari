@@ -11,7 +11,6 @@ TOPIC=${TOPIC:-competition1}
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 LOCAL_DIR=$(cd "$SCRIPT_DIR/.." && pwd)
 source "$LOCAL_DIR/lib/compose.sh"
-COMPOSE_FILE=${COMPOSE_FILE:-"$LOCAL_DIR/docker-compose.yml"}
 
 probe_id="hikari-smoke-$(date +%s)"
 payload=$(jq -cn \

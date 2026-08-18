@@ -18,7 +18,6 @@ ADMIN_PASSWORD=${ADMIN_PASSWORD:-hikari_comp@2026}
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 LOCAL_DIR=$(cd "$SCRIPT_DIR/.." && pwd)
 source "$LOCAL_DIR/lib/compose.sh"
-COMPOSE_FILE=${COMPOSE_FILE:-"$LOCAL_DIR/docker-compose.yml"}
 
 stamp=$(date +%s)
 C1_NAME="prog_c1_${stamp}"
@@ -53,7 +52,7 @@ extract_csrf_nonce_js() {
 }
 
 db_query() {
-  docker-compose -f "$COMPOSE_FILE" exec -T db \
+  hikari_compose exec -T db \
     mariadb -u"$HIKARI_DB_USER" -p"$HIKARI_DB_PASSWORD" "$HIKARI_DB_NAME" -N -B -e "$1"
 }
 
@@ -62,7 +61,7 @@ es_marker_hits() {
   local query
   query=$(jq -cn --arg m "$marker" \
     '{query:{match_phrase:{marker:$m}}}')
-  docker-compose -f "$COMPOSE_FILE" exec -T elasticsearch \
+  hikari_compose exec -T elasticsearch \
     curl -sS -H 'Content-Type: application/json' \
     -X POST "http://localhost:9200/$ES_INDEX/_search" -d "$query" \
     | jq -r '.hits.total.value // 0'

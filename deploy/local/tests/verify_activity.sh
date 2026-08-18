@@ -12,14 +12,13 @@ ADMIN_PASSWORD=${ADMIN_PASSWORD:-hikari_comp@2026}
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 LOCAL_DIR=$(cd "$SCRIPT_DIR/.." && pwd)
 source "$LOCAL_DIR/lib/compose.sh"
-COMPOSE_FILE=${COMPOSE_FILE:-"$LOCAL_DIR/docker-compose.yml"}
 
 cookie_jar=$(mktemp)
 trap 'rm -f "$cookie_jar"' EXIT
 
 elasticsearch_get() {
   local path=$1
-  docker-compose -f "$COMPOSE_FILE" exec -T elasticsearch \
+  hikari_compose exec -T elasticsearch \
     curl -sS "http://localhost:9200/$path"
 }
 
@@ -44,7 +43,7 @@ echo "login submitted (status 302)"
 
 echo "checking relational store ..."
 db_query='SELECT COUNT(*) FROM hikari_activity WHERE event_type='\''user.login'\'' AND occurred_at >= '\'"$before"\'';'
-db_hits=$(docker-compose -f "$COMPOSE_FILE" exec -T db \
+db_hits=$(hikari_compose exec -T db \
   mariadb -u"$HIKARI_DB_USER" -p"$HIKARI_DB_PASSWORD" "$HIKARI_DB_NAME" -N -B -e "$db_query")
 db_hits=${db_hits//[[:space:]]/}
 if [[ "$db_hits" -lt 1 ]]; then

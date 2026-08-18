@@ -52,6 +52,12 @@ def register(blueprint: Blueprint) -> None:
         methods=["POST"],
     )
     blueprint.add_url_rule(
+        "/admin/hikari/competitions/<int:run_id>/revert",
+        endpoint="hikari_competitions_revert",
+        view_func=views.revert,
+        methods=["POST"],
+    )
+    blueprint.add_url_rule(
         "/admin/hikari/competitions/<int:run_id>/cancel",
         endpoint="hikari_competitions_cancel",
         view_func=views.cancel,

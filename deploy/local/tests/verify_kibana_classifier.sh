@@ -10,7 +10,6 @@ ADMIN_PASSWORD=${ADMIN_PASSWORD:-hikari_comp@2026}
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 LOCAL_DIR=$(cd "$SCRIPT_DIR/.." && pwd)
 source "$LOCAL_DIR/lib/compose.sh"
-COMPOSE_FILE=${COMPOSE_FILE:-"$LOCAL_DIR/docker-compose.yml"}
 
 jar=$(mktemp)
 trap 'rm -f "$jar" /tmp/hikari-classifier-*.html' EXIT
@@ -65,7 +64,7 @@ echo "kibana proxy returned HTTP $code"
 
 sleep 2
 
-payload=$(docker-compose -f "$COMPOSE_FILE" exec -T db \
+payload=$(hikari_compose exec -T db \
   mariadb -u"$HIKARI_DB_USER" -p"$HIKARI_DB_PASSWORD" "$HIKARI_DB_NAME" -N -B --raw -e \
   "SELECT payload FROM hikari_activity WHERE event_type='kibana.query' ORDER BY id DESC LIMIT 1;")
 

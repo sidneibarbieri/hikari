@@ -9,7 +9,6 @@ CTFD_URL=${CTFD_URL:-http://localhost:8000}
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 LOCAL_DIR=$(cd "$SCRIPT_DIR/.." && pwd)
 source "$LOCAL_DIR/lib/compose.sh"
-COMPOSE_FILE=${COMPOSE_FILE:-"$LOCAL_DIR/docker-compose.yml"}
 
 stamp=$(date +%s)
 PLAYER_NAME="siem_${stamp}"
@@ -26,12 +25,12 @@ extract_nonce() {
 
 db_value() {
   local query=$1
-  docker-compose -f "$COMPOSE_FILE" exec -T db \
+  hikari_compose exec -T db \
     mariadb -u"$HIKARI_DB_USER" -p"$HIKARI_DB_PASSWORD" "$HIKARI_DB_NAME" -N -B -e "$query"
 }
 
 open_hunting_window() {
-  docker-compose -f "$COMPOSE_FILE" exec -T ctfd python - <<'PY'
+  hikari_compose exec -T ctfd python - <<'PY'
 from time import time
 
 from CTFd import create_app

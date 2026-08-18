@@ -161,6 +161,47 @@ def finish_run(run: CompetitionRun, now: datetime) -> None:
     db.session.commit()
 
 
+def revert_to_draft(run: CompetitionRun, now: datetime) -> None:
+    """Undo an execution opened by mistake, while nobody has scored yet.
+
+    Every other transition moves forward, so an operator who starts the wrong
+    execution minutes before the real one has no way back. Once a submission
+    exists the execution is history and reverting would erase it, so from that
+    point the way out is to finish it.
+
+    Logs already released into the SIEM stay there. They belong to the same
+    challenges and the SIEM is closed again while the execution is a draft, so
+    the real start finds them in place instead of injecting duplicates.
+    """
+    if run.status not in ACTIVE_STATUSES:
+        raise ValueError(
+            "Apenas uma execução agendada, em andamento ou pausada pode voltar a rascunho"
+        )
+
+    scored = _submissions_since(run.starts_at)
+    if scored:
+        raise ValueError(
+            f"Esta execução já registrou {scored} submissão(ões). "
+            "Use Encerrar para preservar o resultado."
+        )
+
+    run.status = "draft"
+    run.starts_at = None
+    run.ends_at = None
+    run.paused_remaining_seconds = None
+    db.session.commit()
+    # Only after the status is persisted does this stop being the active run,
+    # which is what lets close_for_draft shut the play window again.
+    close_for_draft(run, now)
+
+
+def _submissions_since(moment: datetime | None) -> int:
+    """Count submissions recorded from a moment onwards."""
+    if moment is None:
+        return 0
+    return Submissions.query.filter(Submissions.date >= moment).count()
+
+
 def cancel_run(run: CompetitionRun, now: datetime) -> None:
     """Cancel a scheduled execution while keeping play surfaces closed."""
     if run.status != "scheduled":

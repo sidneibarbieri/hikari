@@ -4,7 +4,6 @@ set -euo pipefail
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 LOCAL_DIR=$(cd "$SCRIPT_DIR/.." && pwd)
 source "$LOCAL_DIR/lib/compose.sh"
-COMPOSE_FILE=${COMPOSE_FILE:-"$LOCAL_DIR/docker-compose.yml"}
 CTFD_URL=${CTFD_URL:-http://localhost:8000}
 ADMIN_NAME=${ADMIN_NAME:-admin}
 ADMIN_PASSWORD=${ADMIN_PASSWORD:-hikari_comp@2026}
