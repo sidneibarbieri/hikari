@@ -161,6 +161,31 @@ def finish_run(run: CompetitionRun, now: datetime) -> None:
     db.session.commit()
 
 
+def change_duration(run: CompetitionRun, total_minutes: int, now: datetime) -> None:
+    """Set how long an execution will last, before anyone starts playing.
+
+    A running execution moves its deadline with adjust_run, which preserves the
+    time already played. Before the start there is nothing to preserve, so the
+    duration is simply what the operator now says it is, and a scheduled run
+    keeps its start while its end moves.
+    """
+    if run.status not in {"draft", "scheduled"}:
+        raise ValueError(
+            "A duração só pode ser alterada antes do início. "
+            "Com a execução em andamento, use Ajustar prazo"
+        )
+
+    run.duration_minutes = total_minutes
+    if run.status == "scheduled" and run.starts_at is not None:
+        run.ends_at = run.starts_at + timedelta(minutes=total_minutes)
+        _apply_schedule(run, paused=False)
+        db.session.commit()
+        return
+
+    db.session.commit()
+    close_for_draft(run, now)
+
+
 def revert_to_draft(run: CompetitionRun, now: datetime) -> None:
     """Undo an execution opened by mistake, while nobody has scored yet.
 

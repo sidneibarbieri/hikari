@@ -387,6 +387,21 @@ body .dropdown-menu {
     }
 }
 
+/* The admin theme is Bootstrap 4, where this class does not exist, so labels
+   meant only for screen readers were taking up room and wrapping inside the
+   controls they describe. */
+.hikari-competition-admin .visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
 /* ------------------------------------------------------ executions */
 .hikari-competition-admin {
     max-width: 1120px;
@@ -458,6 +473,75 @@ body .dropdown-menu {
 }
 .hikari-duration-field label {
     flex: 1;
+}
+/* One card per execution the operator can still act on. Inside a table cell
+   these controls fought for the same few pixels; here each one owns a row. */
+.hikari-run {
+    margin-top: 1rem;
+    padding: 1rem;
+    background: var(--hk-surface-2);
+    border: 1px solid var(--hk-border);
+    border-radius: var(--hk-radius);
+}
+.hikari-run:first-of-type {
+    margin-top: 0.75rem;
+}
+.hikari-run-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+.hikari-run-header code {
+    display: block;
+    margin-top: 0.15rem;
+    color: var(--hk-text-muted);
+    font-size: var(--hikari-size-xs);
+}
+.hikari-run-facts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem 2rem;
+    margin: 0.85rem 0 0;
+    padding: 0.75rem 0 0;
+    border-top: 1px solid var(--hk-border);
+}
+.hikari-run-facts dt {
+    color: var(--hk-text-muted);
+    font-size: var(--hikari-size-2xs);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+.hikari-run-facts dd {
+    margin: 0.1rem 0 0;
+    color: var(--hk-text);
+}
+.hikari-run-actions {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+    padding-top: 0.9rem;
+    border-top: 1px solid var(--hk-border);
+}
+.hikari-run-action {
+    margin: 0;
+}
+.hikari-run-action-title {
+    display: block;
+    margin-bottom: 0.4rem;
+    color: var(--hk-text-muted);
+    font-size: var(--hikari-size-xs);
+    font-weight: 700;
+}
+.hikari-run-action .hikari-inline-control .form-control {
+    min-width: 0;
+}
+.hikari-run-buttons .hikari-admin-actions {
+    align-items: center;
+    min-height: 2.65rem;
 }
 .hikari-admin-actions {
     display: flex;

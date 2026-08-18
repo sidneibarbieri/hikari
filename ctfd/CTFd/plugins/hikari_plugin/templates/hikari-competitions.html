@@ -62,11 +62,106 @@
     </form>
   </section>
 
+  {% set em_curso = runs | selectattr("status", "in", ["draft", "scheduled", "running", "paused"]) | list %}
+  {% if em_curso %}
+  <section class="hikari-admin-card">
+    <h2>Controle</h2>
+    <p class="hikari-admin-help">Execuções que ainda podem ser alteradas. Cada ação irreversível pede confirmação.</p>
+    {% for run in em_curso %}
+    <article class="hikari-run">
+      <header class="hikari-run-header">
+        <div>
+          <strong>{{ run.name }}</strong>
+          <code>{{ run.key }}</code>
+        </div>
+        <span class="hikari-status-chip hikari-status-chip--{{ run.status }}">{{ status_labels.get(run.status, run.status) }}</span>
+      </header>
+      <dl class="hikari-run-facts">
+        <div><dt>Modalidade</dt><dd>{{ "Equipes" if run.scoring_mode == "teams" else "Individual" }}</dd></div>
+        <div><dt>Duração</dt><dd>{{ describe_duration(run.duration_minutes) }}</dd></div>
+        <div><dt>Início</dt><dd>{{ format_schedule_time(run.starts_at) or "—" }}</dd></div>
+        <div><dt>Término</dt><dd>{{ format_schedule_time(run.ends_at) or "—" }}</dd></div>
+      </dl>
+
+      <div class="hikari-run-actions">
+        {% if run.status in ["draft", "scheduled"] %}
+        <form class="hikari-run-action" method="post" action="/admin/hikari/competitions/{{ run.id }}/duration">
+          <input name="nonce" type="hidden" value="{{ csrf_nonce }}">
+          <span class="hikari-run-action-title">Duração</span>
+          <div class="hikari-inline-control">
+            <label class="visually-hidden" for="edit-hours-{{ run.id }}">Horas</label>
+            <input class="form-control" id="edit-hours-{{ run.id }}" name="duration_hours" type="number"
+                   min="0" max="168" step="1" value="{{ run.duration_minutes // 60 }}" required>
+            <label class="visually-hidden" for="edit-minutes-{{ run.id }}">Minutos</label>
+            <input class="form-control" id="edit-minutes-{{ run.id }}" name="duration_minutes" type="number"
+                   min="0" max="59" step="1" value="{{ run.duration_minutes % 60 }}" required>
+            <button class="btn btn-outline-primary" type="submit">Salvar</button>
+          </div>
+          <p class="hikari-field-hint">Horas e minutos. Só antes do início.</p>
+        </form>
+        {% endif %}
+
+        {% if run.status == "draft" %}
+        <form class="hikari-run-action" method="post" action="/admin/hikari/competitions/{{ run.id }}/schedule">
+          <input name="nonce" type="hidden" value="{{ csrf_nonce }}">
+          <span class="hikari-run-action-title">Agendar início</span>
+          <div class="hikari-inline-control">
+            <label class="visually-hidden" for="starts-at-{{ run.id }}">Início</label>
+            <input class="form-control" id="starts-at-{{ run.id }}" name="starts_at" type="datetime-local" required>
+            <button class="btn btn-outline-primary" type="submit">Agendar</button>
+          </div>
+          <p class="hikari-field-hint">Cadastros seguem abertos até o início.</p>
+        </form>
+        {% endif %}
+
+        {% if run.status == "running" %}
+        <form class="hikari-run-action" method="post" action="/admin/hikari/competitions/{{ run.id }}/adjust">
+          <input name="nonce" type="hidden" value="{{ csrf_nonce }}">
+          <span class="hikari-run-action-title">Ajustar prazo</span>
+          <div class="hikari-inline-control">
+            <label class="visually-hidden" for="adjust-minutes-{{ run.id }}">Ajuste de prazo em minutos</label>
+            <input class="form-control" id="adjust-minutes-{{ run.id }}" name="adjust_minutes" type="number"
+                   min="-480" max="480" step="5" value="60" required>
+            <button class="btn btn-outline-primary" type="submit">Aplicar</button>
+          </div>
+          <p class="hikari-field-hint">Minutos, múltiplos de cinco. Positivo estende, negativo encurta. Precisa deixar ao menos 5 minutos.</p>
+        </form>
+        {% endif %}
+
+        <div class="hikari-run-action hikari-run-buttons">
+          <span class="hikari-run-action-title">Estado</span>
+          <div class="hikari-admin-actions">
+            {% if run.status in ["draft", "scheduled"] %}
+            <form method="post" action="/admin/hikari/competitions/{{ run.id }}/start"><input name="nonce" type="hidden" value="{{ csrf_nonce }}"><button class="btn btn-primary" type="submit">Iniciar agora</button></form>
+            {% endif %}
+            {% if run.status == "paused" %}
+            <form method="post" action="/admin/hikari/competitions/{{ run.id }}/resume"><input name="nonce" type="hidden" value="{{ csrf_nonce }}"><button class="btn btn-primary" type="submit">Retomar</button></form>
+            {% endif %}
+            {% if run.status == "running" %}
+            <form method="post" action="/admin/hikari/competitions/{{ run.id }}/pause"><input name="nonce" type="hidden" value="{{ csrf_nonce }}"><button class="btn btn-secondary" type="submit">Pausar</button></form>
+            {% endif %}
+            {% if run.status in ["running", "paused"] %}
+            <form method="post" action="/admin/hikari/competitions/{{ run.id }}/finish" onsubmit="return confirm('Encerrar a competição agora? Os competidores param de submeter imediatamente e esta ação não pode ser desfeita.')"><input name="nonce" type="hidden" value="{{ csrf_nonce }}"><button class="btn btn-danger" type="submit">Encerrar</button></form>
+            {% endif %}
+            {% if run.status == "scheduled" %}
+            <form method="post" action="/admin/hikari/competitions/{{ run.id }}/cancel" onsubmit="return confirm('Cancelar o agendamento? A execução não poderá mais ser iniciada.')"><input name="nonce" type="hidden" value="{{ csrf_nonce }}"><button class="btn btn-danger" type="submit">Cancelar</button></form>
+            {% endif %}
+            {% if run.status in ["scheduled", "running", "paused"] %}
+            <form method="post" action="/admin/hikari/competitions/{{ run.id }}/revert" onsubmit="return confirm('Voltar esta execução para rascunho fecha o jogo imediatamente. Só é possível enquanto ninguém pontuou. Confirmar?')"><input name="nonce" type="hidden" value="{{ csrf_nonce }}"><button class="btn btn-outline-danger" type="submit">Voltar para rascunho</button></form>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </article>
+    {% endfor %}
+  </section>
+  {% endif %}
+
   <section class="hikari-admin-card">
     <h2>Histórico</h2>
     {% if runs %}
     <div class="table-responsive"><table class="table">
-      <thead><tr><th>Execução</th><th>Modalidade</th><th>Estado</th><th>Duração</th><th>Início</th><th>Término</th><th>Ações</th></tr></thead>
+      <thead><tr><th>Execução</th><th>Modalidade</th><th>Estado</th><th>Duração</th><th>Início</th><th>Término</th></tr></thead>
       <tbody>
       {% for run in runs %}
       <tr>
@@ -74,29 +169,8 @@
         <td>{{ "Equipes" if run.scoring_mode == "teams" else "Individual" }}</td>
         <td><span class="hikari-status-chip hikari-status-chip--{{ run.status }}">{{ status_labels.get(run.status, run.status) }}</span></td>
         <td>{{ describe_duration(run.duration_minutes) }}</td>
-        <td>{{ format_schedule_time(run.starts_at) }}</td>
-        <td>{{ format_schedule_time(run.ends_at) }}</td>
-        <td>
-          <div class="hikari-admin-actions">
-          {% if run.status == "draft" %}
-          <form method="post" action="/admin/hikari/competitions/{{ run.id }}/schedule"><input name="nonce" type="hidden" value="{{ csrf_nonce }}"><label class="visually-hidden" for="starts-at-{{ run.id }}">Início</label><input class="form-control" id="starts-at-{{ run.id }}" name="starts_at" type="datetime-local" required><button class="btn btn-outline-primary" type="submit">Agendar</button></form>
-          <form method="post" action="/admin/hikari/competitions/{{ run.id }}/start"><input name="nonce" type="hidden" value="{{ csrf_nonce }}"><button class="btn btn-primary" type="submit">Iniciar agora</button></form>
-          {% elif run.status == "scheduled" %}
-          <form method="post" action="/admin/hikari/competitions/{{ run.id }}/start"><input name="nonce" type="hidden" value="{{ csrf_nonce }}"><button class="btn btn-primary" type="submit">Iniciar agora</button></form>
-          <form method="post" action="/admin/hikari/competitions/{{ run.id }}/cancel" onsubmit="return confirm('Cancelar o agendamento? A execução não poderá mais ser iniciada.')"><input name="nonce" type="hidden" value="{{ csrf_nonce }}"><button class="btn btn-danger" type="submit">Cancelar</button></form>
-          <form method="post" action="/admin/hikari/competitions/{{ run.id }}/revert" onsubmit="return confirm('Voltar esta execução para rascunho fecha o jogo imediatamente. Só é possível enquanto ninguém pontuou. Confirmar?')"><input name="nonce" type="hidden" value="{{ csrf_nonce }}"><button class="btn btn-outline-danger" type="submit">Voltar para rascunho</button></form>
-          {% elif run.status == "running" %}
-          <form method="post" action="/admin/hikari/competitions/{{ run.id }}/adjust"><input name="nonce" type="hidden" value="{{ csrf_nonce }}"><label for="adjust-minutes-{{ run.id }}">Ajuste de prazo em minutos</label><div class="hikari-inline-control"><input class="form-control" id="adjust-minutes-{{ run.id }}" name="adjust_minutes" type="number" min="-480" max="480" step="5" value="60" required><button class="btn btn-outline-primary" type="submit">Ajustar prazo</button></div><p class="hikari-field-hint">Múltiplos de cinco. Positivo estende, negativo encurta. O novo prazo precisa deixar ao menos 5 minutos; para terminar agora, use Encerrar.</p></form>
-          <form method="post" action="/admin/hikari/competitions/{{ run.id }}/pause"><input name="nonce" type="hidden" value="{{ csrf_nonce }}"><button class="btn btn-secondary" type="submit">Pausar</button></form>
-          <form method="post" action="/admin/hikari/competitions/{{ run.id }}/finish" onsubmit="return confirm('Encerrar a competição agora? Os competidores param de submeter imediatamente e esta ação não pode ser desfeita.')"><input name="nonce" type="hidden" value="{{ csrf_nonce }}"><button class="btn btn-danger" type="submit">Encerrar</button></form>
-          <form method="post" action="/admin/hikari/competitions/{{ run.id }}/revert" onsubmit="return confirm('Voltar esta execução para rascunho fecha o jogo imediatamente. Só é possível enquanto ninguém pontuou. Confirmar?')"><input name="nonce" type="hidden" value="{{ csrf_nonce }}"><button class="btn btn-outline-danger" type="submit">Voltar para rascunho</button></form>
-          {% elif run.status == "paused" %}
-          <form method="post" action="/admin/hikari/competitions/{{ run.id }}/resume"><input name="nonce" type="hidden" value="{{ csrf_nonce }}"><button class="btn btn-primary" type="submit">Retomar</button></form>
-          <form method="post" action="/admin/hikari/competitions/{{ run.id }}/finish" onsubmit="return confirm('Encerrar a competição agora? Os competidores param de submeter imediatamente e esta ação não pode ser desfeita.')"><input name="nonce" type="hidden" value="{{ csrf_nonce }}"><button class="btn btn-danger" type="submit">Encerrar</button></form>
-          <form method="post" action="/admin/hikari/competitions/{{ run.id }}/revert" onsubmit="return confirm('Voltar esta execução para rascunho fecha o jogo imediatamente. Só é possível enquanto ninguém pontuou. Confirmar?')"><input name="nonce" type="hidden" value="{{ csrf_nonce }}"><button class="btn btn-outline-danger" type="submit">Voltar para rascunho</button></form>
-          {% endif %}
-          </div>
-        </td>
+        <td>{{ format_schedule_time(run.starts_at) or "—" }}</td>
+        <td>{{ format_schedule_time(run.ends_at) or "—" }}</td>
       </tr>
       {% endfor %}
       </tbody>

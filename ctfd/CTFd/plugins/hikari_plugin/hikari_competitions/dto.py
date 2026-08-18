@@ -14,47 +14,21 @@ MAXIMUM_DURATION_MINUTES = 7 * 24 * 60
 SCORING_MODES = {"teams", "users"}
 
 
-class CompetitionDraft(BaseModel):
-    """Input required to create a competition execution.
+class DurationInput(BaseModel):
+    """A duration stated as hours and minutes.
 
-    The duration arrives as hours and minutes, the way an operator states it,
-    because asking for a total turns a five and a half hour competition into an
-    arithmetic problem to be solved under pressure. Every rejection here is read
-    by a person deciding what to type next, so each message says what is wrong
-    and what to do about it.
+    Asking for a total turns a five and a half hour competition into an
+    arithmetic problem to be solved under pressure. Every rejection here is
+    read by a person deciding what to type next, so each message says what is
+    wrong and what to do about it.
     """
 
-    key: str
-    name: str
-    scoring_mode: str
     duration_hours: int
     duration_minutes: int
 
     @property
     def total_minutes(self) -> int:
         return self.duration_hours * 60 + self.duration_minutes
-
-    @validator("key")
-    def validate_key(cls, value: str) -> str:
-        normalized = value.strip().lower()
-        if not _KEY_PATTERN.fullmatch(normalized):
-            raise ValueError("Use 3 a 64 caracteres: letras minúsculas, números e hífens")
-        return normalized
-
-    @validator("name")
-    def validate_name(cls, value: str) -> str:
-        normalized = value.strip()
-        if len(normalized) < MINIMUM_NAME_LENGTH:
-            raise ValueError(f"O nome precisa ter ao menos {MINIMUM_NAME_LENGTH} caracteres")
-        if len(normalized) > MAXIMUM_NAME_LENGTH:
-            raise ValueError(f"O nome pode ter no máximo {MAXIMUM_NAME_LENGTH} caracteres")
-        return normalized
-
-    @validator("scoring_mode")
-    def validate_scoring_mode(cls, value: str) -> str:
-        if value not in SCORING_MODES:
-            raise ValueError("Escolha uma modalidade: equipes ou competidores individuais")
-        return value
 
     @validator("duration_hours", "duration_minutes", pre=True)
     def validate_duration_part(cls, value: object) -> int:
@@ -79,3 +53,33 @@ class CompetitionDraft(BaseModel):
         if total > MAXIMUM_DURATION_MINUTES:
             raise ValueError("A competição pode durar no máximo sete dias")
         return values
+
+
+class CompetitionDraft(DurationInput):
+    """Input required to create a competition execution."""
+
+    key: str
+    name: str
+    scoring_mode: str
+
+    @validator("key")
+    def validate_key(cls, value: str) -> str:
+        normalized = value.strip().lower()
+        if not _KEY_PATTERN.fullmatch(normalized):
+            raise ValueError("Use 3 a 64 caracteres: letras minúsculas, números e hífens")
+        return normalized
+
+    @validator("name")
+    def validate_name(cls, value: str) -> str:
+        normalized = value.strip()
+        if len(normalized) < MINIMUM_NAME_LENGTH:
+            raise ValueError(f"O nome precisa ter ao menos {MINIMUM_NAME_LENGTH} caracteres")
+        if len(normalized) > MAXIMUM_NAME_LENGTH:
+            raise ValueError(f"O nome pode ter no máximo {MAXIMUM_NAME_LENGTH} caracteres")
+        return normalized
+
+    @validator("scoring_mode")
+    def validate_scoring_mode(cls, value: str) -> str:
+        if value not in SCORING_MODES:
+            raise ValueError("Escolha uma modalidade: equipes ou competidores individuais")
+        return value

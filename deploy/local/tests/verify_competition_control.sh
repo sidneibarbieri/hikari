@@ -211,6 +211,78 @@ cancelled_status=$(hikari_compose exec -T db mariadb -N -u"$HIKARI_DB_USER" -p"$
 [[ "$(configured_start)" -gt "$(date +%s)" ]] \
   || { echo "FAIL: cancellation reopened the CTFd play window"; exit 1; }
 
+# The duration of an execution that has not started has to be changeable, or a
+# schedule agreed after the run was created forces a whole new execution.
+duracao_key="${run_key}-duracao"
+dashboard=$(mktemp)
+curl -sS -c "$cookie_jar" -b "$cookie_jar" -o "$dashboard" "$CTFD_URL/admin/hikari/competitions"
+code=$(curl -sS -c "$cookie_jar" -b "$cookie_jar" -o /dev/null -w '%{http_code}' \
+  -X POST "$CTFD_URL/admin/hikari/competitions" \
+  --data-urlencode "nonce=$(extract_nonce "$dashboard")" \
+  --data-urlencode "key=$duracao_key" \
+  --data-urlencode "name=Duracao Run $stamp" \
+  --data-urlencode "scoring_mode=teams" \
+  --data-urlencode "duration_hours=4" \
+  --data-urlencode "duration_minutes=0")
+[[ "$code" == "302" ]] || { echo "FAIL: duration test run creation returned $code"; exit 1; }
+duracao_id=$(run_id_for_key "$duracao_key")
+[[ -n "$duracao_id" ]] || { echo "FAIL: duration test run was not persisted"; exit 1; }
+
+duracao_minutos() {
+  hikari_mariadb -N \
+    -e "SELECT duration_minutes FROM hikari_competition_runs WHERE \`key\` = '$duracao_key';" \
+    | tr -d '\r\n'
+}
+[[ "$(duracao_minutos)" == "240" ]] \
+  || { echo "FAIL: creation did not store four hours, got $(duracao_minutos)"; exit 1; }
+
+curl -sS -c "$cookie_jar" -b "$cookie_jar" -o "$dashboard" "$CTFD_URL/admin/hikari/competitions"
+code=$(curl -sS -c "$cookie_jar" -b "$cookie_jar" -o /dev/null -w '%{http_code}' \
+  -X POST "$CTFD_URL/admin/hikari/competitions/$duracao_id/duration" \
+  --data-urlencode "nonce=$(extract_nonce "$dashboard")" \
+  --data-urlencode "duration_hours=5" \
+  --data-urlencode "duration_minutes=30")
+[[ "$code" == "302" ]] || { echo "FAIL: duration change returned $code"; exit 1; }
+[[ "$(duracao_minutos)" == "330" ]] \
+  || { echo "FAIL: five and a half hours were not stored, got $(duracao_minutos)"; exit 1; }
+
+# A scheduled run keeps its start while its end follows the new duration.
+curl -sS -c "$cookie_jar" -b "$cookie_jar" -o "$dashboard" "$CTFD_URL/admin/hikari/competitions"
+curl -sS -c "$cookie_jar" -b "$cookie_jar" -o /dev/null \
+  -X POST "$CTFD_URL/admin/hikari/competitions/$duracao_id/schedule" \
+  --data-urlencode "nonce=$(extract_nonce "$dashboard")" \
+  --data-urlencode "starts_at=2099-06-01T10:00"
+curl -sS -c "$cookie_jar" -b "$cookie_jar" -o "$dashboard" "$CTFD_URL/admin/hikari/competitions"
+curl -sS -c "$cookie_jar" -b "$cookie_jar" -o /dev/null \
+  -X POST "$CTFD_URL/admin/hikari/competitions/$duracao_id/duration" \
+  --data-urlencode "nonce=$(extract_nonce "$dashboard")" \
+  --data-urlencode "duration_hours=2" \
+  --data-urlencode "duration_minutes=0"
+janela=$(hikari_mariadb -N \
+  -e "SELECT TIMESTAMPDIFF(MINUTE, starts_at, ends_at) FROM hikari_competition_runs WHERE \`key\` = '$duracao_key';" \
+  | tr -d '\r\n')
+[[ "$janela" == "120" ]] \
+  || { echo "FAIL: the scheduled window did not follow the new duration, got $janela"; exit 1; }
+
+# Once it is running the deadline moves with Ajustar prazo, not with this.
+curl -sS -c "$cookie_jar" -b "$cookie_jar" -o "$dashboard" "$CTFD_URL/admin/hikari/competitions"
+curl -sS -c "$cookie_jar" -b "$cookie_jar" -o /dev/null \
+  -X POST "$CTFD_URL/admin/hikari/competitions/$duracao_id/start" \
+  --data-urlencode "nonce=$(extract_nonce "$dashboard")"
+curl -sS -c "$cookie_jar" -b "$cookie_jar" -o "$dashboard" "$CTFD_URL/admin/hikari/competitions"
+curl -sS -c "$cookie_jar" -b "$cookie_jar" -o /dev/null \
+  -X POST "$CTFD_URL/admin/hikari/competitions/$duracao_id/duration" \
+  --data-urlencode "nonce=$(extract_nonce "$dashboard")" \
+  --data-urlencode "duration_hours=8" \
+  --data-urlencode "duration_minutes=0"
+[[ "$(duracao_minutos)" == "120" ]] \
+  || { echo "FAIL: a running execution accepted a duration change"; exit 1; }
+curl -sS -c "$cookie_jar" -b "$cookie_jar" -o "$dashboard" "$CTFD_URL/admin/hikari/competitions"
+curl -sS -c "$cookie_jar" -b "$cookie_jar" -o /dev/null \
+  -X POST "$CTFD_URL/admin/hikari/competitions/$duracao_id/finish" \
+  --data-urlencode "nonce=$(extract_nonce "$dashboard")"
+echo "PASS: duração editável antes do início, em horas e minutos, e recusada depois"
+
 # An execution opened by mistake has to be reversible, and the undo has to stop
 # being available the moment the competition becomes real history.
 revert_key="${run_key}-revert"

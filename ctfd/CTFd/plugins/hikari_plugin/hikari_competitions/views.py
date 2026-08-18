@@ -8,7 +8,7 @@ from pydantic import ValidationError
 from CTFd.models import db
 from CTFd.utils.decorators import admins_only
 
-from .dto import CompetitionDraft
+from .dto import CompetitionDraft, DurationInput
 from .formatting import describe_duration
 from .models import CompetitionRun
 from . import service
@@ -141,6 +141,24 @@ def finish(run_id: int):
         flash(str(error), "danger")
     else:
         flash("Execução encerrada. Faça o checkpoint antes de reutilizar a instalação.", "success")
+    return redirect(url_for("hikariplugin.hikari_competitions_dashboard"))
+
+
+@admins_only
+def duration(run_id: int):
+    run = _run_or_404(run_id)
+    try:
+        pedido = DurationInput(
+            duration_hours=request.form.get("duration_hours", ""),
+            duration_minutes=request.form.get("duration_minutes", ""),
+        )
+        service.change_duration(run, pedido.total_minutes, _now())
+    except ValidationError as error:
+        flash(error.errors()[0]["msg"], "danger")
+    except ValueError as error:
+        flash(str(error), "danger")
+    else:
+        flash("Duração atualizada.", "success")
     return redirect(url_for("hikariplugin.hikari_competitions_dashboard"))
 
 
