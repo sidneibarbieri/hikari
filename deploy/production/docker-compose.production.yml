@@ -17,7 +17,6 @@ services:
       SECRET_KEY: "${SECRET_KEY}"
       DATABASE_URL: "mysql+pymysql://ctfd:${DATABASE_PASSWORD:?DATABASE_PASSWORD is required}@db/ctfd"
       REDIS_URL: "redis://cache:6379"
-      SERVER_PUBLICBASEURL: "https://${HIKARI_DOMAIN}/hikari/kibana"
       HIKARI_GOOGLE_CLIENT_ID: "${HIKARI_GOOGLE_CLIENT_ID:-}"
       HIKARI_GOOGLE_CLIENT_SECRET: "${HIKARI_GOOGLE_CLIENT_SECRET:-}"
       HIKARI_OAUTH_REDIRECT_BASE: "https://${HIKARI_DOMAIN}"
@@ -69,6 +68,9 @@ services:
     # Kibana acessado apenas via proxy CTFd — nunca exposto diretamente
     environment:
       XPACK_ENCRYPTEDSAVEDOBJECTS_ENCRYPTIONKEY: "${KIBANA_ENCRYPTION_KEY}"
+      # Kibana builds absolute links from this, and competitors reach it
+      # through the public domain, not through the loopback of the server.
+      SERVER_PUBLICBASEURL: "https://${HIKARI_DOMAIN}/hikari/kibana"
 
   logstash:
     restart: unless-stopped
