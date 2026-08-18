@@ -27,6 +27,15 @@ run_duration_minutes() {
     | tr -d '\r\n'
 }
 
+# The dashboard lists every execution, so picking an id by its position in the
+# page silently targets whichever draft happens to sit there. The key is what
+# identifies the execution this test created.
+run_id_for_key() {
+  hikari_mariadb -N \
+    -e "SELECT id FROM hikari_competition_runs WHERE \`key\` = '$1';" \
+    | tr -d '\r\n'
+}
+
 run_status() {
   hikari_compose exec -T db mariadb -N -u"$HIKARI_DB_USER" -p"$HIKARI_DB_PASSWORD" "$HIKARI_DB_NAME" \
     -e "SELECT status FROM hikari_competition_runs WHERE \`key\` = '$run_key';" \
@@ -93,8 +102,10 @@ code=$(curl -sS -c "$cookie_jar" -b "$cookie_jar" -o /dev/null -w '%{http_code}'
 
 dashboard=$(mktemp)
 curl -sS -c "$cookie_jar" -b "$cookie_jar" -o "$dashboard" "$CTFD_URL/admin/hikari/competitions"
-run_id=$(grep -oE "/admin/hikari/competitions/[0-9]+/start" "$dashboard" | head -1 | grep -oE '[0-9]+')
-[[ -n "$run_id" ]] || { echo "FAIL: start action missing for created run"; exit 1; }
+run_id=$(run_id_for_key "$run_key")
+[[ -n "$run_id" ]] || { echo "FAIL: created run was not persisted"; exit 1; }
+grep -q "/admin/hikari/competitions/$run_id/start" "$dashboard" \
+  || { echo "FAIL: start action missing for created run"; exit 1; }
 nonce=$(extract_nonce "$dashboard")
 [[ -n "$nonce" ]] || { echo "FAIL: competition nonce missing"; exit 1; }
 
@@ -177,8 +188,10 @@ code=$(curl -sS -c "$cookie_jar" -b "$cookie_jar" -o /dev/null -w '%{http_code}'
 [[ "$code" == "302" ]] || { echo "FAIL: cancellation test run creation returned $code"; exit 1; }
 
 curl -sS -c "$cookie_jar" -b "$cookie_jar" -o "$dashboard" "$CTFD_URL/admin/hikari/competitions"
-cancel_id=$(grep -oE "/admin/hikari/competitions/[0-9]+/schedule" "$dashboard" | tail -1 | grep -oE '[0-9]+')
-[[ -n "$cancel_id" ]] || { echo "FAIL: cancellation test run lacks schedule action"; exit 1; }
+cancel_id=$(run_id_for_key "$cancel_key")
+[[ -n "$cancel_id" ]] || { echo "FAIL: cancellation test run was not persisted"; exit 1; }
+grep -q "/admin/hikari/competitions/$cancel_id/schedule" "$dashboard" \
+  || { echo "FAIL: cancellation test run lacks schedule action"; exit 1; }
 code=$(curl -sS -c "$cookie_jar" -b "$cookie_jar" -o /dev/null -w '%{http_code}' \
   -X POST "$CTFD_URL/admin/hikari/competitions/$cancel_id/schedule" \
   --data-urlencode "nonce=$(extract_nonce "$dashboard")" \
@@ -217,8 +230,10 @@ revert_status() {
 }
 
 curl -sS -c "$cookie_jar" -b "$cookie_jar" -o "$dashboard" "$CTFD_URL/admin/hikari/competitions"
-revert_id=$(grep -oE "/admin/hikari/competitions/[0-9]+/schedule" "$dashboard" | tail -1 | grep -oE '[0-9]+')
-[[ -n "$revert_id" ]] || { echo "FAIL: revert test run lacks schedule action"; exit 1; }
+revert_id=$(run_id_for_key "$revert_key")
+[[ -n "$revert_id" ]] || { echo "FAIL: revert test run was not persisted"; exit 1; }
+grep -q "/admin/hikari/competitions/$revert_id/schedule" "$dashboard" \
+  || { echo "FAIL: revert test run lacks schedule action"; exit 1; }
 
 # A draft offers no undo, because there is nothing to undo.
 grep -q "/admin/hikari/competitions/$revert_id/revert" "$dashboard" \
@@ -261,9 +276,11 @@ code=$(curl -sS -c "$cookie_jar" -b "$cookie_jar" -o /dev/null -w '%{http_code}'
   --data-urlencode "nonce=$(extract_nonce "$dashboard")")
 [[ "$code" == "302" ]] || { echo "FAIL: restart for the submission guard returned $code"; exit 1; }
 
+# The start time carries microseconds, and NOW() would round down to the second
+# it shares with it, landing the submission before the execution it belongs to.
 hikari_mariadb \
   -e "INSERT INTO submissions (challenge_id, user_id, team_id, ip, provided, type, date)
-      SELECT c.id, u.id, NULL, '127.0.0.1', 'guarda', 'correct', NOW()
+      SELECT c.id, u.id, NULL, '127.0.0.1', 'guarda', 'correct', NOW(6)
         FROM challenges c, users u WHERE u.type = 'admin' LIMIT 1;" > /dev/null
 
 curl -sS -c "$cookie_jar" -b "$cookie_jar" -o "$dashboard" "$CTFD_URL/admin/hikari/competitions"
