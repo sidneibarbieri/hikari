@@ -1,16 +1,17 @@
 """Typed values the installer passes between its stages.
 
-Keeping these as models rather than dictionaries means a missing field fails
-where it is built, not three stages later where the cause is no longer visible.
+These use the standard library alone. The installer is the one component that
+runs before anything is prepared, on a host where no dependency can be assumed,
+so requiring a package to install packages would defeat its purpose. The
+application itself, which runs inside the container, uses Pydantic.
 """
 
 from __future__ import annotations
 
+from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
 from typing import List, Optional
-
-from pydantic import BaseModel, Field
 
 
 class Severity(str, Enum):
@@ -21,7 +22,8 @@ class Severity(str, Enum):
     BLOCKER = "blocker"
 
 
-class Finding(BaseModel):
+@dataclass(frozen=True)
+class Finding:
     """One observation about the host, with the action that resolves it."""
 
     severity: Severity
@@ -34,7 +36,8 @@ class Finding(BaseModel):
         return self.severity is Severity.BLOCKER
 
 
-class HostFacts(BaseModel):
+@dataclass(frozen=True)
+class HostFacts:
     """What the installer measured about the machine it runs on."""
 
     operating_system: str
@@ -53,26 +56,33 @@ class Profile(str, Enum):
     PRODUCTION = "producao"
 
 
-class InstallationPlan(BaseModel):
+@dataclass(frozen=True)
+class InstallationPlan:
     """Everything the installer needs, resolved before it changes anything."""
 
     profile: Profile
     repository_root: Path
-    compose_files: List[Path]
-    project_name: str
+    compose_files: List[Path] = field(default_factory=list)
+    project_name: str = "local"
     ctfd_port: int = 8000
     domain: Optional[str] = None
-    skip_verification: bool = False
+
+    def __post_init__(self) -> None:
+        if self.profile is Profile.PRODUCTION and not self.domain:
+            raise ValueError("O perfil de produção exige um domínio.")
+        if not 1 <= self.ctfd_port <= 65535:
+            raise ValueError(f"Porta fora do intervalo válido: {self.ctfd_port}")
 
     @property
     def local_directory(self) -> Path:
         return self.repository_root / "deploy" / "local"
 
 
-class StepOutcome(BaseModel):
+@dataclass(frozen=True)
+class StepOutcome:
     """The result of one installation step, for the closing report."""
 
     name: str
     succeeded: bool
-    seconds: float = Field(ge=0)
+    seconds: float
     message: str = ""
