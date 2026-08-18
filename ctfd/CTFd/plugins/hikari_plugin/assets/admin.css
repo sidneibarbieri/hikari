@@ -434,11 +434,14 @@ body .dropdown-menu {
     border: 1px solid var(--hk-border);
     border-radius: var(--hk-radius);
 }
+/* Fields start on the same line so the eye reads one row of labels instead of
+   four heights. Bottom alignment ragged them, because a field with a hint is
+   taller than one without. */
 .hikari-admin-form {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr)) auto;
-    gap: 0.9rem;
-    align-items: end;
+    grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+    gap: 1.1rem;
+    align-items: start;
 }
 .hikari-admin-form label {
     display: grid;
@@ -447,6 +450,22 @@ body .dropdown-menu {
     color: var(--hk-text-muted);
     font-size: var(--hikari-size-xs);
     font-weight: 700;
+}
+/* A control sized by its own content overflows the column it sits in and lands
+   on top of the next one, which is what a missing framework class caused here.
+   Owning the width keeps that impossible whatever the theme provides. */
+.hikari-competition-admin select,
+.hikari-competition-admin input,
+.hikari-competition-admin .form-control {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+}
+.hikari-form-submit {
+    grid-column: 1 / -1;
+    display: flex;
+    justify-content: flex-start;
+    padding-top: 0.2rem;
 }
 .hikari-admin-form .btn {
     min-height: 2.65rem;

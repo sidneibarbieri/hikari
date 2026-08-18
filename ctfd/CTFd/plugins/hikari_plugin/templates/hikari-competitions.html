@@ -39,7 +39,7 @@
         <input class="form-control" name="name" required maxlength="128" placeholder="Competição de defesa cibernética">
       </label>
       <label>Modalidade de pontuação
-        <select class="form-select" name="scoring_mode" required>
+        <select class="form-control" name="scoring_mode" required>
           <option value="teams">Equipes, inclusive equipes individuais</option>
           <option value="users">Competidores individuais</option>
         </select>
@@ -58,7 +58,9 @@
         </div>
         <p class="hikari-field-hint">Exemplo: 5h30. De 15 minutos a 7 dias.</p>
       </fieldset>
-      <button class="btn btn-primary" type="submit">Criar execução</button>
+      <div class="hikari-form-submit">
+        <button class="btn btn-primary" type="submit">Criar execução</button>
+      </div>
     </form>
   </section>
 
