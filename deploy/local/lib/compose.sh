@@ -8,6 +8,13 @@ HIKARI_LIB_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 HIKARI_LOCAL_DIR=$(cd "$HIKARI_LIB_DIR/.." && pwd)
 
 hikari_compose() {
+  # An installed stack keeps its generated values in an env file rather than in
+  # the shell, and the production compose file interpolates them. Without it a
+  # build or an up fails on a missing variable instead of starting.
+  if [[ -n "${HIKARI_COMPOSE_ENV_FILE:-}" ]]; then
+    set -- --env-file "$HIKARI_COMPOSE_ENV_FILE" "$@"
+  fi
+
   if command -v docker-compose >/dev/null 2>&1; then
     docker-compose "$@"
     return
@@ -20,6 +27,18 @@ hikari_compose() {
 
   echo "Docker Compose is required. Install the Docker Compose plugin or docker-compose." >&2
   return 127
+}
+
+# The installer writes this file next to the production compose file and starts
+# the stack with it, so an operator running these scripts has to use the same one.
+hikari_adopt_environment_file() {
+  if [[ -n "${HIKARI_COMPOSE_ENV_FILE:-}" ]]; then
+    return 0
+  fi
+  local candidato="$HIKARI_LOCAL_DIR/../production/.compose.env"
+  if [[ -r "$candidato" ]]; then
+    export HIKARI_COMPOSE_ENV_FILE=$(cd "$(dirname "$candidato")" && pwd)/.compose.env
+  fi
 }
 
 hikari_container_env() {
@@ -74,6 +93,7 @@ hikari_adopt_database_credentials() {
 }
 
 hikari_adopt_running_stack
+hikari_adopt_environment_file
 hikari_adopt_database_credentials
 
 # An explicit environment value always wins; these are the development defaults
