@@ -75,6 +75,10 @@ services:
       - --collation-server=utf8mb4_unicode_ci
       - --wait_timeout=28800
       - --max_allowed_packet=64M
+      # Each CTFd worker keeps its own SQLAlchemy pool, so the ceiling has to
+      # clear workers x pool size with room for maintenance connections. The
+      # default of 151 is exhausted by a few hundred people playing at once.
+      - --max_connections=${DB_MAX_CONNECTIONS:-500}
     volumes:
       - mariadb-data:/var/lib/mysql
     healthcheck:
