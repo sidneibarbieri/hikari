@@ -266,8 +266,10 @@ gateway_flag="hikari{ensaio-porta-$stamp}"
 deep_flag="hikari{ensaio-profundo-$stamp}"
 gateway_marker="ensaio-porta-marker-$stamp"
 deep_marker="ensaio-profundo-marker-$stamp"
-gateway_log="$workspace/gateway.json"
-deep_log="$workspace/deep.json"
+# The platform keeps log filenames unique, so a rehearsal that reused the same
+# name would only ever succeed on a fresh installation.
+gateway_log="$workspace/gateway-$stamp.json"
+deep_log="$workspace/deep-$stamp.json"
 printf '[{"marker":"%s","event.action":"logon","source.ip":"10.0.0.1"}]\n' \
   "$gateway_marker" > "$gateway_log"
 printf '[{"marker":"%s","event.action":"lateral_movement","source.ip":"10.0.0.2"}]\n' \
