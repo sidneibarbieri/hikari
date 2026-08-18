@@ -972,6 +972,22 @@ select option {
     font-size: var(--hikari-size-md);
     line-height: 1.55;
 }
+/* The administrator panel has more than one thing to offer, so its sections
+   need a rhythm the single-purpose competitor panel never needed. */
+.team-join-panel h3 {
+    margin: 1.6rem 0 0.5rem;
+    font-size: var(--hikari-size-base);
+    font-weight: 700;
+    color: var(--hikari-text);
+}
+.team-join-panel h3:first-of-type {
+    padding-top: 1.2rem;
+    border-top: 1px solid var(--hikari-border);
+}
+.team-join-panel .team-join-actions + h3 {
+    margin-top: 1.8rem;
+}
+
 .team-join-actions {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));

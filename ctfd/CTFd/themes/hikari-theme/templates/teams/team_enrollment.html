@@ -7,6 +7,41 @@
     </div>
   </div>
   <div class="container">
+    {% if is_admin() %}
+    {#
+      An administrator arriving here was asked to join the competition they are
+      running. They do not compete, so the page says what they came to do
+      instead of offering them a place on the scoreboard.
+    #}
+    <div class="team-join-panel">
+      <h2>Você está como administrador</h2>
+      <p>
+        Administradores não competem: a pontuação é das equipes, e nada que você
+        resolver aparece no placar.
+      </p>
+
+      <h3>Conferir os desafios</h3>
+      <p>
+        No painel você vê os desafios cadastrados, edita o enunciado, as dicas e
+        a flag, e pré-visualiza cada um exatamente como o competidor verá.
+      </p>
+      <div class="team-join-actions">
+        <a class="btn btn-primary" href="/admin/challenges">Desafios cadastrados</a>
+        <a class="btn btn-primary" href="/admin/hikari/competitions">Controle da competição</a>
+      </div>
+
+      <h3>Ver a tela do competidor</h3>
+      <p>
+        Para percorrer a sequência como um competidor — categorias, desafios
+        bloqueados e a ordem de liberação — crie uma equipe aqui. Equipe criada
+        por administrador nasce oculta: <strong>não entra no placar nem conta
+        para ninguém</strong>.
+      </p>
+      <div class="team-join-actions">
+        <a class="btn btn-secondary" href="{{ url_for('teams.new') }}">Criar equipe de verificação</a>
+      </div>
+    </div>
+    {% else %}
     <div class="team-join-panel">
       <h2>Entrar na competição</h2>
       <p>
@@ -19,5 +54,6 @@
         <a class="btn btn-primary" href="{{ url_for('teams.new') }}">Criar equipe, inclusive individual</a>
       </div>
     </div>
+    {% endif %}
   </div>
 {% endblock %}

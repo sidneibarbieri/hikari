@@ -179,7 +179,7 @@ def recent_solves(limit: int) -> List[RecentSolve]:
         .join(Challenges, Solves.challenge_id == Challenges.id)
         .join(Users, Solves.user_id == Users.id)
         .outerjoin(Teams, Solves.team_id == Teams.id)
-        .filter(Users.hidden == False, Users.banned == False)
+        .filter(Users.hidden == False, Users.banned == False, Users.type == "user")
         .order_by(Solves.date.desc())
         .limit(limit)
         .all()
@@ -231,7 +231,17 @@ def team_timeline(standings: Sequence[LiveStanding]) -> List[TimelinePoint]:
 
 
 def total_solves() -> int:
-    return int(Solves.query.count())
+    """Count the solves this board is willing to show.
+
+    Every other query here leaves out hidden and banned accounts, so counting
+    all of them let an administrator testing a flag raise the number the
+    audience reads on the projector.
+    """
+    return int(
+        Solves.query.join(Users, Solves.user_id == Users.id)
+        .filter(Users.hidden == False, Users.banned == False, Users.type == "user")
+        .count()
+    )
 
 
 def isoformat(value: Optional[datetime]) -> Optional[str]:
