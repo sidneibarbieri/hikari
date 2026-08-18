@@ -76,7 +76,7 @@ report_test_data() {
        SELECT CONCAT('  submissões dessas contas . ', COUNT(*)) FROM submissions s
         JOIN users u ON u.id = s.user_id WHERE u.name REGEXP '$TEST_ACCOUNT_PATTERN';
        SELECT CONCAT('  eventos de atividade ..... ', COUNT(*)) FROM hikari_activity
-        WHERE competition_key REGEXP '^(acceptance|simulacao)-';
+        WHERE competition_key REGEXP '^(acceptance|simulacao|ensaio)-';
        SELECT CONCAT('  desafios de teste ........ ', COUNT(*))
         FROM hikari_challenge_library_entries e
         JOIN hikari_challenge_library_imports i ON i.id = e.library_import_id
@@ -240,12 +240,12 @@ purge_test_data() {
         WHERE u.name REGEXP '$TEST_ACCOUNT_PATTERN';
        DELETE f FROM hikari_feedback_responses f JOIN users u ON u.id = f.user_id
         WHERE u.name REGEXP '$TEST_ACCOUNT_PATTERN';
-       DELETE FROM hikari_activity WHERE competition_key REGEXP '^(acceptance|simulacao)-';
+       DELETE FROM hikari_activity WHERE competition_key REGEXP '^(acceptance|simulacao|ensaio)-';
        UPDATE users SET team_id = NULL WHERE name REGEXP '$TEST_ACCOUNT_PATTERN';
        UPDATE teams SET captain_id = NULL WHERE name REGEXP '$TEST_ACCOUNT_PATTERN';
        DELETE FROM users WHERE name REGEXP '$TEST_ACCOUNT_PATTERN';
        DELETE FROM teams WHERE name REGEXP '$TEST_ACCOUNT_PATTERN';
-       DELETE FROM hikari_competition_runs WHERE \`key\` REGEXP '^(acceptance|simulacao)-';"
+       DELETE FROM hikari_competition_runs WHERE \`key\` REGEXP '^(acceptance|simulacao|ensaio)-';"
   purge_test_challenges
 }
 
