@@ -19,9 +19,19 @@ COMPOSE_ENV="$SCRIPT_DIR/.compose.env"
 
 [[ -f "$COMPOSE_ENV" ]] || { echo "compose environment not found: $COMPOSE_ENV" >&2; exit 1; }
 [[ -f "$BASE_COMPOSE_FILE" ]] || { echo "compose base file not found: $BASE_COMPOSE_FILE" >&2; exit 1; }
+# Recovery is attempted on the worst day, so an unreadable environment file has
+# to say what is wrong rather than abort on a cryptic "command not found".
+if ! (set -a; source "$COMPOSE_ENV"); then
+  echo "the environment file could not be read: $COMPOSE_ENV" >&2
+  echo "a value containing spaces has to be quoted, as in KEY=\"-Xms4g -Xmx4g\"" >&2
+  exit 1
+fi
 set -a
 source "$COMPOSE_ENV"
 set +a
+
+[[ -n "${DATABASE_PASSWORD:-}" ]] \
+  || { echo "DATABASE_PASSWORD is missing from $COMPOSE_ENV" >&2; exit 1; }
 
 BACKUP_DIR=${HIKARI_BACKUP_DIR:-/opt/hikari/backups}
 
