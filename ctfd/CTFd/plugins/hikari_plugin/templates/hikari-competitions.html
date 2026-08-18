@@ -160,6 +160,50 @@
   {% endif %}
 
   <section class="hikari-admin-card">
+    <h2>Sequência do jogo</h2>
+    <p class="hikari-admin-help">
+      O que os competidores encontram quando a competição abre. Esta leitura vem
+      dos desafios, não da tela: navegando pela grade, um administrador vê tudo
+      liberado, porque o CTFd o deixa passar pelos pré-requisitos.
+    </p>
+
+    {% if sequence.unreachable %}
+    <div class="hikari-sequence-alert">
+      <strong>{{ sequence.unreachable | length }} desafio(s) nunca abrirão</strong>
+      <ul>
+        {% for item in sequence.unreachable %}
+        <li>{{ item.name }} <span>({{ item.category }}) — {{ item.reason }}</span></li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+
+    {% if sequence.total %}
+    <p class="hikari-sequence-resumo">
+      <strong>{{ sequence.total }}</strong> desafios ao todo ·
+      <strong>{{ sequence.open_at_start }}</strong> abrem no início ·
+      <strong>{{ sequence.total - sequence.open_at_start }}</strong> liberam conforme as equipes resolvem
+      {%- if sequence.hidden %} · <strong>{{ sequence.hidden }}</strong> ocultos, que ninguém verá{% endif %}
+    </p>
+    <div class="table-responsive"><table class="table">
+      <thead><tr><th>Categoria</th><th>Desafios</th><th>Abrem no início</th><th>Liberam depois</th></tr></thead>
+      <tbody>
+      {% for stage in sequence.stages %}
+      <tr>
+        <td><strong>{{ stage.name }}</strong></td>
+        <td>{{ stage.total }}</td>
+        <td>{{ stage.open_at_start or "—" }}</td>
+        <td>{{ stage.locked or "—" }}</td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table></div>
+    {% else %}
+    <p class="hikari-admin-help">Nenhum desafio cadastrado ainda.</p>
+    {% endif %}
+  </section>
+
+  <section class="hikari-admin-card">
     <h2>Histórico</h2>
     {% if runs %}
     <div class="table-responsive"><table class="table">

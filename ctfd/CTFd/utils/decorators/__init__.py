@@ -26,13 +26,13 @@ def during_ctf_time_only(f):
                 if view_after_ctf():
                     return f(*args, **kwargs)
                 else:
-                    error = "{} has ended".format(config.ctf_name())
+                    error = "{} já foi encerrada".format(config.ctf_name())
                     abort(403, description=error)
             if ctf_started() is False:
                 if is_teams_mode() and get_current_team() is None:
                     return redirect(url_for("teams.private", next=request.full_path))
                 else:
-                    error = "{} has not started yet".format(config.ctf_name())
+                    error = "{} ainda não começou".format(config.ctf_name())
                     abort(403, description=error)
 
     return during_ctf_time_only_wrapper

@@ -558,7 +558,33 @@ body .dropdown-menu {
 .hikari-run-action .hikari-inline-control .form-control {
     min-width: 0;
 }
-.hikari-run-buttons .hikari-admin-actions {
+.hikari-run-buttons /* A challenge nobody can reach is the failure an operator finds during the
+   event, so it is stated before the counts rather than after them. */
+.hikari-sequence-alert {
+    margin: 0.9rem 0;
+    padding: 0.9rem 1rem;
+    background: var(--hk-surface-2);
+    border-left: 3px solid var(--hikari-danger, #ef4444);
+    border-radius: 0 var(--hk-radius) var(--hk-radius) 0;
+    color: var(--hk-text);
+}
+.hikari-sequence-alert ul {
+    margin: 0.5rem 0 0;
+    padding-left: 1.15rem;
+    color: var(--hk-text-muted);
+}
+.hikari-sequence-alert span {
+    color: var(--hk-text-muted);
+}
+.hikari-sequence-resumo {
+    margin: 0.9rem 0;
+    color: var(--hk-text-muted);
+}
+.hikari-sequence-resumo strong {
+    color: var(--hk-text);
+}
+
+.hikari-admin-actions {
     align-items: center;
     min-height: 2.65rem;
 }

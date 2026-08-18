@@ -11,6 +11,7 @@ from CTFd.utils.decorators import admins_only
 from .dto import CompetitionDraft, DurationInput
 from .formatting import describe_duration
 from .models import CompetitionRun
+from .sequence import build_sequence
 from . import service
 from .timezone import format_schedule_time, operator_time_zone, parse_local_schedule
 
@@ -35,6 +36,7 @@ def dashboard():
         csrf_nonce=session.get("nonce"),
         format_schedule_time=format_schedule_time,
         describe_duration=describe_duration,
+        sequence=build_sequence(),
         operator_time_zone=operator_time_zone().key,
     )
 
