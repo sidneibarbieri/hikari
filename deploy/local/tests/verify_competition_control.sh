@@ -300,4 +300,16 @@ curl -sS -c "$cookie_jar" -b "$cookie_jar" -o /dev/null \
   --data-urlencode "nonce=$(extract_nonce "$dashboard")"
 
 echo "PASS: run created, started, extended, paused, resumed, finished, and cancelled safely"
+# Ending a competition and cancelling a schedule cannot be undone, so neither
+# may be one stray click away during an event.
+dashboard=$(mktemp)
+curl -sS -c "$cookie_jar" -b "$cookie_jar" -o "$dashboard" "$CTFD_URL/admin/hikari/competitions"
+for irreversivel in finish cancel revert; do
+  linhas=$(grep -c "competitions/[0-9]*/$irreversivel\"" "$dashboard" || true)
+  protegidas=$(grep -c "competitions/[0-9]*/$irreversivel\" onsubmit=\"return confirm" "$dashboard" || true)
+  [[ "$linhas" == "$protegidas" ]] \
+    || { echo "FAIL: $irreversivel aparece $linhas vez(es) e só $protegidas pede confirmação"; exit 1; }
+done
+echo "PASS: encerrar, cancelar e voltar para rascunho pedem confirmação"
+
 echo "PASS: an execution opened by mistake returns to draft, and refuses to once it has a score"
