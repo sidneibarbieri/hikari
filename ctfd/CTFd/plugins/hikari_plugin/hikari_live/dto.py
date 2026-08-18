@@ -29,6 +29,9 @@ class TimelinePoint(BaseModel):
 
 class LiveBoard(BaseModel):
     generated_at: str
+    # The audience only needs the clock when it starts to matter. The board
+    # reports what remains and lets the page decide when to show it.
+    seconds_remaining: Optional[int] = None
     total_solves: int
     active_teams: int
     active_users: int

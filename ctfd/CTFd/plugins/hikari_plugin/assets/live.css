@@ -370,3 +370,86 @@
         text-align: left;
     }
 }
+
+/* ------------------------------------------------ o tempo e o movimento */
+/* Emotion here comes from what the board says, not from decoration: the clock
+   appears only when it changes how people watch, and motion marks the moment
+   something happened. Everything stops for a viewer who asked for less. */
+.live-header-side {
+    display: flex;
+    align-items: stretch;
+    gap: 0.75rem;
+}
+.live-countdown {
+    min-width: 11rem;
+    padding: 1rem 1.15rem;
+    border: 1px solid var(--hikari-accent);
+    border-radius: var(--hikari-radius);
+    background: linear-gradient(180deg, rgba(30, 24, 12, 0.92), rgba(18, 14, 8, 0.92));
+    animation: live-surgir 420ms ease-out;
+}
+.live-countdown span {
+    display: block;
+    color: var(--hikari-text-muted);
+    font-size: var(--hikari-size-2xs);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+.live-countdown strong {
+    display: block;
+    margin-top: 0.4rem;
+    color: var(--hikari-accent);
+    font-family: var(--hikari-font-display);
+    font-size: var(--hikari-size-xl);
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+}
+/* The final minute is the only moment that earns a pulse, and even then it is
+   the breathing kind rather than a blink. */
+.live-countdown--urgente {
+    border-color: var(--hikari-danger, #f87171);
+}
+.live-countdown--urgente strong {
+    color: var(--hikari-danger, #f87171);
+    animation: live-respirar 1s ease-in-out infinite;
+}
+
+.live-rank-row--subiu {
+    animation: live-subiu 1.6s ease-out;
+}
+.live-solve--novo {
+    animation: live-chegou 620ms ease-out;
+}
+
+@keyframes live-surgir {
+    from { opacity: 0; transform: translateY(-0.35rem); }
+    to   { opacity: 1; transform: none; }
+}
+@keyframes live-respirar {
+    0%, 100% { opacity: 1; }
+    50%      { opacity: 0.55; }
+}
+@keyframes live-subiu {
+    0%   { background-color: rgba(52, 211, 153, 0.16); }
+    100% { background-color: transparent; }
+}
+@keyframes live-chegou {
+    from { opacity: 0; transform: translateX(-0.5rem); }
+    to   { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .live-countdown,
+    .live-countdown--urgente strong,
+    .live-rank-row--subiu,
+    .live-solve--novo {
+        animation: none;
+    }
+}
+
+@media (max-width: 48rem) {
+    .live-header-side {
+        flex-direction: column;
+    }
+}

@@ -7,6 +7,24 @@ from CTFd.models import Awards, Challenges, Solves, Teams, Users, db
 from .dto import LiveBoard, LiveStanding, RecentSolve, TimelinePoint
 
 
+def seconds_remaining() -> Optional[int]:
+    """Return the seconds left in the execution under way, if any.
+
+    A paused execution has no running clock, and a board shown before the
+    start or after the end has nothing to count down.
+    """
+    from CTFd.plugins.hikari_plugin.hikari_competitions.models import CompetitionRun
+
+    run = (
+        CompetitionRun.query.filter(CompetitionRun.status == "running")
+        .order_by(CompetitionRun.id.desc())
+        .first()
+    )
+    if run is None or run.ends_at is None:
+        return None
+    return max(0, int((run.ends_at - datetime.utcnow()).total_seconds()))
+
+
 def build_live_board(limit: int = 10) -> LiveBoard:
     teams = visible_teams()
     users = visible_users()
@@ -15,6 +33,7 @@ def build_live_board(limit: int = 10) -> LiveBoard:
 
     return LiveBoard(
         generated_at=isoformat(datetime.utcnow()),
+        seconds_remaining=seconds_remaining(),
         total_solves=total_solves(),
         active_teams=len(teams),
         active_users=len(users),

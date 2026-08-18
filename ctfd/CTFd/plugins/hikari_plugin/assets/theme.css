@@ -1094,6 +1094,70 @@ select option {
     padding-left: 1.15rem;
     color: var(--hikari-text-muted);
 }
+/* The section that teaches the SIEM carries queries a competitor copies, so a
+   query has to read as one unbroken line rather than as prose. */
+.hikari-guide-siem {
+    margin: 1.4rem 0;
+    padding: 1.1rem 1.2rem;
+    background: var(--hikari-surface);
+    border: 1px solid var(--hikari-border);
+    border-radius: var(--hikari-radius);
+    color: var(--hikari-text-muted);
+}
+.hikari-guide-siem h2 {
+    margin: 0 0 0.6rem;
+    font-size: var(--hikari-size-lg);
+    color: var(--hikari-text);
+}
+.hikari-guide-siem h3 {
+    margin: 1.35rem 0 0.55rem;
+    font-size: var(--hikari-size-base);
+    font-weight: 700;
+    color: var(--hikari-text);
+}
+.hikari-guide-siem p,
+.hikari-guide-siem li {
+    line-height: 1.55;
+}
+.hikari-guide-siem ul {
+    display: grid;
+    gap: 0.4rem;
+    margin: 0;
+    padding-left: 1.15rem;
+}
+.hikari-guide-siem code {
+    padding: 0.1rem 0.35rem;
+    background: var(--hikari-surface-2);
+    border: 1px solid var(--hikari-border);
+    border-radius: 0.3rem;
+    color: var(--hikari-text);
+    font-size: var(--hikari-size-sm);
+    overflow-wrap: break-word;
+}
+.hikari-query-list {
+    display: grid;
+    gap: 0.7rem;
+    margin: 0;
+}
+.hikari-query-list div {
+    padding: 0.7rem 0.85rem;
+    background: var(--hikari-surface-2);
+    border-left: 3px solid var(--hikari-accent);
+    border-radius: 0 var(--hikari-radius) var(--hikari-radius) 0;
+}
+.hikari-query-list dt {
+    margin: 0 0 0.3rem;
+    font-weight: 400;
+}
+.hikari-query-list dd {
+    margin: 0;
+    font-size: var(--hikari-size-sm);
+}
+.hikari-guide-note {
+    margin: 0.75rem 0 0;
+    font-size: var(--hikari-size-sm);
+}
+
 .hikari-section-heading {
     margin: 1.5rem 0 1rem;
 }

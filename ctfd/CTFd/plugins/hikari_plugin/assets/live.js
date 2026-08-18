@@ -14,7 +14,20 @@
     solves: root.querySelector("[data-live-solves]"),
     timeline: root.querySelector("[data-live-timeline]"),
     timelineLegend: root.querySelector("[data-live-timeline-legend]"),
+    countdown: root.querySelector("[data-live-countdown]"),
+    countdownValue: root.querySelector("[data-live-countdown-value]"),
   };
+
+  // The clock is only worth showing once it changes how people watch.
+  const COUNTDOWN_VISIBLE_SECONDS = 600;
+  const COUNTDOWN_URGENT_SECONDS = 60;
+
+  // Positions and solves seen in the previous refresh, so the board can show
+  // what just changed instead of redrawing everything as if it were new.
+  let previousPositions = new Map();
+  let knownSolves = new Set();
+  let firstRender = true;
+  let deadline = null;
 
   const timelineColors = ["#34d399", "#d4a35a", "#5ddeff", "#a7f3d0", "#fbbf24"];
 
@@ -26,12 +39,15 @@
 
   function render(board) {
     setText(selectors.generated, formatDate(board.generated_at));
+    updateDeadline(board.seconds_remaining);
     setText(selectors.totalSolves, board.total_solves);
     setText(selectors.activeTeams, board.active_teams);
     setText(selectors.activeUsers, board.active_users);
     renderStandings(selectors.teams, board.team_standings);
     renderStandings(selectors.users, board.individual_standings);
     renderSolves(selectors.solves, board.recent_solves);
+    rememberPositions(board.team_standings);
+    firstRender = false;
     renderTimeline(
       selectors.timeline,
       selectors.timelineLegend,
@@ -53,6 +69,11 @@
   function standingRow(item, maxScore) {
     const row = document.createElement("div");
     row.className = "live-rank-row";
+    // Only a climb is marked. On a projector, pointing at the team that fell
+    // would be the one thing a scoreboard should never do.
+    if (climbed(item)) {
+      row.classList.add("live-rank-row--subiu");
+    }
 
     const position = document.createElement("span");
     position.textContent = `#${item.position}`;
@@ -93,7 +114,15 @@
       container.replaceChildren(empty);
       return;
     }
-    container.replaceChildren(...solves.map(solveRow));
+    const rows = solves.map((solve) => {
+      const row = solveRow(solve);
+      if (!firstRender && !knownSolves.has(solveKey(solve))) {
+        row.classList.add("live-solve--novo");
+      }
+      return row;
+    });
+    knownSolves = new Set(solves.map(solveKey));
+    container.replaceChildren(...rows);
   }
 
   function solveRow(solve) {
@@ -263,6 +292,54 @@
     });
   }
 
+  function updateDeadline(secondsRemaining) {
+    deadline =
+      typeof secondsRemaining === "number"
+        ? Date.now() + secondsRemaining * 1000
+        : null;
+    paintCountdown();
+  }
+
+  function paintCountdown() {
+    if (!selectors.countdown) {
+      return;
+    }
+    const remaining =
+      deadline === null ? null : Math.max(0, Math.round((deadline - Date.now()) / 1000));
+
+    if (remaining === null || remaining > COUNTDOWN_VISIBLE_SECONDS) {
+      selectors.countdown.hidden = true;
+      return;
+    }
+
+    selectors.countdown.hidden = false;
+    selectors.countdown.classList.toggle(
+      "live-countdown--urgente",
+      remaining <= COUNTDOWN_URGENT_SECONDS
+    );
+    const minutes = Math.floor(remaining / 60);
+    const seconds = remaining % 60;
+    setText(
+      selectors.countdownValue,
+      `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`
+    );
+  }
+
+  function rememberPositions(standings) {
+    previousPositions = new Map(
+      standings.map((item) => [item.account_id, item.position])
+    );
+  }
+
+  function climbed(item) {
+    const before = previousPositions.get(item.account_id);
+    return !firstRender && before !== undefined && item.position < before;
+  }
+
+  function solveKey(solve) {
+    return `${solve.occurred_at}|${solve.challenge_name}|${solve.user_name}`;
+  }
+
   async function refresh() {
     const response = await fetch("/hikari/live/data", { credentials: "same-origin" });
     if (!response.ok) {
@@ -273,4 +350,7 @@
 
   refresh();
   window.setInterval(refresh, 5000);
+  // The board is polled every few seconds, but a countdown has to move every
+  // second or it reads as broken.
+  window.setInterval(paintCountdown, 1000);
 })();

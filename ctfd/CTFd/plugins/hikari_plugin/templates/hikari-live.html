@@ -16,9 +16,15 @@
         Acompanhe a pontuação das equipes, a contribuição individual e os solves recentes durante a competição.
       </p>
     </div>
-    <div class="live-clock">
-      <span>Atualizado</span>
-      <strong data-live-generated>{{ board.generated_at }}</strong>
+    <div class="live-header-side">
+      <div class="live-countdown" data-live-countdown hidden aria-live="polite">
+        <span>Tempo restante</span>
+        <strong data-live-countdown-value>--:--</strong>
+      </div>
+      <div class="live-clock">
+        <span>Atualizado</span>
+        <strong data-live-generated>{{ board.generated_at }}</strong>
+      </div>
     </div>
   </header>
 

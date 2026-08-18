@@ -17,6 +17,64 @@
     <li><strong>Registre sua experiência.</strong> Ao terminar, responda ao questionário de feedback. As respostas complementam os dados técnicos da execução.</li>
   </ol>
 
+  <section class="hikari-guide-siem" aria-labelledby="guide-siem-title">
+    <h2 id="guide-siem-title">Como investigar no SIEM</h2>
+    <p>
+      O SIEM é onde ficam os registros da rede investigada. Ele abre quando a
+      competição começa, pelo menu <strong>SIEM</strong>. A busca fica no alto
+      da tela: você escreve o que procura e a lista abaixo mostra os eventos
+      que combinam.
+    </p>
+
+    <h3>Quatro buscas que resolvem a maior parte</h3>
+    <dl class="hikari-query-list">
+      <div>
+        <dt><code>event.dataset:auth AND event.outcome:failure</code></dt>
+        <dd>Tentativas de login que falharam. Bom começo para procurar quem tentou entrar sem conseguir.</dd>
+      </div>
+      <div>
+        <dt><code>destination.port:445</code></dt>
+        <dd>Conversas em uma porta específica. Troque o número pela porta que o desafio citar.</dd>
+      </div>
+      <div>
+        <dt><code>source.ip:"198.18.0.0/16"</code></dt>
+        <dd>Tudo que partiu de uma faixa de rede inteira. Use quando o desafio falar de uma sub-rede.</dd>
+      </div>
+      <div>
+        <dt><code>user.name:"w.dantas.terceirizado"</code></dt>
+        <dd>Tudo que uma pessoa fez. Vale também para <code>host.name</code> e <code>source.ip</code>.</dd>
+      </div>
+    </dl>
+    <p class="hikari-guide-note">
+      Combine buscas com <code>AND</code> para restringir e <code>OR</code> para
+      ampliar. Use aspas quando o valor tiver ponto, arroba ou espaço.
+    </p>
+
+    <h3>Onde procurar</h3>
+    <p>
+      Os registros vêm de dez origens. O desafio quase sempre indica qual delas
+      olhar: <code>auth</code> (autenticação), <code>firewall</code>,
+      <code>dns</code>, <code>edr</code> (endpoints), <code>vpn</code>,
+      <code>waf</code>, <code>ips</code>, <code>nac</code>,
+      <code>email</code> e <code>appdb</code> (banco da aplicação). Para ver
+      uma delas inteira, busque <code>event.dataset:dns</code>.
+    </p>
+
+    <h3>Como é a resposta</h3>
+    <p>
+      A flag tem o formato <code>flag{valor}</code>, e o valor sai do próprio
+      log — um endereço IP, um nome de usuário, um e-mail. Copie exatamente
+      como aparece, incluindo pontos e maiúsculas, e envie no campo do desafio.
+    </p>
+
+    <h3>Se a busca não trouxer nada</h3>
+    <ul>
+      <li><strong>Aumente o período.</strong> É o motivo mais comum. O seletor de datas fica no canto superior direito; escolha um intervalo maior.</li>
+      <li><strong>Confira o campo.</strong> <code>source.ip</code> é quem enviou; <code>destination.ip</code> é quem recebeu.</li>
+      <li><strong>Procure por pedaço.</strong> <code>message:*varredura*</code> encontra a palavra em qualquer lugar do texto do evento.</li>
+    </ul>
+  </section>
+
   <section class="hikari-guide-rules" aria-labelledby="guide-pace-title">
     <h2 id="guide-pace-title">Por que resolver logo</h2>
     <p>

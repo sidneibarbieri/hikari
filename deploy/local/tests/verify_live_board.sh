@@ -55,6 +55,28 @@ jq -e '.recent_solves | length > 0' "$data" >/dev/null \
 jq -e '.timeline | length > 0' "$data" >/dev/null \
   || { echo "FAIL: live data has no timeline points"; exit 1; }
 
+# The clock only earns its place near the end, so the board reports what
+# remains and the page decides. Without a running execution there is nothing
+# to count, and a board that showed a countdown then would be lying.
+jq -e 'has("seconds_remaining")' "$data" >/dev/null \
+  || { echo "FAIL: live data does not report the remaining time"; exit 1; }
+jq -e '.seconds_remaining == null' "$data" >/dev/null \
+  || { echo "FAIL: a board with no running execution reported a countdown"; exit 1; }
+echo "PASS: sem execução em andamento, o placar não anuncia contagem"
+
+grep -q "data-live-countdown" "$page" \
+  || { echo "FAIL: live board has no countdown element"; exit 1; }
+grep -q "live-countdown\" *hidden" "$page" \
+  || grep -q "data-live-countdown hidden" "$page" \
+  || { echo "FAIL: the countdown is not hidden by default"; exit 1; }
+for regra in COUNTDOWN_VISIBLE_SECONDS COUNTDOWN_URGENT_SECONDS live-solve--novo live-rank-row--subiu; do
+  grep -q "$regra" <<<"$script" \
+    || { echo "FAIL: live board script is missing $regra"; exit 1; }
+done
+grep -q "prefers-reduced-motion" <<<"$style" \
+  || { echo "FAIL: the board animates without honouring reduced motion"; exit 1; }
+echo "PASS: contagem regressiva e movimento presentes, com movimento reduzido respeitado"
+
 top_team=$(jq -r '.team_standings[0].name' "$data")
 top_score=$(jq -r '.team_standings[0].score' "$data")
 echo "PASS: live board data feed exposes standings, solves, and timeline"
