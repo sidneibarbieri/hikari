@@ -26,6 +26,8 @@ fi
 
 echo "Reconstruindo o índice do SIEM a partir dos desafios ativos..."
 hikari_compose cp "$SCRIPT_DIR/rebuild_competition_data.py" "ctfd:$CONTAINER_SCRIPT"
+hikari_compose cp "$LOCAL_DIR/elasticsearch/competition-index.json" \
+  "ctfd:/tmp/competition-index.json"
 hikari_compose exec -T ctfd python "$CONTAINER_SCRIPT"
 
 documents=$(hikari_compose exec -T elasticsearch curl -fsS \

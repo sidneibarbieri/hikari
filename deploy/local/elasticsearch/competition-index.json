@@ -1,0 +1,17 @@
+{
+  "mappings": {
+    "subobjects": false,
+    "dynamic_templates": [
+      {
+        "enderecos_de_rede": {
+          "match": "*.ip",
+          "match_mapping_type": "string",
+          "mapping": {
+            "type": "ip",
+            "ignore_malformed": true
+          }
+        }
+      }
+    ]
+  }
+}

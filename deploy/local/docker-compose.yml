@@ -178,11 +178,13 @@ services:
         if [ "$$status" = "404" ]; then
           curl -fsS -X PUT http://elasticsearch:9200/competition1 \
             -H 'Content-Type: application/json' \
-            -d '{"mappings":{"subobjects":false}}'
+            -d @/definicao/competition-index.json
         elif [ "$$status" != "200" ]; then
           echo "Elasticsearch returned HTTP $$status while checking competition1" >&2
           exit 1
         fi
+    volumes:
+      - ./elasticsearch/competition-index.json:/definicao/competition-index.json:ro
     depends_on:
       elasticsearch:
         condition: service_healthy

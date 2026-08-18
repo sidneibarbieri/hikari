@@ -53,16 +53,38 @@ def event_batches(locations: list[str]) -> list[tuple[str, list[dict[str, object
     return batches
 
 
+INDEX_DEFINITION = "/tmp/competition-index.json"
+
+
 def reset_index(elasticsearch_url: str) -> None:
+    """Recreate the index from the definition the stack itself installs.
+
+    Holding a second copy of the mapping here would silently undo whatever the
+    deployment defines, every time the haystack is rebuilt.
+    """
+    with open(INDEX_DEFINITION, encoding="utf-8") as definicao:
+        mapping = json.load(definicao)
+
     response = requests.delete(f"{elasticsearch_url}/{INDEX_NAME}", timeout=30)
     if response.status_code not in (200, 404):
         response.raise_for_status()
-    response = requests.put(
-        f"{elasticsearch_url}/{INDEX_NAME}",
-        json={"mappings": {"subobjects": False}},
-        timeout=30,
-    )
+    response = requests.put(f"{elasticsearch_url}/{INDEX_NAME}", json=mapping, timeout=30)
     response.raise_for_status()
+
+
+def hand_to_kafka(producer: Producer, payload: bytes) -> None:
+    """Queue one event, waiting when the local queue is full.
+
+    The producer holds a fixed number of messages before it accepts more. A
+    rebuild rides well past that number, so a full queue is the normal state
+    rather than an error, and the answer is to let deliveries drain.
+    """
+    while True:
+        try:
+            producer.produce(INDEX_NAME, value=payload)
+            return
+        except BufferError:
+            producer.poll(0.5)
 
 
 def publish_events(batches: list[tuple[str, list[dict[str, object]]]]) -> int:
@@ -70,11 +92,11 @@ def publish_events(batches: list[tuple[str, list[dict[str, object]]]]) -> int:
     count = 0
     for _, events in batches:
         for event in events:
-            producer.produce(INDEX_NAME, value=json.dumps(event).encode("utf-8"))
+            hand_to_kafka(producer, json.dumps(event).encode("utf-8"))
+            producer.poll(0)
             count += 1
-            if count % 10000 == 0:
-                producer.poll(0)
-    remaining = producer.flush(120)
+
+    remaining = producer.flush(300)
     if remaining:
         raise RuntimeError(f"Kafka producer did not deliver {remaining} events")
     return count
