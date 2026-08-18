@@ -77,6 +77,8 @@ report_test_data() {
         JOIN users u ON u.id = s.user_id WHERE u.name REGEXP '$TEST_ACCOUNT_PATTERN';
        SELECT CONCAT('  eventos de atividade ..... ', COUNT(*)) FROM hikari_activity
         WHERE competition_key REGEXP '^(acceptance|simulacao|ensaio)-';
+       SELECT CONCAT('  eventos de contas teste .. ', COUNT(*)) FROM hikari_activity a
+        JOIN users u ON u.id = a.actor_id WHERE u.name REGEXP '$TEST_ACCOUNT_PATTERN';
        SELECT CONCAT('  desafios de teste ........ ', COUNT(*))
         FROM hikari_challenge_library_entries e
         JOIN hikari_challenge_library_imports i ON i.id = e.library_import_id
@@ -241,6 +243,11 @@ purge_test_data() {
        DELETE f FROM hikari_feedback_responses f JOIN users u ON u.id = f.user_id
         WHERE u.name REGEXP '$TEST_ACCOUNT_PATTERN';
        DELETE FROM hikari_activity WHERE competition_key REGEXP '^(acceptance|simulacao|ensaio)-';
+       -- A rehearsal run inside the real competition records its telemetry under
+       -- the real key, so the actor is what identifies it as test data. This has
+       -- to precede the account removal, while the join still resolves.
+       DELETE a FROM hikari_activity a JOIN users u ON u.id = a.actor_id
+        WHERE u.name REGEXP '$TEST_ACCOUNT_PATTERN';
        UPDATE users SET team_id = NULL WHERE name REGEXP '$TEST_ACCOUNT_PATTERN';
        UPDATE teams SET captain_id = NULL WHERE name REGEXP '$TEST_ACCOUNT_PATTERN';
        DELETE FROM users WHERE name REGEXP '$TEST_ACCOUNT_PATTERN';

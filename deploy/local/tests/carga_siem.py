@@ -160,6 +160,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Carga sobre o proxy autenticado do SIEM.")
     parser.add_argument("--endereco", default="http://127.0.0.1:8000")
     parser.add_argument("--prefixo", required=True, help="prefixo das contas de teste")
+    parser.add_argument("--sufixo", default="", help="sufixo das contas, quando houver")
     parser.add_argument("--contas", type=int, default=10)
     parser.add_argument("--senha", default="CargaTeste123")
     parser.add_argument("--por-conta", type=int, default=10,
@@ -167,7 +168,8 @@ def main() -> int:
     parser.add_argument("--segundos", type=int, default=60)
     argumentos = parser.parse_args()
 
-    contas = [f"{argumentos.prefixo}{i}" for i in range(1, argumentos.contas + 1)]
+    contas = [f"{argumentos.prefixo}{i}{argumentos.sufixo}"
+              for i in range(1, argumentos.contas + 1)]
     print(f"Carga no SIEM contra {argumentos.endereco}")
     inicio = time.monotonic()
     medicoes = asyncio.run(executar(argumentos.endereco, contas, argumentos.senha,
