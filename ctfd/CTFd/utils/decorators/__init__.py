@@ -218,7 +218,7 @@ def require_complete_profile(f):
                         # This is an abort because it's difficult for us to flash information on the teams page
                         return abort(
                             403,
-                            description="Please fill in all required team profile fields",
+                            description="Preencha todos os campos obrigatórios do perfil da equipe.",
                         )
 
                 return f(*args, **kwargs)

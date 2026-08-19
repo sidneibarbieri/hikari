@@ -34,15 +34,15 @@ def listing():
     errors = get_errors()
 
     if Configs.challenge_visibility == ChallengeVisibilityTypes.ADMINS:
-        infos.append("Challenge Visibility is set to Admins Only")
+        infos.append("A visibilidade dos desafios está restrita a administradores.")
 
     if ctf_started() is False:
-        errors.append(f"{Configs.ctf_name} has not started yet")
+        errors.append(f"{Configs.ctf_name} ainda não começou")
 
     if ctf_paused() is True:
-        infos.append(f"{Configs.ctf_name} is paused")
+        infos.append(f"{Configs.ctf_name} está pausada")
 
     if ctf_ended() is True:
-        infos.append(f"{Configs.ctf_name} has ended")
+        infos.append(f"{Configs.ctf_name} foi encerrada")
 
     return render_template("challenges.html", infos=infos, errors=errors)

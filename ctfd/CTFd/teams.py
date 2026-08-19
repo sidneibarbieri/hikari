@@ -241,7 +241,7 @@ def new():
         if valid_country is False:
             errors.append("País inválido.")
         if valid_bracket is False:
-            errors.append("Please provide a valid bracket")
+            errors.append("Escolha uma chave válida.")
 
         if errors:
             return render_template("teams/new_team.html", errors=errors), 403
@@ -304,7 +304,7 @@ def private():
     score = team.get_score(admin=True)
 
     if config.is_scoreboard_frozen():
-        infos.append("Scoreboard has been frozen")
+        infos.append("O placar foi congelado.")
 
     return render_template(
         "teams/private.html",
@@ -338,7 +338,7 @@ def public(team_id):
         return render_template("teams/public.html", team=team, errors=errors)
 
     if config.is_scoreboard_frozen():
-        infos.append("Scoreboard has been frozen")
+        infos.append("O placar foi congelado.")
 
     return render_template(
         "teams/public.html",

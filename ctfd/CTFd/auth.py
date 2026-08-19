@@ -232,7 +232,7 @@ def register():
                 registration_code.lower()
                 != str(get_config("registration_code", default="")).lower()
             ):
-                errors.append("The registration code you entered was incorrect")
+                errors.append("O código de inscrição informado está incorreto.")
 
         # Process additional user fields
         fields = {}
@@ -243,7 +243,7 @@ def register():
         for field_id, field in fields.items():
             value = request.form.get(f"fields[{field_id}]", "").strip()
             if field.required is True and (value is None or value == ""):
-                errors.append("Please provide all required fields")
+                errors.append("Preencha todos os campos obrigatórios.")
                 break
 
             if field.field_type == "boolean":
@@ -281,29 +281,29 @@ def register():
                 valid_bracket = True
 
         if not valid_email:
-            errors.append("Please enter a valid email address")
+            errors.append("Informe um e-mail válido.")
         if email.check_email_is_whitelisted(email_address) is False:
-            errors.append("Your email address is not from an allowed domain")
+            errors.append("Este e-mail não pertence a um domínio autorizado.")
         if names:
-            errors.append("That user name is already taken")
+            errors.append("Este nome de usuário já está em uso.")
         if team_name_email_check is True:
-            errors.append("Your user name cannot be an email address")
+            errors.append("O nome de usuário não pode ser um e-mail.")
         if emails:
-            errors.append("That email has already been used")
+            errors.append("Este e-mail já foi cadastrado.")
         if pass_short:
-            errors.append("Pick a longer password")
+            errors.append("Escolha uma senha mais longa.")
         if pass_long:
-            errors.append("Pick a shorter password")
+            errors.append("Escolha uma senha mais curta.")
         if name_len:
-            errors.append("Pick a longer user name")
+            errors.append("Escolha um nome de usuário mais longo.")
         if valid_website is False:
-            errors.append("Websites must be a proper URL starting with http or https")
+            errors.append("O site precisa ser um endereço começando com http ou https.")
         if valid_country is False:
-            errors.append("Invalid country")
+            errors.append("País inválido.")
         if valid_affiliation is False:
-            errors.append("Please provide a shorter affiliation")
+            errors.append("Informe uma afiliação mais curta.")
         if valid_bracket is False:
-            errors.append("Please provide a valid bracket")
+            errors.append("Escolha uma chave válida.")
 
         if len(errors) > 0:
             return render_template(
@@ -426,13 +426,13 @@ def login():
                     "[{date}] {ip} - submitted invalid password for {name}",
                     name=user.name,
                 )
-                errors.append("Your username or password is incorrect")
+                errors.append("Usuário ou senha incorretos.")
                 db.session.close()
                 return render_template("login.html", errors=errors)
         else:
             # This user just doesn't exist
             log("logins", "[{date}] {ip} - submitted invalid account information")
-            errors.append("Your username or password is incorrect")
+            errors.append("Usuário ou senha incorretos.")
             db.session.close()
             return render_template("login.html", errors=errors)
     else:
