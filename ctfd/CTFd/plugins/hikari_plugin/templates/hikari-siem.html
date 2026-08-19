@@ -18,7 +18,7 @@
       </p>
     </div>
     <div class="siem-actions">
-      <a class="hikari-action hikari-action-primary" href="{{ discover_url }}">Abrir Discover</a>
+      <a class="hikari-action hikari-action-primary" href="{{ discover_url }}?_g=(time:(from:now-3y,to:now))">Abrir Discover</a>
       <a class="hikari-action hikari-action-secondary" href="{{ dashboard_url }}">Dashboard Kibana</a>
       <a class="hikari-action hikari-action-secondary" href="/challenges">Ver desafios</a>
     </div>
@@ -48,43 +48,43 @@
   <section class="siem-shortcuts" aria-label="Atalhos de caça">
     <header>
       <h2>Atalhos de caça</h2>
-      <p>Consultas KQL prontas. Clique para abrir o Discover já filtrado.</p>
+      <p>Consultas KQL prontas, já com o período que cobre todos os registros da competição. Clique para abrir o Discover filtrado.</p>
     </header>
     <ul class="siem-shortcut-grid">
       <li>
-        <a href="{{ discover_url }}?_g=(time:(from:now-15m,to:now))" class="siem-shortcut">
-          <strong>Últimos 15 minutos</strong>
-          <span>Janela curta para reagir a alertas recentes.</span>
-        </a>
-      </li>
-      <li>
-        <a href="{{ discover_url }}?_a=(query:(language:kuery,query:'response:&gt;%3D400'))" class="siem-shortcut">
-          <strong>Respostas HTTP &ge; 400</strong>
-          <span>Erros e falhas de autenticação. Útil para localizar tentativas.</span>
-        </a>
-      </li>
-      <li>
-        <a href="{{ discover_url }}?_a=(query:(language:kuery,query:'request:*flag*%20OR%20response:*flag*'))" class="siem-shortcut">
-          <strong>Padrão <code>flag</code> no payload</strong>
-          <span>Procura a substring no request e na response. Aponta candidatos a indicador.</span>
-        </a>
-      </li>
-      <li>
-        <a href="{{ discover_url }}?_a=(query:(language:kuery,query:'user_agent:*curl*%20OR%20user_agent:*python*%20OR%20user_agent:*wget*'))" class="siem-shortcut">
-          <strong>User-Agent automatizado</strong>
-          <span>Curl, Python, wget — indicador comum de varredura ou exfiltração.</span>
-        </a>
-      </li>
-      <li>
-        <a href="{{ discover_url }}?_a=(query:(language:kuery,query:'destination.port:(22%20OR%203389%20OR%204444%20OR%208080%20OR%208443)'))" class="siem-shortcut">
-          <strong>Portas de interesse</strong>
-          <span>SSH, RDP, payloads, web alternativa. Útil para movimento lateral.</span>
-        </a>
-      </li>
-      <li>
-        <a href="{{ discover_url }}?_a=(query:(language:kuery,query:'event.severity:(high%20OR%20critical)'))" class="siem-shortcut">
+        <a href="{{ discover_url }}?_g=(time:(from:now-3y,to:now))&_a=(query:(language:kuery,query:'event.severity_label%3A%28%22Alta%22%20OR%20%22Cr%C3%ADtico%22%29'))" class="siem-shortcut">
           <strong>Severidade alta ou crítica</strong>
-          <span>Foca nas linhas que o pipeline marcou como prioritárias.</span>
+          <span>As linhas que o pipeline marcou como prioritárias.</span>
+        </a>
+      </li>
+      <li>
+        <a href="{{ discover_url }}?_g=(time:(from:now-3y,to:now))&_a=(query:(language:kuery,query:'event.dataset%3Aauth%20AND%20event.outcome%3Afailure'))" class="siem-shortcut">
+          <strong>Autenticação recusada</strong>
+          <span>Tentativas de entrar que falharam. Bom ponto de partida.</span>
+        </a>
+      </li>
+      <li>
+        <a href="{{ discover_url }}?_g=(time:(from:now-3y,to:now))&_a=(query:(language:kuery,query:'event.dataset%3Aedr'))" class="siem-shortcut">
+          <strong>Atividade nos endpoints</strong>
+          <span>O que o agente viu nas máquinas: processos, arquivos, execuções.</span>
+        </a>
+      </li>
+      <li>
+        <a href="{{ discover_url }}?_g=(time:(from:now-3y,to:now))&_a=(query:(language:kuery,query:'event.dataset%3Afirewall'))" class="siem-shortcut">
+          <strong>Tráfego do firewall</strong>
+          <span>Conexões permitidas e barradas na borda da rede.</span>
+        </a>
+      </li>
+      <li>
+        <a href="{{ discover_url }}?_g=(time:(from:now-3y,to:now))&_a=(query:(language:kuery,query:'event.dataset%3Adns'))" class="siem-shortcut">
+          <strong>Consultas de DNS</strong>
+          <span>Nomes resolvidos. Útil para achar domínios usados por um atacante.</span>
+        </a>
+      </li>
+      <li>
+        <a href="{{ discover_url }}?_g=(time:(from:now-3y,to:now))&_a=(query:(language:kuery,query:'destination.port%3A%2822%20OR%203389%20OR%20445%20OR%204444%20OR%208080%29'))" class="siem-shortcut">
+          <strong>Portas de interesse</strong>
+          <span>SSH, RDP, compartilhamento e web alternativa: movimento lateral.</span>
         </a>
       </li>
     </ul>
