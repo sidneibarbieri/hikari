@@ -72,7 +72,30 @@ fi
   && echo "PASS: nenhuma dica grátis e nenhuma escondida na descrição"
 
 echo
-echo "== 4. todo desafio tem resposta =="
+echo "== 4. as categorias vêm do vocabulário declarado =="
+# Nomear categorias por gosto deixa a coleção sem apoio nenhum. O vocabulário
+# vem das táticas do MITRE ATT&CK, com uma exceção declarada para as tarefas
+# de analista que não são movimento de adversário.
+vocabulario=$(python3 -c "
+import sys; sys.path.insert(0, '$LOCAL_DIR/scripts')
+from attack_taxonomy import VOCABULARIO
+print('|'.join(VOCABULARIO))
+")
+fora=$(consulta "SELECT COUNT(*) FROM (SELECT DISTINCT category FROM challenges
+                  WHERE state='visible') AS d;")
+conhecidas=0
+while IFS= read -r nome; do
+  [[ -z "$nome" ]] && continue
+  case "|$vocabulario|" in
+    *"|$nome|"*) conhecidas=$((conhecidas + 1)) ;;
+    *) reprovar "categoria fora do vocabulário: $nome" ;;
+  esac
+done < <(consulta "SELECT DISTINCT category FROM challenges WHERE state='visible';")
+[[ "$conhecidas" == "$fora" ]] \
+  && echo "PASS: as $fora categorias pertencem ao vocabulário do ATT&CK"
+
+echo
+echo "== 5. todo desafio tem resposta =="
 sem_flag=$(consulta "SELECT COUNT(*) FROM challenges c WHERE c.state='visible'
                       AND NOT EXISTS (SELECT 1 FROM flags f WHERE f.challenge_id = c.id);")
 [[ "$sem_flag" == "0" ]] && echo "PASS: todos os $total desafios têm flag" \
