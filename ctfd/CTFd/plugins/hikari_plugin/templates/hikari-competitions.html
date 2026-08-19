@@ -172,7 +172,7 @@
       <strong>{{ sequence.unreachable | length }} desafio(s) nunca abrirão</strong>
       <ul>
         {% for item in sequence.unreachable %}
-        <li>{{ item.name }} <span>({{ item.category }}) — {{ item.reason }}</span></li>
+        <li>{{ item.name }} <span>({{ item.category }}): {{ item.reason }}</span></li>
         {% endfor %}
       </ul>
     </div>
