@@ -36,8 +36,13 @@ nonce_de() { grep -oE 'name="nonce"[^>]*value="[^"]+"' "$1" | head -1 | sed -E '
 token_de() { grep -oE "'csrfNonce': *\"[^\"]+\"" "$1" | head -1 | sed -E 's/.*"([^"]+)"/\1/'; }
 
 echo "== 1. as respostas da edição ignoram maiúsculas =="
+# A regra vale para o acervo que vai ao evento, que é o que a biblioteca
+# registra. Desafios criados por outros testes são transitórios e não fazem
+# parte de edição nenhuma.
 sensiveis=$(hikari_mariadb -N -B -e \
-  "SELECT COUNT(*) FROM flags f JOIN challenges c ON c.id = f.challenge_id
+  "SELECT COUNT(*) FROM flags f
+     JOIN challenges c ON c.id = f.challenge_id
+     JOIN hikari_challenge_library_entries e ON e.challenge_id = c.id
     WHERE c.state = 'visible' AND (f.data IS NULL OR f.data <> 'case_insensitive');" | tr -d '[:space:]')
 [[ "$sensiveis" == "0" ]] \
   || { echo "FAIL: $sensiveis resposta(s) ainda exigem capitalização exata"; exit 1; }
@@ -86,7 +91,9 @@ echo "PASS: 'FLAG{INJEÇÃO DE CÓDIGO}' resolve 'flag{Injeção De Código}'"
 echo
 echo "== 3. respostas curtas não aceitam tentativa infinita =="
 curtas=$(hikari_mariadb -N -B -e \
-  "SELECT COUNT(*) FROM challenges c JOIN flags f ON f.challenge_id = c.id
+  "SELECT COUNT(*) FROM challenges c
+     JOIN flags f ON f.challenge_id = c.id
+     JOIN hikari_challenge_library_entries e ON e.challenge_id = c.id
     WHERE c.state = 'visible' AND c.max_attempts = 0
       AND CHAR_LENGTH(REPLACE(REPLACE(f.content,'flag{',''),'}','')) <= 6;" | tr -d '[:space:]')
 [[ "$curtas" == "0" ]] \

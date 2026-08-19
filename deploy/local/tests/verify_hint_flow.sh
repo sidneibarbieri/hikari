@@ -44,8 +44,9 @@ echo "== 1. um desafio com dica paga =="
 hikari_mariadb -e \
   "INSERT INTO challenges (name, description, max_attempts, value, category, type, state)
      VALUES ('dica-$stamp', 'Descricao que basta para resolver.', 0, 100, 'Teste de dica', 'standard', 'visible');
-   INSERT INTO flags (challenge_id, type, content)
-     SELECT id, 'static', 'flag{dica-$stamp}' FROM challenges WHERE name = 'dica-$stamp';
+   INSERT INTO flags (challenge_id, type, content, data)
+     SELECT id, 'static', 'flag{dica-$stamp}', 'case_insensitive'
+       FROM challenges WHERE name = 'dica-$stamp';
    INSERT INTO hints (challenge_id, type, content, cost)
      SELECT id, 'standard', 'Isto acelera, mas nao e necessario.', 30 FROM challenges WHERE name = 'dica-$stamp';" > /dev/null
 desafio=$(hikari_mariadb -N -B -e "SELECT id FROM challenges WHERE name = 'dica-$stamp';" | tr -d '[:space:]')
