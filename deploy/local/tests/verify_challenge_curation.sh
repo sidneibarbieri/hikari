@@ -102,6 +102,55 @@ sem_flag=$(consulta "SELECT COUNT(*) FROM challenges c WHERE c.state='visible'
   || reprovar "$sem_flag desafio(s) sem flag"
 
 echo
+echo "== 6. nenhum texto entrega a própria resposta =="
+# Um título que contém a flag transforma o desafio em leitura. Vale para a
+# descrição e para a dica, que também são lidas antes de qualquer busca.
+vazamentos=$(hikari_compose exec -T -w /opt/CTFd -e PYTHONPATH=/opt/CTFd ctfd python - <<'PY' 2>/dev/null | tail -1
+import unicodedata
+from CTFd import create_app
+
+def normalizar(texto):
+    texto = unicodedata.normalize("NFKD", (texto or "").lower())
+    return "".join(c for c in texto if not unicodedata.combining(c))
+
+app = create_app()
+with app.app_context():
+    from CTFd.models import Challenges, Flags, Hints
+    vazando = 0
+    for desafio in Challenges.query.filter_by(state="visible").all():
+        for flag in Flags.query.filter_by(challenge_id=desafio.id).all():
+            valor = (flag.content or "")
+            if valor.startswith("flag{") and valor.endswith("}"):
+                valor = valor[5:-1]
+            if len(valor) < 4:
+                continue
+            alvo = normalizar(valor)
+            textos = [desafio.name, desafio.description]
+            textos += [h.content for h in Hints.query.filter_by(challenge_id=desafio.id).all()]
+            if any(alvo in normalizar(texto) for texto in textos):
+                vazando += 1
+    print(vazando)
+PY
+)
+if [[ "$vazamentos" == "0" ]]; then
+  echo "PASS: nenhum título, descrição ou dica contém a própria flag"
+else
+  reprovar "$vazamentos desafio(s) entregam a resposta no próprio texto"
+fi
+
+echo
+echo "== 7. a dificuldade chega ao competidor =="
+sem_tag=$(consulta "SELECT COUNT(*) FROM challenges c WHERE c.state='visible'
+                     AND NOT EXISTS (SELECT 1 FROM tags t WHERE t.challenge_id = c.id);")
+if [[ "$sem_tag" == "0" ]]; then
+  niveis=$(consulta "SELECT GROUP_CONCAT(DISTINCT t.value ORDER BY t.value SEPARATOR ', ')
+                       FROM tags t JOIN challenges c ON c.id = t.challenge_id WHERE c.state='visible';")
+  echo "PASS: todos os $total desafios anunciam a dificuldade ($niveis)"
+else
+  echo "  aviso: $sem_tag desafio(s) sem dificuldade anunciada"
+fi
+
+echo
 if [[ "$falhou" == "0" ]]; then
   echo "Curadoria verificada."
 else
