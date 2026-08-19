@@ -13,9 +13,10 @@ SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 LOCAL_DIR=$(cd "$SCRIPT_DIR/.." && pwd)
 source "$LOCAL_DIR/lib/compose.sh"
 
-# A category wide enough to hold a quarter of the event is a list, not a
-# category; one that holds a single challenge is a label.
-MAXIMO_POR_CATEGORIA=${MAXIMO_POR_CATEGORIA:-10}
+# Um número fixo seria arbitrário: duas linhas de investigação podem somar dez
+# desafios com toda a coerência. O que estraga a leitura é a categoria que
+# engole a edição, e isso se mede em proporção, não em contagem.
+FRACAO_MAXIMA=${FRACAO_MAXIMA:-3}
 
 consulta() { hikari_mariadb -N -B -e "$1" | tr -d '\r'; }
 
@@ -40,18 +41,19 @@ else
 fi
 
 echo
-echo "== 2. nenhuma categoria vira um blocão =="
+echo "== 2. nenhuma categoria engole a edição =="
+teto=$(( total / FRACAO_MAXIMA ))
 largas=$(consulta "SELECT COUNT(*) FROM (SELECT category FROM challenges WHERE state='visible'
-                    GROUP BY category HAVING COUNT(*) > $MAXIMO_POR_CATEGORIA) AS d;")
+                    GROUP BY category HAVING COUNT(*) > $teto) AS d;")
 if [[ "$largas" != "0" ]]; then
-  reprovar "$largas categoria(s) com mais de $MAXIMO_POR_CATEGORIA desafios"
+  reprovar "$largas categoria(s) passam de $teto desafios, um terço da edição"
   consulta "SELECT CONCAT('  ', category, ': ', COUNT(*)) FROM challenges WHERE state='visible'
-             GROUP BY category HAVING COUNT(*) > $MAXIMO_POR_CATEGORIA;"
+             GROUP BY category HAVING COUNT(*) > $teto;"
 else
   categorias=$(consulta "SELECT COUNT(DISTINCT category) FROM challenges WHERE state='visible';")
   maior=$(consulta "SELECT MAX(n) FROM (SELECT COUNT(*) AS n FROM challenges WHERE state='visible'
                      GROUP BY category) AS d;")
-  echo "PASS: $categorias categorias, a maior com $maior desafios"
+  echo "PASS: $categorias categorias, a maior com $maior de um teto de $teto"
 fi
 
 echo
@@ -148,6 +150,18 @@ if [[ "$sem_tag" == "0" ]]; then
   echo "PASS: todos os $total desafios anunciam a dificuldade ($niveis)"
 else
   echo "  aviso: $sem_tag desafio(s) sem dificuldade anunciada"
+fi
+
+echo
+echo "== 8. o jogo inteiro pode ser terminado =="
+# Um grafo sem laço e sem órfão ainda pode prender um desafio atrás de algo
+# que ninguém alcança. A única prova é jogar no papel, onda a onda.
+saida=$(hikari_compose exec -T -w /opt/CTFd -e PYTHONPATH=/opt/CTFd ctfd \
+  python /tmp/simular.py 2>/dev/null || true)
+if grep -q "todos os desafios são alcançáveis" <<<"$saida"; then
+  echo "PASS: $(grep -oE 'ondas até o fim [. ]+[0-9]+' <<<"$saida" | grep -oE '[0-9]+$') ondas até o último desafio"
+else
+  reprovar "há desafio que nunca abre: $(grep 'NUNCA ABREM' <<<"$saida")"
 fi
 
 echo

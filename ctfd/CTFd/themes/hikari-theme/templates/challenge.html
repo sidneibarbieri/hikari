@@ -96,6 +96,7 @@
         <section class="jchallenge-submit-panel" aria-label="Enviar flag">
           <h3>Enviar resposta</h3>
           <p>Use o SIEM para investigar os eventos e envie a flag quando tiver evidência suficiente.</p>
+          <p class="jchall-format">Formato: <code>flag{resposta}</code> — copie o valor do log e escreva entre as chaves. Maiúsculas e minúsculas não importam.</p>
           <div class="jchall-input-form">
             {% block input %}
               <input
@@ -106,7 +107,7 @@
                   id="challenge-input" class="jchallenge-input"
                   type="text" name="submission"
                   @keyup.enter="submitChallenge()"
-                  placeholder="Flag" x-model="submission"
+                  placeholder="flag{sua resposta}" x-model="submission"
               >
             {% endblock %}
             {% block submit %}
