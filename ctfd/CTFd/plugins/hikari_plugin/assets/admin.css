@@ -26,6 +26,17 @@
     --hk-radius-sm:      var(--hikari-radius-sm);
     --hk-font:           var(--hikari-font);
     --hk-font-display:   var(--hikari-font-display);
+
+    /* A navbar do Hikari precisa ficar acima do conteúdo para que seus menus
+       escapem dos contextos de overflow do admin, e o Bootstrap coloca os
+       modais em 1050, abaixo dela. O resultado era a navbar pintando por cima
+       de toda caixa de diálogo. A escala inteira fica declarada aqui, em
+       ordem, para que uma regra nova não precise dar um lance maior que a
+       anterior para aparecer. */
+    --hk-camada-navbar:          3000;
+    --hk-camada-dropdown:        3001;
+    --hk-camada-modal-fundo:     3100;
+    --hk-camada-modal:           3101;
 }
 
 html, body {
@@ -303,6 +314,46 @@ small.form-text,
 .modal-header .close:hover {
     opacity: 1;
 }
+.modal-backdrop {
+    z-index: var(--hk-camada-modal-fundo);
+}
+.modal {
+    z-index: var(--hk-camada-modal);
+}
+
+/* O CTFd monta vários formulários de modal em JavaScript com <select> e
+   <input> sem a classe .form-control do Bootstrap. O tema escuro só alcançava
+   os controles com classe, então esses formulários continuavam com o widget
+   claro do navegador dentro de uma caixa escura. Aqui o alvo é o elemento. */
+.modal-body label {
+    display: block;
+    margin-bottom: 0.35rem;
+    color: var(--hk-text);
+    font-weight: 600;
+}
+.modal-body select,
+.modal-body textarea,
+.modal-body input:not([type="checkbox"]):not([type="radio"]):not([type="file"]) {
+    display: block;
+    width: 100%;
+    padding: 0.375rem 0.65rem;
+    background-color: var(--hk-surface-2);
+    border: 1px solid var(--hk-border);
+    border-radius: var(--hk-radius-sm);
+    color: var(--hk-text);
+    font-family: var(--hk-font);
+}
+.modal-body select:focus,
+.modal-body textarea:focus,
+.modal-body input:focus {
+    outline: none;
+    border-color: var(--hk-primary);
+    box-shadow: 0 0 0 0.15rem var(--hk-primary-soft);
+}
+.modal-body select option {
+    background-color: var(--hk-surface-2);
+    color: var(--hk-text);
+}
 
 /* ---------------------------------------------------------------- toasts
  * Bootstrap's .toast defaults to white; on the dark admin surface the
@@ -369,7 +420,7 @@ body .dropdown-menu {
     border: 1px solid var(--hk-border) !important;
     border-radius: var(--hk-radius-sm);
     box-shadow: 0 10px 32px rgba(0, 0, 0, 0.55);
-    z-index: 3001 !important;
+    z-index: var(--hk-camada-dropdown) !important;
     padding: 0.35rem 0;
 }
 
@@ -764,7 +815,7 @@ body .navbar.navbar-dark.bg-dark {
     background-color: rgba(5, 8, 13, 0.97) !important;
     border-bottom: 1px solid var(--hk-border);
     min-height: 3.75rem;
-    z-index: 3000;
+    z-index: var(--hk-camada-navbar);
     overflow: visible;
 }
 body .navbar .container,
