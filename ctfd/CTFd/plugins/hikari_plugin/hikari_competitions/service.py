@@ -86,6 +86,10 @@ def synchronize_active_run(now: datetime) -> CompetitionRun | None:
         return None
     if run.status == "scheduled" and run.starts_at is not None and run.starts_at <= now:
         run.status = "running"
+        # Every other transition writes CTFd's global window through
+        # _apply_schedule. The automatic promotion has to write it too, or the
+        # platform would open with whatever window the previous run left behind.
+        _apply_schedule(run, paused=False)
         _activate_initial_logs()
         db.session.commit()
         return run
