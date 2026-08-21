@@ -39,6 +39,14 @@ TRADUCAO_DE_CAMPOS: Dict[str, str] = {
     # chaves com sufixo já foram substituídas acima, estas só alcançam o que
     # sobrou.
     "Threat Severity (custom)": "event.severity_label",
+    "Destination Country (custom)": "source.geo.country_iso_code",
+    "Fortinet Message (custom)": "message",
+    "Service Name (custom)": "event.dataset",
+    "Account Name (custom)": "user.name",
+    "Process Name (custom)": "process.name",
+    "Command Line (custom)": "process.name",
+    "Detect Name (custom)": "rule.name",
+    "URL (custom)": "url.full",
     "Destination Port": "destination.port",
     "Destination IP": "destination.ip",
     "Source IP": "source.ip",

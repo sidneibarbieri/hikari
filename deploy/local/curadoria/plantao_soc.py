@@ -717,18 +717,19 @@ INVESTIGACOES = [
                 "chave": "quantos-arquivos-sairam",
                 "nome": "Quantos Arquivos Saíram",
                 "categoria": "Triagem e Métricas",
-                "dificuldade": "Médio",
+                "dificuldade": "Fácil",
                 "flag": "1003",
                 "depende": ["de-onde-baixou"],
                 "descricao": (
-                    "Para medir o volume real é preciso contar apenas as operações de download "
-                    "registradas pela fonte. O conjunto traz também o evento da regra de "
-                    "correlação, e incluí-lo inflaria o número em um.\n\n"
-                    "Informe quantos downloads foram efetivamente registrados."
+                    "Antes de classificar o episódio como vazamento, a resposta a incidentes "
+                    "precisa de um número: quantos arquivos saíram de fato. É esse volume que "
+                    "define se o caso vira comunicação a titulares ou fica em investigação "
+                    "interna.\n\n"
+                    "Informe quantas operações de download foram registradas."
                 ),
                 "dica": (
-                    "O total bruto do conjunto não é a resposta. Filtre pela operação antes de "
-                    "contar."
+                    "Restrinja ao conjunto de eventos deste caso e conte as operações de "
+                    "download, sem misturar com outras operações do mesmo serviço."
                 ),
             },
             {

@@ -20,7 +20,7 @@ import argparse
 import json
 import re
 import unicodedata
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Iterator, List, Optional
 
@@ -110,18 +110,36 @@ def nome_de_campo(chave: str) -> str:
 FORMATO_DO_QRADAR = "%b %d, %Y, %I:%M:%S %p"
 
 
+# O export traz alguns eventos de correlação sem horário de início: o QRadar
+# grava a época zero, que aparece como "Dec 31, 1969". Um único evento nessa
+# data faz qualquer janela automática do Kibana abrir cinquenta e sete anos,
+# escondendo o resto da investigação atrás de um intervalo absurdo. O valor não
+# é inventado: o evento é descartado do índice quando nenhum dos seus próprios
+# campos de horário é utilizável.
+EPOCA_ZERO = datetime(1970, 1, 1)
+LIMITE_DE_PLAUSIBILIDADE = datetime(2000, 1, 1)
+
+
+def plausivel(momento: datetime) -> bool:
+    return momento > LIMITE_DE_PLAUSIBILIDADE
+
+
 def instante(evento: Dict[str, Any]) -> Optional[str]:
-    """O horário ordenável do evento, em ISO 8601."""
+    """O horário ordenável do evento, em ISO 8601, ou None se não houver."""
     formatado = texto_limpo(evento.get("startDateTime"))
     if formatado:
         try:
-            return datetime.strptime(formatado, FORMATO_DO_QRADAR).isoformat()
+            momento = datetime.strptime(formatado, FORMATO_DO_QRADAR)
+            if plausivel(momento):
+                return momento.isoformat()
         except ValueError:
             pass
     for campo in ("deviceTime", "endDateTime"):
         valor = texto_limpo(evento.get(campo))
         if valor and valor.isdigit():
-            return datetime.utcfromtimestamp(int(valor) / 1000).isoformat()
+            momento = datetime.fromtimestamp(int(valor) / 1000, timezone.utc).replace(tzinfo=None)
+            if plausivel(momento):
+                return momento.isoformat()
     return None
 
 
@@ -197,7 +215,7 @@ def converter(evento: Dict[str, Any], origem: str) -> Dict[str, Any]:
     if marca is not None:
         convertido["@timestamp"] = marca
     exibido = texto_limpo(evento.get("startDateTime"))
-    if exibido:
+    if exibido and not exibido.startswith("Dec 31, 1969"):
         # Preservado como texto porque um dos desafios pede exatamente a cadeia
         # que aparece na tela do QRadar, e não o instante reformatado.
         convertido["event.start_display"] = exibido
@@ -233,6 +251,11 @@ def converter(evento: Dict[str, Any], origem: str) -> Dict[str, Any]:
     return convertido
 
 
+def utilizavel(convertido: Dict[str, Any]) -> bool:
+    """Um evento sem horário não entra: no SIEM ele não é investigável."""
+    return "@timestamp" in convertido
+
+
 def eventos_convertidos(origem: Path) -> Iterator[Dict[str, Any]]:
     for caminho in sorted(origem.glob("*.anon.json")):
         # O nome do conjunto vem do nome do arquivo, e o sistema de arquivos do
@@ -241,7 +264,9 @@ def eventos_convertidos(origem: Path) -> Iterator[Dict[str, Any]]:
         # devolve zero sem nenhum erro visível.
         nome = unicodedata.normalize("NFC", caminho.name.replace(".anon.json", ""))
         for evento in json.loads(caminho.read_text(encoding="utf-8")):
-            yield converter(evento, nome)
+            convertido = converter(evento, nome)
+            if utilizavel(convertido):
+                yield convertido
 
 
 def executar(origem: Path, saida: Path) -> None:
