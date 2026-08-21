@@ -9,7 +9,7 @@ database can be cleared without losing the work.
 import io
 import json
 import re
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Set, Tuple
 from zipfile import ZipFile, ZIP_DEFLATED
 
 from CTFd.models import Flags, Hints, Tags
@@ -54,15 +54,24 @@ def export_preview() -> Dict[str, List]:
     return {"exportable": exportable, "skipped": skipped}
 
 
-def export_library(package_key: str, display_name: str) -> bytes:
+def export_library(
+    package_key: str, display_name: str, challenge_ids: Optional[Set[int]] = None
+) -> bytes:
     """Return a ZIP with the Hikari challenges that carry a flag.
 
     A challenge still being drafted has no flag yet. Skipping it keeps the
     rest of the work recoverable; refusing the whole export because of one
     draft would cause the loss the export exists to prevent.
+
+    ``challenge_ids`` narrows the package to a subset. The subset has to be
+    closed under prerequisites: a challenge whose dependency was left out
+    would import unreachable, so the selection is refused rather than shipped
+    broken.
     """
     package_key, display_name = validate_export_metadata(package_key, display_name)
     challenges, _ = _export_plan()
+    if challenge_ids is not None:
+        challenges = _selected_and_closed(challenges, challenge_ids)
     if not challenges:
         raise ChallengeExportError(
             "Nenhum desafio Hikari completo para exportar. "
@@ -87,6 +96,20 @@ def export_library(package_key: str, display_name: str) -> bytes:
                 continue
             archive.writestr(member, _read_log(challenge.log_filename))
     return buffer.getvalue()
+
+
+def _selected_and_closed(challenges: List[object], selection: Set[int]) -> List[object]:
+    """Keep the selected challenges, refusing a selection that breaks a chain."""
+    chosen = [challenge for challenge in challenges if challenge.id in selection]
+    available = {challenge.id for challenge in chosen}
+    for challenge in chosen:
+        missing = [pid for pid in _prerequisite_ids(challenge) if pid not in available]
+        if missing:
+            raise ChallengeExportError(
+                f"O desafio {challenge.name} depende de outro que ficou fora da seleção. "
+                "Um pacote precisa levar a cadeia inteira."
+            )
+    return chosen
 
 
 def _hikari_challenges() -> List[object]:
