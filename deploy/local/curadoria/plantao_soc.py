@@ -132,11 +132,12 @@ INVESTIGACOES = [
                     "Enumeração feita a partir de um console interativo tem uma leitura; feita "
                     "por um processo de serviço, tem outra. Um dos registros preserva qual "
                     "processo executou a consulta.\n\n"
-                    "Informe apenas o nome do executável, sem o caminho do diretório."
+                    "Informe o nome do executável responsável."
                 ),
                 "dica": (
-                    "A maioria dos registros não preenche esse campo. Procure o único em que ele "
-                    "aponta para um executável dentro de System32."
+                    "A maioria dos registros não preenche esse campo. O único que preenche "
+                    "aponta para um executável dentro de System32, e o caminho completo fica "
+                    "guardado em um campo vizinho ao do nome."
                 ),
             },
             {
