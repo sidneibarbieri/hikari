@@ -12,11 +12,12 @@ import re
 from typing import Dict, List, Optional, Tuple
 from zipfile import ZipFile, ZIP_DEFLATED
 
-from CTFd.models import Flags
+from CTFd.models import Flags, Hints, Tags
 from CTFd.plugins.hikari_plugin import hikari_models
 from CTFd.utils import get_app_config
 from CTFd.utils.uploads.uploaders import FilesystemUploader, S3Uploader
 
+from .dto import DIFICULDADES
 from .models import ChallengeLibraryEntry
 
 FORMAT_VERSION = 1
@@ -188,7 +189,30 @@ def _challenge_entry(challenge: object, keys: Dict[int, str]) -> dict:
         "state": challenge.state or "visible",
         "prerequisites": _prerequisite_keys(challenge, keys),
         "log_file": _log_name(challenge.log_filename),
+        "difficulty": _difficulty(challenge.id),
+        "hints": _hints(challenge.id),
+        "max_attempts": challenge.max_attempts or 0,
+        "case_insensitive": _is_case_insensitive(challenge.id),
     }
+
+
+def _difficulty(challenge_id: int) -> Optional[str]:
+    tag = Tags.query.filter(
+        Tags.challenge_id == challenge_id, Tags.value.in_(DIFICULDADES)
+    ).first()
+    return tag.value if tag else None
+
+
+def _hints(challenge_id: int) -> List[dict]:
+    return [
+        {"content": hint.content, "cost": hint.cost or 0}
+        for hint in Hints.query.filter_by(challenge_id=challenge_id).order_by(Hints.id).all()
+    ]
+
+
+def _is_case_insensitive(challenge_id: int) -> bool:
+    flag = _static_flag(challenge_id)
+    return bool(flag) and flag.data != "case_sensitive"
 
 
 def _static_flag(challenge_id: int) -> Optional[object]:

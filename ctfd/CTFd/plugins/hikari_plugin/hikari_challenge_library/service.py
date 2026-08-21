@@ -9,7 +9,7 @@ from zipfile import BadZipFile, ZipFile
 from pydantic import ValidationError
 from sqlalchemy.exc import IntegrityError
 
-from CTFd.models import Flags, db
+from CTFd.models import Flags, Hints, Tags, db
 from CTFd.plugins.hikari_plugin import hikari_models
 from CTFd.plugins.hikari_plugin.hikari_competitions.models import CompetitionRun
 from CTFd.utils import get_app_config
@@ -198,7 +198,7 @@ def _persist_library(
             type="hikari",
             value=specification.value,
             state=specification.state,
-            max_attempts=0,
+            max_attempts=specification.max_attempts,
         )
         db.session.add(challenge)
         db.session.flush()
@@ -208,9 +208,15 @@ def _persist_library(
                 challenge_id=challenge.id,
                 type="static",
                 content=specification.flag,
-                data="case_sensitive",
+                # A competition should not fail somebody for typing a value
+                # with different capitalisation than the log shows.
+                data="case_insensitive" if specification.case_insensitive else "case_sensitive",
             )
         )
+        for hint in specification.hints:
+            db.session.add(Hints(challenge_id=challenge.id, content=hint.content, cost=hint.cost))
+        if specification.difficulty:
+            db.session.add(Tags(challenge_id=challenge.id, value=specification.difficulty))
         db.session.add(
             ChallengeLibraryEntry(
                 library_import_id=library.id,
