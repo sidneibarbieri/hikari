@@ -53,6 +53,27 @@ TRADUCAO = {
 }
 
 
+# Campos que precisam chegar ao índice como número. Uma porta gravada como
+# texto vira um campo text no mapeamento dinâmico, e agregação por termo não
+# funciona sobre text: o desafio que conta portas de origem falha sem que nada
+# acuse erro. O tipo pertence ao dado, não ao mapeamento do índice de destino.
+CAMPOS_NUMERICOS = frozenset({
+    "source.port",
+    "destination.port",
+    "event.severity",
+    "network.iana_number",
+})
+
+
+def numero_ou_texto(campo: str, valor: str) -> Any:
+    if campo not in CAMPOS_NUMERICOS:
+        return valor
+    try:
+        return int(valor)
+    except ValueError:
+        return valor
+
+
 def texto_limpo(valor: Any) -> Optional[str]:
     if valor is None:
         return None
@@ -170,7 +191,7 @@ def converter(evento: Dict[str, Any], origem: str) -> Dict[str, Any]:
     for campo_qradar, campo_hikari in TRADUCAO.items():
         valor = texto_limpo(evento.get(campo_qradar))
         if valor is not None:
-            convertido[campo_hikari] = valor
+            convertido[campo_hikari] = numero_ou_texto(campo_hikari, valor)
 
     marca = instante(evento)
     if marca is not None:
