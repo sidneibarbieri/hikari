@@ -109,9 +109,9 @@
 
     <article class="siem-panel">
       <div class="siem-panel-heading">
-        <h2>Serviços observados</h2>
+        <h2>Fontes de log observadas</h2>
       </div>
-      {% for row in summary.services %}
+      {% for row in summary.datasets %}
         <div class="siem-row"><span>{{ row.key }}</span><strong>{{ row.count }}</strong></div>
       {% else %}
         <p class="text-muted">Sem dados agregados.</p>
@@ -130,8 +130,8 @@
     </article>
 
     <article class="siem-panel">
-      <h2>Mensagens Fortinet</h2>
-      {% for row in summary.messages %}
+      <h2>Regras acionadas</h2>
+      {% for row in summary.rules %}
         <div class="siem-row"><span>{{ row.key }}</span><strong>{{ row.count }}</strong></div>
       {% else %}
         <p class="text-muted">Sem mensagens Fortinet agregadas.</p>
@@ -168,7 +168,7 @@
     </article>
 
     <article class="siem-panel">
-      <h2>Países de destino</h2>
+      <h2>Países de origem</h2>
       {% for row in summary.countries %}
         <div class="siem-row"><span>{{ row.key }}</span><strong>{{ row.count }}</strong></div>
       {% else %}
@@ -183,7 +183,7 @@
       <span>Valores agregados por campo operacional</span>
     </div>
     <div class="siem-message-grid">
-      {% for row in summary.messages + summary.event_names %}
+      {% for row in summary.rules + summary.event_names %}
         <div class="siem-message"><span>{{ row.key }}</span><strong>{{ row.count }}</strong></div>
       {% else %}
         <p class="text-muted">Sem mensagens agregadas.</p>

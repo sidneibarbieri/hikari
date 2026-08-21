@@ -28,9 +28,9 @@ class SiemSummary(BaseModel):
     network_events: int
     classified_events: int
     severity: List[TermBucket]
-    services: List[TermBucket]
+    datasets: List[TermBucket]
     countries: List[TermBucket]
-    messages: List[TermBucket]
+    rules: List[TermBucket]
     event_names: List[TermBucket]
     source_ips: List[TermBucket]
     destination_ips: List[TermBucket]
@@ -64,9 +64,9 @@ def build_siem_summary(index_name: str = "competition1") -> SiemSummary:
         network_events=filter_count(summary_payload, "network_events"),
         classified_events=filter_count(summary_payload, "classified_events"),
         severity=term_buckets(summary_payload, "severity"),
-        services=term_buckets(summary_payload, "services"),
+        datasets=term_buckets(summary_payload, "datasets"),
         countries=term_buckets(summary_payload, "countries"),
-        messages=term_buckets(summary_payload, "messages"),
+        rules=term_buckets(summary_payload, "rules"),
         event_names=term_buckets(summary_payload, "event_names"),
         source_ips=term_buckets(summary_payload, "source_ips"),
         destination_ips=term_buckets(summary_payload, "destination_ips"),
@@ -82,9 +82,9 @@ def empty_summary(index_name: str) -> SiemSummary:
         network_events=0,
         classified_events=0,
         severity=[],
-        services=[],
+        datasets=[],
         countries=[],
-        messages=[],
+        rules=[],
         event_names=[],
         source_ips=[],
         destination_ips=[],
@@ -97,72 +97,50 @@ def elastic_url() -> str:
     return settings().elastic_url.rstrip("/")
 
 
+# O painel foi escrito contra um esquema anterior, com nomes de coluna no
+# estilo do appliance de origem ("Source IP", "Fortinet Message (custom)").
+# O índice passou a usar nomes ECS e ninguém reescreveu as agregações, então
+# todas passaram a devolver zero enquanto o total de eventos, que não depende
+# de campo nenhum, continuava certo. Daí a tela mostrar quase meio milhão de
+# eventos e nenhum sinal.
+CAMPOS = {
+    "severity": "event.severity_label.keyword",
+    "datasets": "event.dataset.keyword",
+    "countries": "source.geo.country_iso_code.keyword",
+    "rules": "rule.name.keyword",
+    "event_names": "event.action.keyword",
+    "source_ips": "source.ip",
+    "destination_ips": "destination.ip",
+    "destination_ports": "destination.port",
+}
+
+
 def summary_query() -> Dict[str, Any]:
-    return {
-        "size": 0,
-        "track_total_hits": True,
-        "aggs": {
-            "network_events": {"filter": {"exists": {"field": "Source IP.keyword"}}},
-            "classified_events": {
-                "filter": {"exists": {"field": "Threat Severity (custom).keyword"}}
-            },
-            "severity": {
-                "terms": {
-                    "field": "Threat Severity (custom).keyword",
-                    "size": 6,
-                }
-            },
-            "services": {
-                "terms": {
-                    "field": "Fortinet Service (custom).keyword",
-                    "size": 6,
-                }
-            },
-            "countries": {
-                "terms": {
-                    "field": "Destination Country (custom).keyword",
-                    "size": 6,
-                }
-            },
-            "messages": {
-                "terms": {
-                    "field": "Fortinet Message (custom).keyword",
-                    "size": 6,
-                }
-            },
-            "event_names": {"terms": {"field": "Event Name.keyword", "size": 6}},
-            "source_ips": {"terms": {"field": "Source IP.keyword", "size": 6}},
-            "destination_ips": {"terms": {"field": "Destination IP.keyword", "size": 6}},
-            "destination_ports": {"terms": {"field": "Destination Port.keyword", "size": 6}},
-        },
+    agregacoes: Dict[str, Any] = {
+        "network_events": {"filter": {"exists": {"field": "source.ip"}}},
+        "classified_events": {"filter": {"exists": {"field": "event.severity_label.keyword"}}},
     }
+    for nome, campo in CAMPOS.items():
+        agregacoes[nome] = {"terms": {"field": campo, "size": 6}}
+    return {"size": 0, "track_total_hits": True, "aggs": agregacoes}
 
 
 def recent_events_query() -> Dict[str, Any]:
     return {
         "size": 12,
         "track_total_hits": False,
-        "query": {
-            "bool": {
-                "should": [
-                    {"exists": {"field": "Source IP.keyword"}},
-                    {"exists": {"field": "Event Name.keyword"}},
-                    {"exists": {"field": "Fortinet Message (custom).keyword"}},
-                ],
-                "minimum_should_match": 1,
-            }
-        },
+        "query": {"exists": {"field": "event.action.keyword"}},
         "sort": [{"@timestamp": {"order": "desc", "unmapped_type": "date"}}],
         "_source": [
             "@timestamp",
-            "Source IP",
-            "Destination IP",
-            "Destination Port",
-            "Fortinet Service (custom)",
-            "Fortinet Message (custom)",
-            "Threat Severity (custom)",
-            "URL (custom)",
-            "Event Name",
+            "source.ip",
+            "destination.ip",
+            "destination.port",
+            "event.dataset",
+            "event.action",
+            "event.severity_label",
+            "message",
+            "url.full",
         ],
     }
 
@@ -191,16 +169,26 @@ def recent_events(payload: Dict[str, Any]) -> List[RecentEvent]:
     return [recent_event(hit.get("_source", {})) for hit in hits]
 
 
+def aninhado(documento: Dict[str, Any], caminho: str) -> Any:
+    """Lê um campo pontuado do _source, que o Elasticsearch guarda aninhado."""
+    atual: Any = documento
+    for parte in caminho.split("."):
+        if not isinstance(atual, dict):
+            return None
+        atual = atual.get(parte)
+    return atual
+
+
 def recent_event(source: Dict[str, Any]) -> RecentEvent:
     return RecentEvent(
         timestamp=source.get("@timestamp"),
-        source_ip=source.get("Source IP"),
-        destination_ip=source.get("Destination IP"),
-        destination_port=string_or_none(source.get("Destination Port")),
-        service=source.get("Fortinet Service (custom)"),
-        severity=source.get("Threat Severity (custom)"),
-        message=source.get("Fortinet Message (custom)") or source.get("Event Name"),
-        url=source.get("URL (custom)"),
+        source_ip=aninhado(source, "source.ip"),
+        destination_ip=aninhado(source, "destination.ip"),
+        destination_port=string_or_none(aninhado(source, "destination.port")),
+        service=aninhado(source, "event.dataset"),
+        severity=aninhado(source, "event.severity_label"),
+        message=source.get("message") or aninhado(source, "event.action"),
+        url=aninhado(source, "url.full"),
     )
 
 
