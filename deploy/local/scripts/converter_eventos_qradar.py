@@ -104,6 +104,38 @@ def instante(evento: Dict[str, Any]) -> Optional[str]:
     return None
 
 
+# Chaves de customProps que têm nome consagrado no vocabulário comum. O
+# competidor que aprendeu a investigar no índice principal não deveria
+# reaprender o nome de cada campo só porque a fonte mudou de fabricante.
+#
+# A regra que separa o que é traduzido do que não é: traduz-se o NOME do
+# campo, nunca o VALOR. Renomear um campo é mapeamento de esquema; reescrever
+# o conteúdo seria alterar o log. Por isso event.outcome carrega aqui
+# "Prevent" e "Detect", como o produto escreveu, enquanto o índice principal
+# carrega "prevented" e "success". A diferença é real e é do dado.
+TRADUCAO_DE_CUSTOMPROPS = {
+    "process_enumerated": "process.executable",
+    "parent_image_file_name": "process.parent.name",
+    "file_name": "file.name",
+    "file_extension": "file.extension",
+    "sha256_string": "file.hash.sha256",
+    "md5_string": "file.hash.md5",
+    "technique_id": "threat.technique.id",
+    "technique": "threat.technique.name",
+    "tactic": "threat.tactic.name",
+    "group_name_ad": "group.name",
+    "request_uri": "url.path",
+    "message": "message",
+    "action": "event.outcome",
+}
+
+# Um caminho completo de executável responde "onde está", e o nome do binário
+# responde "o que executou". As duas perguntas aparecem em desafios
+# diferentes, e derivar a segunda da primeira evita exigir do competidor um
+# recorte de string que não ensina nada.
+CAMPO_DE_CAMINHO = "process.executable"
+CAMPO_DE_NOME_DO_PROCESSO = "process.name"
+
 # Cada fonte de log do QRadar nomeia a identidade e a máquina do seu jeito, e
 # todas essas chaves chegam dentro de customProps. Manter só o nome original
 # obrigaria o competidor a descobrir, dataset por dataset, como o campo se
@@ -118,6 +150,7 @@ ORIGENS_DE_USUARIO = (
 ORIGENS_DE_HOST = (
     "qradar.hostname",
     "qradar.src_name",
+    "qradar.machine_identifier",
     "qradar.client_hostname",
     "qradar.srcworkstation",
 )
@@ -148,12 +181,26 @@ def converter(evento: Dict[str, Any], origem: str) -> Dict[str, Any]:
         # que aparece na tela do QRadar, e não o instante reformatado.
         convertido["event.start_display"] = exibido
 
-    mensagem = texto_limpo(evento.get("payloadAsUTF"))
-    if mensagem:
-        convertido["message"] = mensagem
+    # Duas coisas diferentes disputavam o nome "message": a linha bruta que o
+    # coletor recebeu e a mensagem legível que a proteção escreveu. No índice
+    # principal, message é a linha legível. A linha bruta passa a ser
+    # event.original, que é onde ela pertence, e message fica livre para a
+    # mensagem do produto, traduzida logo abaixo a partir de customProps.
+    bruto = texto_limpo(evento.get("payloadAsUTF"))
+    if bruto:
+        convertido["event.original"] = bruto
 
     for chave, valor in pares_de_customprops(evento.get("customProps")).items():
+        # O nome de origem continua gravado, porque é ele que aparece na tela
+        # do QRadar e é por ele que um analista confere o caso na fonte.
         convertido[f"qradar.{chave}"] = valor
+        comum = TRADUCAO_DE_CUSTOMPROPS.get(chave)
+        if comum and comum not in convertido:
+            convertido[comum] = valor
+
+    caminho = convertido.get(CAMPO_DE_CAMINHO)
+    if caminho and CAMPO_DE_NOME_DO_PROCESSO not in convertido:
+        convertido[CAMPO_DE_NOME_DO_PROCESSO] = caminho.replace("\\", "/").rsplit("/", 1)[-1]
 
     usuario = primeiro_preenchido(convertido, ORIGENS_DE_USUARIO)
     if usuario and "user.name" not in convertido:

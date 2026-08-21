@@ -38,21 +38,21 @@ CONFERENCIAS = {
     },
     "o-processo-que-perguntou": {
         "conjunto": "AD Detecção de possível ataque de bloodhoud",
-        "modo": "sufixo", "campo": "qradar.process_enumerated.keyword",
+        "modo": "entre_os_valores", "campo": "process.name.keyword",
     },
     "a-conta-do-reconhecimento": {
         "conjunto": "AD Detecção de possível ataque de bloodhoud",
-        "modo": "unico", "campo": "qradar.account_name.keyword",
+        "modo": "unico", "campo": "user.name.keyword",
     },
 
     # O Segundo Controlador
     "a-maquina-enumerada": {
         "conjunto": "SOC AD - Detecção de possível ataque de bloodhoud",
-        "modo": "unico", "campo": "qradar.machine_identifier.keyword",
+        "modo": "unico", "campo": "host.name.keyword",
     },
     "o-grupo-que-abre-sessao": {
         "conjunto": "SOC AD - Detecção de possível ataque de bloodhoud",
-        "modo": "entre_os_valores", "campo": "qradar.group_name_ad.keyword",
+        "modo": "entre_os_valores", "campo": "group.name.keyword",
     },
 
     # Insistência Sobre Uma Conta
@@ -92,11 +92,11 @@ CONFERENCIAS = {
     # Sessões Acima do Limite
     "o-nome-da-anomalia": {
         "conjunto": "Number of Concurrent sessions above threshold from an IP",
-        "modo": "texto", "campo": "qradar.message",
+        "modo": "texto", "campo": "message",
     },
     "quantas-vezes-repetiu": {
         "conjunto": "Number of Concurrent sessions above threshold from an IP",
-        "modo": "texto", "campo": "qradar.message",
+        "modo": "texto", "campo": "message",
     },
 
     # Conversa Com a Mineração
@@ -120,11 +120,11 @@ CONFERENCIAS = {
     },
     "a-ferramenta-por-tras": {
         "conjunto": "Multiple Exploit Malware Types Targeting a Single Destination",
-        "modo": "topo", "campo": "qradar.message.keyword",
+        "modo": "topo", "campo": "message.keyword",
     },
     "detectar-ou-impedir": {
         "conjunto": "Multiple Exploit Malware Types Targeting a Single Destination",
-        "modo": "topo", "campo": "qradar.action.keyword",
+        "modo": "topo", "campo": "event.outcome.keyword",
     },
     "o-alvo-preferido": {
         "conjunto": "Multiple Exploit Malware Types Targeting a Single Destination",
@@ -142,7 +142,7 @@ CONFERENCIAS = {
     },
     "o-recurso-na-mira": {
         "conjunto": "Multiple Exploit-Malware Types Targeting a Single Destination",
-        "modo": "topo", "campo": "qradar.request_uri.keyword",
+        "modo": "topo", "campo": "url.path.keyword",
     },
     "a-porta-de-origem-repetida": {
         "conjunto": "Multiple Exploit-Malware Types Targeting a Single Destination",
@@ -183,25 +183,25 @@ CONFERENCIAS = {
     },
     "o-formato-predominante": {
         "conjunto": "Excessive File Download Events From the Same Source IP",
-        "modo": "topo_sem_caixa", "campo": "qradar.file_extension.keyword",
+        "modo": "topo_sem_caixa", "campo": "file.extension.keyword",
     },
     "o-peso-dos-documentos": {
         "conjunto": "Excessive File Download Events From the Same Source IP",
-        "modo": "soma_sem_caixa", "campo": "qradar.file_extension.keyword", "valor": "pdf",
+        "modo": "soma_sem_caixa", "campo": "file.extension.keyword", "valor": "pdf",
     },
 
     # Telemetria de Endpoint
     "a-tecnica-do-despejo": {
         "conjunto": "CS-Credential Access-OS Credential Dumping",
-        "modo": "unico", "campo": "qradar.technique_id.keyword",
+        "modo": "unico", "campo": "threat.technique.id.keyword",
     },
     "o-binario-do-indicador": {
         "conjunto": "CS-Custom Intelligence-Indicator of Attack",
-        "modo": "unico", "campo": "qradar.file_name.keyword",
+        "modo": "unico", "campo": "file.name.keyword",
     },
     "o-modulo-carregado-de-lado": {
         "conjunto": "CS-Defense Evasion-DLL Side-Loading",
-        "modo": "unico", "campo": "qradar.technique_id.keyword",
+        "modo": "unico", "campo": "threat.technique.id.keyword",
     },
     "a-disposicao-do-bloqueio": {
         "conjunto": "CS-Defense Evasion-Disable or Modify Tools",
@@ -209,15 +209,15 @@ CONFERENCIAS = {
     },
     "o-hash-do-binario": {
         "conjunto": "CS-Execution-PowerShell-2",
-        "modo": "unico", "campo": "qradar.sha256_string.keyword",
+        "modo": "unico", "campo": "file.hash.sha256.keyword",
     },
     "o-powershell-no-attack": {
         "conjunto": "CS-Execution-PowerShell",
-        "modo": "unico", "campo": "qradar.technique_id.keyword",
+        "modo": "unico", "campo": "threat.technique.id.keyword",
     },
     "quem-chamou-o-subsistema": {
         "conjunto": "CS-Execution-User Execution",
-        "modo": "unico", "campo": "qradar.parent_image_file_name.keyword",
+        "modo": "unico", "campo": "process.parent.name.keyword",
     },
     "o-topo-da-cadeia": {
         "conjunto": "CS-Initial Access-Spearphishing Attachment",
@@ -229,13 +229,13 @@ CONFERENCIAS = {
     },
     "o-instalador-intermediario": {
         "conjunto": "CS-Post-Exploit-Malicious Tool Execution",
-        "modo": "unico", "campo": "qradar.parent_image_file_name.keyword",
+        "modo": "unico", "campo": "process.parent.name.keyword",
     },
     "a-identidade-entre-os-casos": {
         "conjuntos": [
             "CS-Execution-User Execution",
             "CS-Post-Exploit-Malicious Tool Execution",
         ],
-        "modo": "comum_aos_conjuntos", "campo": "qradar.user_name.keyword",
+        "modo": "comum_aos_conjuntos", "campo": "user.name.keyword",
     },
 }
