@@ -16,6 +16,7 @@ from typing import Dict, List, Optional
 
 sys.path.insert(0, str(Path(__file__).parent))
 
+from exportacao_de_credenciais import EXPORTACAO_DE_CREDENCIAIS
 from plantao_soc import INVESTIGACOES, PONTOS, TRILHA_DE_ENDPOINT
 
 
@@ -84,7 +85,7 @@ def conferir_dependencias(entradas: List[Dict]) -> List[str]:
 
 
 def gerar(destino: Optional[Path]) -> None:
-    blocos = INVESTIGACOES + [TRILHA_DE_ENDPOINT]
+    blocos = INVESTIGACOES + [TRILHA_DE_ENDPOINT, EXPORTACAO_DE_CREDENCIAIS]
     total = 0
     problemas: List[str] = []
 
