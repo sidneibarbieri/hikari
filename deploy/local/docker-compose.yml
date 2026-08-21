@@ -147,6 +147,11 @@ services:
       SERVER_BASEPATH: /hikari/kibana
       SERVER_REWRITEBASEPATH: "true"
       SERVER_PUBLICBASEURL: http://localhost:${CTFD_PORT:-8000}/hikari/kibana
+      # A geração de relatórios sai do ar: é o caminho que transforma a
+      # investigação em um arquivo para levar embora. O gateway também recusa
+      # essas rotas, e desligar aqui evita oferecer ao competidor um botão que
+      # só devolve erro.
+      XPACK_REPORTING_ENABLED: "false"
       NEWSFEED_ENABLED: "false"
       TELEMETRY_ENABLED: "false"
       TELEMETRY_OPTIN: "false"

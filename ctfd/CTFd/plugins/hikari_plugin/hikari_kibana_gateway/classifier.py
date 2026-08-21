@@ -231,7 +231,84 @@ def _free_text(decoded: Any, raw_body: bytes) -> Optional[str]:
     kql = _kql_excerpt(decoded)
     if kql:
         return kql
+    reconstructed = reconstructed_query(decoded)
+    if reconstructed:
+        return reconstructed
     return _free_text_from_raw(raw_body)
+
+
+# Clauses that carry what the analyst asked for. Everything else in the body
+# describes how Kibana wants the answer rendered.
+_CLAUSULAS_DE_INTENCAO = ("match_phrase", "match", "term", "wildcard", "prefix")
+
+
+def reconstructed_query(decoded: Any) -> Optional[str]:
+    """Render the analyst's filters back into something readable.
+
+    Discover never sends the KQL the competitor typed. By the time the request
+    reaches ``internal/bsearch`` the text has already been compiled into
+    Elasticsearch clauses, so looking for the literal string finds nothing and
+    the activity log reports zero queries for somebody who ran dozens. Reading
+    the clauses recovers the intent, and it also captures the filter pills,
+    which never had a KQL form to begin with.
+    """
+    clauses = _intent_clauses(decoded)
+    if not clauses:
+        return None
+    unique = list(dict.fromkeys(clauses))
+    return _shorten(" AND ".join(unique))
+
+
+def _intent_clauses(decoded: Any) -> List[str]:
+    if isinstance(decoded, dict):
+        found: List[str] = []
+        for key, value in decoded.items():
+            if key in _CLAUSULAS_DE_INTENCAO and isinstance(value, dict):
+                found.extend(_render_field_clause(value))
+            elif key == "terms" and isinstance(value, dict):
+                found.extend(_render_terms_clause(value))
+            elif key == "exists" and isinstance(value, dict) and value.get("field"):
+                found.append(f"{value['field']}: *")
+            elif key == "query_string" and isinstance(value, dict) and value.get("query"):
+                found.append(str(value["query"]))
+            elif key == "range" and isinstance(value, dict):
+                found.extend(_render_range_clause(value))
+            else:
+                found.extend(_intent_clauses(value))
+        return found
+    if isinstance(decoded, list):
+        return [clause for item in decoded for clause in _intent_clauses(item)]
+    return []
+
+
+def _render_field_clause(clause: Dict[str, Any]) -> List[str]:
+    rendered = []
+    for field, value in clause.items():
+        if isinstance(value, dict):
+            value = value.get("query", value.get("value"))
+        if value is not None:
+            rendered.append(f"{field}: {value}")
+    return rendered
+
+
+def _render_terms_clause(clause: Dict[str, Any]) -> List[str]:
+    rendered = []
+    for field, values in clause.items():
+        if isinstance(values, list) and values:
+            rendered.append(f"{field}: ({' or '.join(str(v) for v in values)})")
+    return rendered
+
+
+def _render_range_clause(clause: Dict[str, Any]) -> List[str]:
+    """Ranges over @timestamp are the time picker, not a question the analyst asked."""
+    rendered = []
+    for field, bounds in clause.items():
+        if field == "@timestamp" or not isinstance(bounds, dict):
+            continue
+        limits = ", ".join(f"{name} {bound}" for name, bound in bounds.items() if name in ("gte", "gt", "lte", "lt"))
+        if limits:
+            rendered.append(f"{field}: {limits}")
+    return rendered
 
 
 def _kql_excerpt(decoded: Any) -> Optional[str]:

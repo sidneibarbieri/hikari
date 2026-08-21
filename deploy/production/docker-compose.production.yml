@@ -68,6 +68,9 @@ services:
     # Kibana acessado apenas via proxy CTFd — nunca exposto diretamente
     environment:
       XPACK_ENCRYPTEDSAVEDOBJECTS_ENCRYPTIONKEY: "${KIBANA_ENCRYPTION_KEY}"
+      # Mesma decisão do ambiente local: sem geração de relatórios, para não
+      # oferecer um caminho de exportação em massa nem um botão que só falha.
+      XPACK_REPORTING_ENABLED: "false"
       # Kibana builds absolute links from this, and competitors reach it
       # through the public domain, not through the loopback of the server.
       SERVER_PUBLICBASEURL: "https://${HIKARI_DOMAIN}/hikari/kibana"
