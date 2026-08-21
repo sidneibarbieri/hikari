@@ -19,6 +19,7 @@ Uso:
 import argparse
 import json
 import re
+import unicodedata
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, Iterator, List, Optional
@@ -166,7 +167,11 @@ def converter(evento: Dict[str, Any], origem: str) -> Dict[str, Any]:
 
 def eventos_convertidos(origem: Path) -> Iterator[Dict[str, Any]]:
     for caminho in sorted(origem.glob("*.anon.json")):
-        nome = caminho.name.replace(".anon.json", "")
+        # O nome do conjunto vem do nome do arquivo, e o sistema de arquivos do
+        # macOS entrega os acentos decompostos. Sem normalizar, "Detecção"
+        # indexado não casa com "Detecção" digitado, e o filtro por conjunto
+        # devolve zero sem nenhum erro visível.
+        nome = unicodedata.normalize("NFC", caminho.name.replace(".anon.json", ""))
         for evento in json.loads(caminho.read_text(encoding="utf-8")):
             yield converter(evento, nome)
 
