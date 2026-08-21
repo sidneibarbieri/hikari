@@ -1,0 +1,36 @@
+{# A janela da competição, do jeito que o competidor precisa ler: em que estado
+   está, quando começa, quando termina e quanto falta. #}
+{% if hikari_window %}
+<section class="hikari-window hikari-window--{{ hikari_window.status }}"
+         aria-label="Horários da competição"
+         {% if hikari_window.seconds_remaining is not none %}data-hikari-window-remaining="{{ hikari_window.seconds_remaining }}"{% endif %}>
+  <div class="hikari-window-state">
+    <span class="hikari-window-dot" aria-hidden="true"></span>
+    <div>
+      <strong>{{ hikari_window.name }}</strong>
+      <span>{{ hikari_window.status_label }}</span>
+    </div>
+  </div>
+  <dl class="hikari-window-times">
+    <div>
+      <dt>Início</dt>
+      <dd>{{ hikari_window.starts_at_label or "a definir" }}</dd>
+    </div>
+    <div>
+      <dt>Término</dt>
+      <dd>{{ hikari_window.ends_at_label or "a definir" }}</dd>
+    </div>
+    <div>
+      <dt>Duração</dt>
+      <dd>{{ hikari_window.duration_minutes // 60 }}h{% if hikari_window.duration_minutes % 60 %}{{ "%02d" | format(hikari_window.duration_minutes % 60) }}{% endif %}</dd>
+    </div>
+    {% if hikari_window.seconds_remaining is not none %}
+    <div class="hikari-window-remaining">
+      <dt>{% if hikari_window.status == "paused" %}Restava{% else %}Falta{% endif %}</dt>
+      <dd data-hikari-window-clock>--:--:--</dd>
+    </div>
+    {% endif %}
+  </dl>
+  <p class="hikari-window-note">Horários no fuso de Brasília.</p>
+</section>
+{% endif %}

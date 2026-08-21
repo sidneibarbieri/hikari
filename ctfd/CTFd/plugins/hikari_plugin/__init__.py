@@ -7,6 +7,7 @@ from CTFd.plugins import (
     register_admin_plugin_script,
     register_admin_plugin_stylesheet,
     register_plugin_assets_directory,
+    register_plugin_script,
     register_plugin_stylesheet,
 )
 from CTFd.utils.decorators import admins_only
@@ -99,6 +100,7 @@ def load(app):
         return f"/plugins/hikari_plugin/assets/{filename}?v={mtime}"
 
     register_plugin_stylesheet(url=_versioned("theme.css"))
+    register_plugin_script(url=_versioned("window.js"))
     register_admin_plugin_stylesheet(url=_versioned("admin.css"))
     # Best-effort ECharts theming. If statistics.js bundled echarts as a
     # private ES module, window.echarts won't exist and the script no-ops.
@@ -332,6 +334,14 @@ def load(app):
     @app.context_processor
     def _inject_hikari_auth_flags():
         return {"hikari_google_enabled": hikari_auth.is_google_enabled()}
+
+    # A competitor should be able to read the schedule from any page that
+    # matters, without asking the organiser.
+    @app.context_processor
+    def _inject_hikari_competition_window():
+        from CTFd.plugins.hikari_plugin.hikari_competitions.window import current_window
+
+        return {"hikari_window": current_window()}
 
 
     ##############################################################################

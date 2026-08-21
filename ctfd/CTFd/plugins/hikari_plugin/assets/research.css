@@ -489,6 +489,21 @@
     color: var(--hikari-text);
 }
 
+/* Uma tabela com muitas colunas passa da borda do cartão e some por baixo do
+   cartão vizinho. Cada tabela ganha a própria faixa de rolagem, de modo que a
+   largura do cartão mande na página e a tabela role dentro dele. */
+.hikari-research .research-card > .table,
+.hikari-research .research-card > .table-responsive {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+}
+.hikari-research .research-card > .table > tbody,
+.hikari-research .research-card > .table > thead {
+    display: table;
+    width: 100%;
+}
+
 .hikari-research .table thead th {
     border-bottom: 1px solid var(--hikari-border);
     color: var(--hikari-text-muted);

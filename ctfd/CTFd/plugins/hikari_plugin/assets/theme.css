@@ -3,6 +3,17 @@
 @import url('fonts.css');
 @import url('tokens.css');
 
+/* O pacote de estilos do tema público não traz o reset de caixa que o
+   Bootstrap normalmente aplica, então todo elemento media em content-box e o
+   padding soma por fora da largura declarada. Com isso, qualquer caixa com
+   width e padding termina mais larga do que o pai e a página passa a rolar na
+   horizontal. O reset devolve a conta de larguras que o resto da folha assume. */
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
 body {
     background-color: var(--hikari-bg);
     color: var(--hikari-text);
@@ -38,9 +49,22 @@ hr {
     padding: 0.35rem 0;
     position: sticky !important;
     top: 0;
-    background-color: rgba(5, 8, 13, 0.97) !important;
+    background-color: var(--hikari-bg) !important;
     border-bottom: 1px solid var(--hikari-border);
-    overflow-x: clip;
+}
+/* A lista de itens cresceu com as páginas do Hikari. Sem quebra de linha ela
+   ou vazava para fora da viewport ou era cortada pelo overflow, e itens do
+   fim, como Sair, sumiam em algumas larguras. */
+.navbar > .container,
+.navbar > .container-fluid,
+.navbar .navbar-collapse,
+.navbar .navbar-nav {
+    flex-wrap: wrap;
+    min-width: 0;
+}
+.navbar > .container,
+.navbar > .container-fluid {
+    row-gap: 0.2rem;
 }
 .navbar > .container,
 .navbar > .container-fluid,
@@ -1982,5 +2006,89 @@ select option {
     .navbar .navbar-brand {
         padding-right: 1.1rem;
         border-right: 1px solid var(--hikari-border);
+    }
+}
+
+/* ------------------------------------------------- janela da competição
+ * Durante o ensaio dois competidores perguntaram a que horas a competição
+ * terminaria. A informação existia apenas na contagem regressiva do placar,
+ * que não é a tela onde eles trabalham. Esta faixa mostra estado, início,
+ * término e o que falta, e aparece tanto nos desafios quanto no placar. */
+.hikari-window {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem 2rem;
+    margin: 0 0 1.25rem;
+    padding: 0.85rem 1.1rem;
+    background-color: var(--hikari-surface);
+    border: 1px solid var(--hikari-border);
+    border-radius: var(--hikari-radius);
+}
+.hikari-window-state {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+.hikari-window-state strong {
+    display: block;
+    color: var(--hikari-text);
+    font-size: var(--hikari-size-sm);
+}
+.hikari-window-state span {
+    color: var(--hikari-text-muted);
+    font-size: var(--hikari-size-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+.hikari-window-dot {
+    width: 0.6rem;
+    height: 0.6rem;
+    border-radius: 50%;
+    background-color: var(--hikari-text-dim);
+    flex-shrink: 0;
+}
+.hikari-window--running .hikari-window-dot {
+    background-color: var(--hikari-primary);
+    box-shadow: 0 0 0 0.25rem var(--hikari-primary-soft);
+}
+.hikari-window--paused .hikari-window-dot {
+    background-color: var(--hikari-warning);
+}
+.hikari-window--finished .hikari-window-dot {
+    background-color: var(--hikari-danger);
+}
+.hikari-window-times {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem 1.75rem;
+    margin: 0;
+}
+.hikari-window-times dt {
+    color: var(--hikari-text-muted);
+    font-size: var(--hikari-size-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-weight: 600;
+}
+.hikari-window-times dd {
+    margin: 0;
+    color: var(--hikari-text);
+    font-size: var(--hikari-size-sm);
+    font-variant-numeric: tabular-nums;
+}
+.hikari-window-remaining dd {
+    color: var(--hikari-primary);
+    font-weight: 700;
+}
+.hikari-window-note {
+    margin: 0;
+    margin-left: auto;
+    color: var(--hikari-text-dim);
+    font-size: var(--hikari-size-xs);
+}
+@media (max-width: 640px) {
+    .hikari-window-note {
+        margin-left: 0;
     }
 }

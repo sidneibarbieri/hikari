@@ -28,6 +28,8 @@
     </div>
   </header>
 
+  {% include "components/hikari-window.html" %}
+
   <section class="live-metrics" aria-label="Resumo da competição">
     <article><span>Solves</span><strong data-live-total-solves>{{ board.total_solves }}</strong></article>
     <article><span>Equipes</span><strong data-live-active-teams>{{ board.active_teams }}</strong></article>

@@ -812,11 +812,25 @@ body .dropdown-divider {
 /* ---------------------------------------------------------------- navbar */
 body .navbar.bg-dark,
 body .navbar.navbar-dark.bg-dark {
-    background-color: rgba(5, 8, 13, 0.97) !important;
+    /* Opaca de propósito: com a barra fixa e um fundo translúcido, o conteúdo
+       rolando por baixo aparecia como fantasma atrás dos itens do menu. */
+    background-color: var(--hikari-bg) !important;
     border-bottom: 1px solid var(--hk-border);
     min-height: 3.75rem;
     z-index: var(--hk-camada-navbar);
     overflow: visible;
+}
+/* O menu do admin ganhou as páginas do Hikari e não cabe mais em uma linha nas
+   larguras comuns de notebook. Sem quebra, a página inteira passava a rolar na
+   horizontal e os últimos itens ficavam fora da tela. */
+body .navbar > .container,
+body .navbar .navbar-collapse,
+body .navbar .navbar-nav {
+    flex-wrap: wrap;
+    min-width: 0;
+}
+body .navbar > .container {
+    row-gap: 0.2rem;
 }
 body .navbar .container,
 body .navbar-collapse,

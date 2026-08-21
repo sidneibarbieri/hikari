@@ -6,6 +6,7 @@ from CTFd.utils.dates import ctftime
 from CTFd.utils.user import is_admin
 
 from .activity import record_kibana_activity
+from .export_guard import export_denial_reason
 from .proxy import proxy_to_kibana
 from .summary import build_siem_summary
 
@@ -54,9 +55,30 @@ def siem_entrypoint():
 def kibana_gateway(proxy_path: str):
     _require_active_hunting_window()
     body = request.get_data(cache=True)
+
+    denial = _bulk_export_denial(proxy_path)
+    if denial is not None:
+        # Named explicitly so a refusal shows up in the activity log even on
+        # paths the query classifier has no reason to recognise.
+        record_kibana_activity(
+            proxy_path, request.method, body, 403, event_type="kibana.export_denied"
+        )
+        abort(403, description=denial)
+
     response = proxy_to_kibana(proxy_path, body)
     record_kibana_activity(proxy_path, request.method, body, response.status_code)
     return response
+
+
+def _bulk_export_denial(proxy_path: str):
+    """Refuse bulk extraction for competitors, while organisers keep it.
+
+    Whoever runs the competition still needs to export evidence and saved
+    objects, so the restriction applies to the people being evaluated.
+    """
+    if is_admin():
+        return None
+    return export_denial_reason(proxy_path)
 
 
 def _require_active_hunting_window() -> None:

@@ -57,9 +57,12 @@ def event_type_for(path: str, method: str, facts: KibanaQueryFacts) -> Optional[
     return None
 
 
-def record_kibana_activity(path: str, method: str, body: bytes, status_code: int) -> None:
+def record_kibana_activity(
+    path: str, method: str, body: bytes, status_code: int, event_type: Optional[str] = None
+) -> None:
     facts = classify(path, method, body)
-    event_type = event_type_for(path, method, facts)
+    if event_type is None:
+        event_type = event_type_for(path, method, facts)
     if event_type is None:
         return
 

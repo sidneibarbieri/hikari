@@ -36,6 +36,7 @@ _TEXT_SETTINGS = {
 _FLAG_SETTINGS = {
     "kafka_use_sasl": "KAFKA_USE_SASL",
     "kibana_provisioning": "HIKARI_KIBANA_PROVISIONING",
+    "kibana_export_blocked": "HIKARI_KIBANA_BLOCK_EXPORT",
 }
 
 
@@ -54,6 +55,9 @@ class HikariSettings(BaseModel):
     kafka_sasl_mechanism: str = "SCRAM-SHA-512"
     kafka_use_sasl: bool = False
     kibana_provisioning: bool = False
+    # Bulk export turns hunting into a file an assistant can read. Blocking it
+    # is the default; a deployment that wants it back says so explicitly.
+    kibana_export_blocked: bool = True
     google_client_id: str = ""
     google_client_secret: str = ""
     oauth_redirect_base: str = ""
@@ -74,10 +78,16 @@ def _provided_text() -> dict:
 
 
 def _provided_flags() -> dict:
-    """Read the flags with the same rule the plugin has always applied."""
+    """Read only the flags the environment actually defines.
+
+    A flag absent from the environment has to fall through to the default
+    declared on the model. Reading every name unconditionally turned every
+    absent flag into False and made a default of True impossible to express.
+    """
     return {
-        field: os.environ.get(name, "").strip().lower() in TRUE_VALUES
+        field: os.environ[name].strip().lower() in TRUE_VALUES
         for field, name in _FLAG_SETTINGS.items()
+        if os.environ.get(name, "").strip()
     }
 
 
