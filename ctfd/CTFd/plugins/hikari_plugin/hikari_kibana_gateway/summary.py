@@ -30,7 +30,7 @@ class SiemSummary(BaseModel):
     severity: List[TermBucket]
     datasets: List[TermBucket]
     countries: List[TermBucket]
-    rules: List[TermBucket]
+    processes: List[TermBucket]
     event_names: List[TermBucket]
     source_ips: List[TermBucket]
     destination_ips: List[TermBucket]
@@ -66,7 +66,7 @@ def build_siem_summary(index_name: str = "competition1") -> SiemSummary:
         severity=term_buckets(summary_payload, "severity"),
         datasets=term_buckets(summary_payload, "datasets"),
         countries=term_buckets(summary_payload, "countries"),
-        rules=term_buckets(summary_payload, "rules"),
+        processes=term_buckets(summary_payload, "processes"),
         event_names=term_buckets(summary_payload, "event_names"),
         source_ips=term_buckets(summary_payload, "source_ips"),
         destination_ips=term_buckets(summary_payload, "destination_ips"),
@@ -84,7 +84,7 @@ def empty_summary(index_name: str) -> SiemSummary:
         severity=[],
         datasets=[],
         countries=[],
-        rules=[],
+        processes=[],
         event_names=[],
         source_ips=[],
         destination_ips=[],
@@ -107,7 +107,7 @@ CAMPOS = {
     "severity": "event.severity_label.keyword",
     "datasets": "event.dataset.keyword",
     "countries": "source.geo.country_iso_code.keyword",
-    "rules": "rule.name.keyword",
+    "processes": "process.name.keyword",
     "event_names": "event.action.keyword",
     "source_ips": "source.ip",
     "destination_ips": "destination.ip",

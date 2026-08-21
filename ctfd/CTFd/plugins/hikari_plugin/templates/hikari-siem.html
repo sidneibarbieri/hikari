@@ -130,8 +130,8 @@
     </article>
 
     <article class="siem-panel">
-      <h2>Regras acionadas</h2>
-      {% for row in summary.rules %}
+      <h2>Processos observados</h2>
+      {% for row in summary.processes %}
         <div class="siem-row"><span>{{ row.key }}</span><strong>{{ row.count }}</strong></div>
       {% else %}
         <p class="text-muted">Sem mensagens Fortinet agregadas.</p>
@@ -183,7 +183,7 @@
       <span>Valores agregados por campo operacional</span>
     </div>
     <div class="siem-message-grid">
-      {% for row in summary.rules + summary.event_names %}
+      {% for row in summary.processes + summary.event_names %}
         <div class="siem-message"><span>{{ row.key }}</span><strong>{{ row.count }}</strong></div>
       {% else %}
         <p class="text-muted">Sem mensagens agregadas.</p>
