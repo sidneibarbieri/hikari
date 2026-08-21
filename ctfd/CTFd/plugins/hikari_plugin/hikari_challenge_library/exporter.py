@@ -9,6 +9,7 @@ database can be cleared without losing the work.
 import io
 import json
 import re
+import unicodedata
 from typing import Dict, List, Optional, Set, Tuple
 from zipfile import ZipFile, ZIP_DEFLATED
 
@@ -186,7 +187,16 @@ def _challenge_keys(challenges: List[object]) -> Dict[int, str]:
 
 
 def _slug(name: str) -> str:
-    slug = _INVALID_KEY_CHARS.sub("-", name.strip().lower()).strip("-")
+    """Derive a package key from a challenge title.
+
+    Titles are written in Portuguese, so most of them carry accents. Replacing
+    an accented letter with a hyphen throws away the letter and produces keys
+    like "a-origem-da-eleva-o": unreadable, and worse as an identity, since two
+    different titles can collapse onto the same shape. Transliterating first
+    keeps the word.
+    """
+    transliterated = unicodedata.normalize("NFKD", name.strip()).encode("ascii", "ignore").decode()
+    slug = _INVALID_KEY_CHARS.sub("-", transliterated.lower()).strip("-")
     if len(slug) < 3:
         slug = f"desafio-{slug}" if slug else "desafio"
     return slug[:64]
