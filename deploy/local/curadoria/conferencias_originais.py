@@ -127,7 +127,8 @@ CONFERENCIAS_ORIGINAIS = {
         "conjunto": "ddos", "modo": "topo", "campo": "rule.name.keyword",
     },
     "Origem da Botnet": {
-        "conjunto": "ddos", "modo": "topo", "campo": "source.geo.keyword",
+        "conjunto": "ddos", "modo": "topo",
+        "campo": "source.geo.country_iso_code.keyword",
     },
     "O Método Predominante": {
         "conjunto": "ddos", "modo": "topo", "campo": "event.action.keyword",

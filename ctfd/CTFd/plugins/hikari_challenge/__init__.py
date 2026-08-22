@@ -20,6 +20,28 @@ def get_uploader():
     return UPLOADERS.get(get_app_config("UPLOAD_PROVIDER") or "filesystem")()
 
 
+# O produtor do Kafka acumula numa fila local antes de enviar, e essa fila tem
+# teto — cem mil mensagens, por padrão. Uma onda maior que isso enche a fila no
+# meio do laço e o produtor recusa o resto com BufferError, perdendo a onda
+# inteira. `poll` entrega o que já está pronto e abre espaço; é espera por
+# vazão, não tratamento de erro, e por isso o laço tem um limite de paciência:
+# se nem assim escoar, o erro sobe.
+TENTATIVAS_DE_ESCOAMENTO = 60
+ESPERA_POR_ESCOAMENTO_EM_SEGUNDOS = 1.0
+
+
+def publicar_com_espera(producer, topico, conteudo):
+    """Publica uma mensagem, aguardando a fila local escoar quando ela enche."""
+    for _ in range(TENTATIVAS_DE_ESCOAMENTO):
+        try:
+            producer.produce(topico, value=conteudo)
+            return
+        except BufferError:
+            producer.poll(ESPERA_POR_ESCOAMENTO_EM_SEGUNDOS)
+    raise BufferError(
+        f"fila do Kafka continuou cheia após {TENTATIVAS_DE_ESCOAMENTO} tentativas")
+
+
 ####### HikariController for controlling activation of logs
 class HikariController:
     @staticmethod
@@ -44,7 +66,8 @@ class HikariController:
  
         producer = get_producer()
         for record in data:
-            producer.produce('competition1', value=json.dumps(record).encode('utf-8'))
+            publicar_com_espera(producer, 'competition1',
+                                json.dumps(record).encode('utf-8'))
 
         producer.flush()
  

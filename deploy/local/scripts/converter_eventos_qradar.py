@@ -17,6 +17,7 @@ Uso:
 """
 
 import argparse
+import ipaddress
 import json
 import re
 import unicodedata
@@ -45,7 +46,12 @@ TRADUCAO = {
     "identityIpOfHost": "host.ip",
     "eventName": "event.action",
     "categoryDescription": "event.category",
-    "logSourceIdentifier": "observer.ip",
+    # `logSourceIdentifier` nem sempre é endereço: vem também como nome de
+    # dispositivo ou código da organização. Mapeado para `observer.ip`, o que
+    # não fosse endereço era descartado silenciosamente pelo `ignore_malformed`
+    # do índice — aparecia no documento e sumia da consulta. O nome ECS para a
+    # identidade da origem é `observer.name`, e o endereço é separado depois.
+    "logSourceIdentifier": "observer.name",
     "qidEventId": "event.code",
     "magnitude": "event.severity",
     "eventDescription": "event.reason",
@@ -63,6 +69,14 @@ CAMPOS_NUMERICOS = frozenset({
     "event.severity",
     "network.iana_number",
 })
+
+
+def endereco_de_rede(valor: Any) -> bool:
+    try:
+        ipaddress.ip_address(str(valor))
+        return True
+    except ValueError:
+        return False
 
 
 def numero_ou_texto(campo: str, valor: str) -> Any:
@@ -236,6 +250,10 @@ def converter(evento: Dict[str, Any], origem: str) -> Dict[str, Any]:
         comum = TRADUCAO_DE_CUSTOMPROPS.get(chave)
         if comum and comum not in convertido:
             convertido[comum] = valor
+
+    origem_do_log = convertido.get("observer.name")
+    if origem_do_log is not None and endereco_de_rede(origem_do_log):
+        convertido["observer.ip"] = origem_do_log
 
     caminho = convertido.get(CAMPO_DE_CAMINHO)
     if caminho and CAMPO_DE_NOME_DO_PROCESSO not in convertido:
