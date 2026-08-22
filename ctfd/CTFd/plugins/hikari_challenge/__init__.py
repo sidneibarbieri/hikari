@@ -42,6 +42,24 @@ def publicar_com_espera(producer, topico, conteudo):
         f"fila do Kafka continuou cheia após {TENTATIVAS_DE_ESCOAMENTO} tentativas")
 
 
+def publicar_onda(producer, topico, registros):
+    """Publica a onda inteira ou nenhuma parte dela.
+
+    O produtor é compartilhado e a fila local sobrevive à chamada que falhou:
+    as mensagens que já entraram continuam lá e são entregues pelo `flush` da
+    próxima publicação, somadas às dela. Foi assim que uma onda recusada no
+    meio acabou indexada duas vezes. Descartar a fila antes de deixar o erro
+    subir é o que torna a falha limpa, e a reserva do desafio, confiável.
+    """
+    try:
+        for registro in registros:
+            publicar_com_espera(producer, topico, json.dumps(registro).encode('utf-8'))
+        producer.flush()
+    except Exception:
+        producer.purge(in_queue=True, in_flight=True)
+        raise
+
+
 ####### HikariController for controlling activation of logs
 class HikariController:
     @staticmethod
@@ -64,12 +82,7 @@ class HikariController:
         if not isinstance(data, list):
             raise ValueError(f"Hikari log file must contain a JSON list: {hf.filename}")
  
-        producer = get_producer()
-        for record in data:
-            publicar_com_espera(producer, 'competition1',
-                                json.dumps(record).encode('utf-8'))
-
-        producer.flush()
+        publicar_onda(get_producer(), 'competition1', data)
  
 
 ###### Custom Hikari Challenge created.
