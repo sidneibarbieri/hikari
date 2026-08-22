@@ -170,7 +170,16 @@ def recent_events(payload: Dict[str, Any]) -> List[RecentEvent]:
 
 
 def aninhado(documento: Dict[str, Any], caminho: str) -> Any:
-    """Lê um campo pontuado do _source, que o Elasticsearch guarda aninhado."""
+    """Lê um campo pontuado do _source, nas duas formas que o índice recebe.
+
+    O índice guarda o ponto como parte do nome do campo, e as fontes discordam
+    de como escrevem o documento: as coleções geradas mandam `source` aninhado,
+    as do QRadar mandam a chave `"source.ip"` inteira. Quem lê só a forma
+    aninhada devolve vazio para metade do índice, e a tabela de eventos
+    recentes aparece em branco sem que nada acuse erro.
+    """
+    if caminho in documento:
+        return documento[caminho]
     atual: Any = documento
     for parte in caminho.split("."):
         if not isinstance(atual, dict):
