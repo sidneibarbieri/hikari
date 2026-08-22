@@ -32,6 +32,20 @@ class Indice:
         return requests.post(f"{self.url}/_search", json=corpo, timeout=120).json()
 
 
+# O Elasticsearch devolve `_source` exatamente como o documento foi indexado, e
+# as origens não escrevem o carimbo de um jeito só: umas terminam em "Z", outras
+# trazem o deslocamento de Brasília. É a mesma grafia de instantes iguais, então
+# quem lê aceita as duas e converte para o fuso que o Kibana exibe.
+FUSO_EXIBIDO = ZoneInfo("America/Sao_Paulo")
+
+
+def instante_de(bruto: str) -> datetime:
+    momento = datetime.fromisoformat(bruto.replace("Z", "+00:00"))
+    if momento.tzinfo is None:
+        momento = momento.replace(tzinfo=timezone.utc)
+    return momento.astimezone(FUSO_EXIBIDO)
+
+
 def total(resposta: Dict[str, Any]) -> int:
     valor = resposta.get("hits", {}).get("total", 0)
     return valor.get("value", 0) if isinstance(valor, dict) else int(valor)
@@ -90,9 +104,7 @@ def resolver(indice: Indice, conferencia: Dict[str, Any]) -> Optional[str]:
         acertos = r["hits"]["hits"]
         if not acertos:
             return None
-        bruto = acertos[0]["_source"]["@timestamp"]
-        momento = datetime.strptime(bruto, "%Y-%m-%dT%H:%M:%S.%fZ").replace(tzinfo=timezone.utc)
-        local = momento.astimezone(ZoneInfo("America/Sao_Paulo"))
+        local = instante_de(acertos[0]["_source"]["@timestamp"])
         # O Kibana mostra milissegundos, não microssegundos; a flag guarda a
         # forma exibida, então a comparação tem de usar a mesma precisão.
         return local.isoformat(timespec="milliseconds")

@@ -18,6 +18,14 @@ Modos, além dos já usados no gabarito dos novos:
 
 # Alguns desafios pedem o segundo colocado de propósito: o primeiro já foi
 # contido pela equipe e a investigação continua no seguinte.
+# Duas perguntas contam o log inteiro, e o log inteiro cresce durante a
+# competição: a cada onda que cai a resposta muda, de modo que quem resolve
+# cedo acerta um número e quem resolve tarde acerta outro. As duas passam a ser
+# datadas, como todo relatório executivo é, e o período escolhido é o do
+# cenário base — as ondas posteriores acontecem em 2026 e ficam de fora.
+PERIODO_DO_RELATORIO = {"@timestamp": {"gte": "2025-01-01T00:00:00-03:00",
+                                       "lt": "2026-01-01T00:00:00-03:00"}}
+
 CONFERENCIAS_ORIGINAIS = {
     "Exportações na Madrugada": {
         "conjunto": "appdb", "modo": "topo", "campo": "user.name.keyword",
@@ -87,6 +95,7 @@ CONFERENCIAS_ORIGINAIS = {
     },
     "A Atividade Mais Recorrente": {
         "modo": "contagem_do_topo", "campo": "event.action.keyword",
+        "faixa": PERIODO_DO_RELATORIO,
     },
     "O Concentrador Mais Usado": {
         "conjunto": "vpn", "modo": "topo", "campo": "host.name.keyword",
@@ -98,6 +107,7 @@ CONFERENCIAS_ORIGINAIS = {
     },
     "Volume de Alto Impacto": {
         "modo": "contagem", "filtro": {"event.severity": 4},
+        "faixa": PERIODO_DO_RELATORIO,
     },
     "A Segunda Conta Atacada": {
         "conjunto": "auth", "modo": "segundo", "campo": "user.name.keyword",

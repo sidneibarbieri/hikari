@@ -1,19 +1,18 @@
 import os
 import json
-from flask import Blueprint, current_app
+from flask import Blueprint
 from CTFd.plugins import register_plugin_assets_directory
 from CTFd.plugins.challenges import CHALLENGE_CLASSES, BaseChallenge
 from CTFd.plugins.migrations import upgrade
-from CTFd.models import (
-    Solves,
-    db
-)
+from CTFd.models import db
 
 from CTFd.utils import get_app_config
 from CTFd.utils.uploads.uploaders import FilesystemUploader, S3Uploader
 
 import CTFd.plugins.hikari_plugin.hikari_models as hikari_models
 from CTFd.plugins.hikari_plugin.kafka_client import get_producer
+
+from .hikari_waves import liberar_ondas_para
 
 UPLOADERS = {"filesystem": FilesystemUploader, "s3": S3Uploader}
 
@@ -111,30 +110,7 @@ class HikariChallenge(BaseChallenge):
     @classmethod
     def solve(cls, user, team, challenge, request):
         super().solve(user, team, challenge, request)
-        
-        all_challenges = hikari_models.HikariChallengeModel.query.all()
-
-        solve_ids = Solves.query.filter_by(user_id=user.id).all()
-        solve_ids = [s.challenge_id for s in solve_ids]
-
-        challs = [c for c in all_challenges if c.id not in solve_ids]
-
-        for chall in challs:
-            prereqs = set()
-            if chall.requirements:
-                prereqs = set(chall.requirements.get('prerequisites'))
-            if len(prereqs) == 0:
-                continue
-            if chall.logs_activated:
-                continue
-            if len(prereqs.intersection(solve_ids)) == len(prereqs):
-                current_app.logger.info(
-                    "hikari.challenge: activating dependent logs for challenge_id=%s",
-                    chall.id,
-                )
-                HikariController.activate_logs(chall.id)
-                setattr(chall, 'logs_activated', True)
-                db.session.commit()
+        liberar_ondas_para(user, team, HikariController.activate_logs)
 
 
 def load(app):

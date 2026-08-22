@@ -267,13 +267,6 @@ def _validate_scoring_mode(run: CompetitionRun) -> None:
 def _activate_initial_logs() -> None:
     """Release log sets belonging to visible challenges without prerequisites."""
     from CTFd.plugins.hikari_challenge import HikariController
-    from CTFd.plugins.hikari_plugin import hikari_models
+    from CTFd.plugins.hikari_challenge.hikari_waves import liberar_ondas_iniciais
 
-    challenges = hikari_models.HikariChallengeModel.query.all()
-    for challenge in challenges:
-        requirements = challenge.requirements or {}
-        if requirements.get("prerequisites") or challenge.logs_activated:
-            continue
-        if challenge.state == "visible":
-            HikariController.activate_logs(challenge.id)
-            challenge.logs_activated = True
+    liberar_ondas_iniciais(HikariController.activate_logs)

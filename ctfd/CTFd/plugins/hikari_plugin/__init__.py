@@ -201,24 +201,9 @@ def load(app):
     @hikariplugin.route('/admin/hikari/init-competition', methods=['GET'])
     @admins_only
     def init_competition():
-        challs = list(hikari_models.HikariChallengeModel.query.all())
-        for chall in challs:
-            prerequisites = []
-            if chall.requirements:
-                prerequisites = chall.requirements.get("prerequisites", [])
-            if prerequisites:
-                continue
-            if chall.logs_activated:
-                continue
-            if chall.state == 'visible':
-                current_app.logger.info(
-                    "hikari.challenge: activating initial logs for challenge_id=%s",
-                    chall.id,
-                )
-                hikari_challenge.HikariController.activate_logs(chall.id)
-                chall.logs_activated = True
-                db.session.commit()
+        from CTFd.plugins.hikari_challenge.hikari_waves import liberar_ondas_iniciais
 
+        liberar_ondas_iniciais(hikari_challenge.HikariController.activate_logs)
         return redirect(url_for('hikariplugin.hikari_main'))
     
     @hikariplugin.route('/admin/hikari/reset-competition', methods=['GET'])
