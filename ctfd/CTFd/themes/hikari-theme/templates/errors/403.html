@@ -8,9 +8,12 @@
 			<div class="pt-5 mt-5 text-center">
 				<h1>{{ error }}</h1>
 				<hr class="w-50 m-auto">
-				<br/>
-				<h2>{% trans %}403 Forbidden{% endtrans %}</h2>
 			</div>
+			{% include "components/hikari-window.html" %}
+			<p class="text-center text-muted">
+				Enquanto a competição não começa, você já pode formar sua equipe e ler
+				<a href="{{ url_for('hikariplugin.hikari_guide') }}">Como participar</a>.
+			</p>
 		</div>
 	</div>
 </div>
